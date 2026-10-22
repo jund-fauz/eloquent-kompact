@@ -1,6 +1,6 @@
 {
     "name": "jund-fauz/eloquent-kompact",
-    "description": "A set of automatic & helper tools to improve development experience and convenience in building app using Eloquent ORM by Laravel",
+    "description": "A set of automation & helper tools to improve development experience and convenience in building app using Eloquent ORM by Laravel",
     "type": "library",
     "license": "MIT",
     "autoload": {
