@@ -29,6 +29,9 @@ final class Checker
             }
         }
 
-        throw new \BadMethodCallException(sprintf('Fungsi %s::%s tidak ada.', self::class, $method));
+        throw new \BadMethodCallException(__('eloquent-kompact::messages.method_not_found', [
+            'class' => self::class,
+            'method' => $method,
+        ]));
     }
 }

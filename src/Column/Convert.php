@@ -8,8 +8,8 @@ final class Convert
 {
     public static function booleanToString(string $columnName): array
     {
-        $trueValue = Str::ucfirst(Creator::getPlainColumnName($columnName));
-        $falseValue = 'Not '.Str::lower($trueValue);
+        $trueValue = __(Str::ucfirst(Creator::getPlainColumnName($columnName)));
+        $falseValue = __('Not :value', ['value' => Str::lower($trueValue)]);
 
         return [$falseValue, $trueValue];
     }

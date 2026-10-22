@@ -17,5 +17,15 @@
         "php": "^8.3",
         "illuminate/support": "^11.0|^12.0|^13.0",
         "illuminate/database": "^11.0|^12.0|^13.0"
+    },
+    "require-dev": {
+        "laravel/framework": "^13.38"
+    },
+    "extra": {
+        "laravel": {
+            "providers": [
+                "JundFauz\\EloquentKompact\\EloquentKompactServiceProvider"
+            ]
+        }
     }
 }
