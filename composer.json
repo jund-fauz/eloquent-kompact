@@ -1,0 +1,21 @@
+{
+    "name": "jund-fauz/eloquent-kompact",
+    "description": "A set of automatic & helper tools to improve development experience and convenience in building app using Eloquent ORM by Laravel",
+    "type": "library",
+    "license": "MIT",
+    "autoload": {
+        "psr-4": {
+            "JundFauz\\EloquentKompact\\": "src/"
+        }
+    },
+    "authors": [
+        {
+            "name": "jund-fauz"
+        }
+    ],
+    "require": {
+        "php": "^8.3",
+        "illuminate/support": "^11.0|^12.0|^13.0",
+        "illuminate/database": "^11.0|^12.0|^13.0"
+    }
+}
