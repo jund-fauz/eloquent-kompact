@@ -2,6 +2,7 @@
 
 namespace JundFauz\EloquentKompact\Query;
 
+use Illuminate\Support\Facades\DB;
 use JundFauz\EloquentKompact\Column\Convert;
 use JundFauz\EloquentKompact\Helper\Str;
 use function array_is_list;
@@ -10,6 +11,9 @@ use function is_string;
 use function join;
 use function substr;
 
+/**
+ * NOTE: Built to compatible with MySQL & PostgreSQL database
+ */
 final class RawQuery
 {
     public const string CHAR = 'CHAR';
@@ -17,7 +21,16 @@ final class RawQuery
 
     public static function zeroIfNull(string ...$columnNames): string|array
     {
-        $result = array_map(fn(string $columnName) => "COALESCE($columnName, 0)", $columnNames);
+        $result = array_map(fn (string $columnName) => "COALESCE($columnName, 0)", $columnNames);
+        if (count($result) === 1) {
+            $result = $result[0];
+        }
+        return $result;
+    }
+
+    public static function nullIfZero(string ...$columnNames): string|array
+    {
+        $result = array_map(fn (string $columnName) => "NULLIF($columnName, 0)", $columnNames);
         if (count($result) === 1) {
             $result = $result[0];
         }
@@ -56,13 +69,9 @@ final class RawQuery
         return "($expression)";
     }
 
-    public static function sum(string ...$columnNames): string
+    public static function sum(string $columnNames): string
     {
-        return Str::concat(
-            'SUM(',
-            join(', ', $columnNames),
-            ')'
-        );
+        return "SUM($columnNames)";
     }
 
     public static function plus(string ...$columnNames): string
@@ -82,12 +91,17 @@ final class RawQuery
 
     public static function divide(string ...$columnNames): string
     {
-        return join(' / ', $columnNames);
+        $result = [
+            self::multiply(array_shift($columnNames), '1.0'),
+            ...array_map(fn (string $columnName) => self::nullIfZero($columnName), $columnNames)
+        ];
+
+        return join(' / ', $result);
     }
 
     public static function if(string $condition, string $trueValue, string $falseValue): string
     {
-        return "IF($condition, $trueValue, $falseValue)";
+        return "CASE WHEN $condition THEN $trueValue ELSE $falseValue END";
     }
 
     public static function switchCase(string $columnName, array $conditions, mixed $defaultValue = null): string
@@ -125,7 +139,11 @@ final class RawQuery
 
     public static function concat(string ...$values): string
     {
-        return 'CONCAT(' . join(', ', $values) . ')';
+        return Str::concat(
+            "CONCAT_WS('', ",
+            join(', ', $values),
+            ')'
+        );
     }
 
     public static function cast(string $columnName, string $as): string
@@ -161,6 +179,11 @@ final class RawQuery
 
     public static function string($value): string
     {
-        return "'$value'";
+        return DB::escape($value);
+    }
+
+    public static function dateAfter(int $days, string $sourceColumnName): string
+    {
+        return "$sourceColumnName + INTERVAL '$days' DAY";
     }
 }
