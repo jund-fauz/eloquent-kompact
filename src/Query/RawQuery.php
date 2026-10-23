@@ -188,6 +188,9 @@ final class RawQuery
         return "$sourceColumnName + INTERVAL '$count' {$type->value}";
     }
 
+    /**
+     * NOTE: Currently, only support 'DAY' interval
+     */
     public static function diff(string $firstColumnName, string $secondColumnName, Interval $interval = Interval::Day): string
     {
         return Driver::matcher(
@@ -198,5 +201,10 @@ final class RawQuery
                 ')'
             )
         );
+    }
+
+    public static function now(): string
+    {
+        return 'NOW()';
     }
 }
