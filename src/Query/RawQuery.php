@@ -3,6 +3,7 @@
 namespace JundFauz\EloquentKompact\Query;
 
 use JundFauz\EloquentKompact\Column\Convert;
+use JundFauz\EloquentKompact\Helper\Str;
 use function array_is_list;
 use function array_shift;
 use function is_string;
@@ -55,22 +56,36 @@ final class RawQuery
         return "($expression)";
     }
 
-    public static function minus(...$columnNames): string
+    public static function sum(string ...$columnNames): string
+    {
+        return Str::concat(
+            'SUM(',
+            join(', ', $columnNames),
+            ')'
+        );
+    }
+
+    public static function plus(string ...$columnNames): string
+    {
+        return join(' + ', $columnNames);
+    }
+
+    public static function minus(string ...$columnNames): string
     {
         return join(' - ', $columnNames);
     }
 
-    public static function multiply(...$columnNames): string
+    public static function multiply(string ...$columnNames): string
     {
         return join(' * ', $columnNames);
     }
 
-    public static function divide(...$columnNames): string
+    public static function divide(string ...$columnNames): string
     {
         return join(' / ', $columnNames);
     }
 
-    public static function if(string $condition, $trueValue, $falseValue): string
+    public static function if(string $condition, string $trueValue, string $falseValue): string
     {
         return "IF($condition, $trueValue, $falseValue)";
     }
@@ -108,7 +123,7 @@ final class RawQuery
         return $result . "\nEND";
     }
 
-    public static function concat(...$values): string
+    public static function concat(string ...$values): string
     {
         return 'CONCAT(' . join(', ', $values) . ')';
     }
