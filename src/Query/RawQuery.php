@@ -132,7 +132,7 @@ final class RawQuery
     {
         $result = '';
         foreach ($relationClasses as $relationClass) {
-            $result .= Convert::modelToRelation($relationClass, true, true) . 'src';
+            $result .= Convert::modelToRelation($relationClass, true, true) . '.';
         }
 
         if ($columnName) {
