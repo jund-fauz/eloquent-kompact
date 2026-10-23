@@ -50,11 +50,6 @@ final class RawQuery
         return $result;
     }
 
-    public static function sameWith(string $columnName, string $value = '?'): string
-    {
-        return "$columnName = $value";
-    }
-
     public static function isNull(string $columnName): string
     {
         return "$columnName IS NULL";
@@ -191,13 +186,13 @@ final class RawQuery
     /**
      * NOTE: Currently, only support 'DAY' interval
      */
-    public static function diff(string $firstColumnName, string $secondColumnName, Interval $interval = Interval::Day): string
+    public static function diff(string $firstColumnName, string $value = '?', Interval $interval = Interval::Day): string
     {
         return Driver::matcher(
-            mysql: "TIMESTAMPDIFF({$interval->value}, $secondColumnName, $firstColumnName)",
+            mysql: "TIMESTAMPDIFF({$interval->value}, $value, $firstColumnName)",
             pgsql: Str::concat(
                 "EXTRACT({$interval->value} FROM ",
-                self::wrap(self::minus($firstColumnName, $secondColumnName)),
+                self::wrap(self::minus($firstColumnName, $value)),
                 ')'
             )
         );
@@ -206,5 +201,10 @@ final class RawQuery
     public static function now(): string
     {
         return 'NOW()';
+    }
+
+    public static function compare(string $firstColumnName, string $secondColumnName, Operator $operator = Operator::SameWith): string
+    {
+        return "$firstColumnName {$operator->value} $secondColumnName";
     }
 }
