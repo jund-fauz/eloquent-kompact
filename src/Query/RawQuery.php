@@ -207,4 +207,9 @@ final class RawQuery
     {
         return "$firstColumnName {$operator->value} $secondColumnName";
     }
+
+    public static function queryConcat(string ...$expressions): string
+    {
+        return join(' ', $expressions);
+    }
 }
