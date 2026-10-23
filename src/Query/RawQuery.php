@@ -182,8 +182,8 @@ final class RawQuery
         return DB::escape($value);
     }
 
-    public static function dateAfter(int $days, string $sourceColumnName): string
+    public static function dateAfter(int $count, string $sourceColumnName, Interval $type = Interval::Day): string
     {
-        return "$sourceColumnName + INTERVAL '$days' DAY";
+        return "$sourceColumnName + INTERVAL '$count' {$type->value}";
     }
 }
