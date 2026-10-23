@@ -186,13 +186,13 @@ final class RawQuery
     /**
      * NOTE: Currently, only support 'DAY' interval
      */
-    public static function diff(string $firstColumnName, string $value = '?', Interval $interval = Interval::Day): string
+    public static function diff(string $firstColumnName, string $secondColumnName, Interval $interval = Interval::Day): string
     {
         return Driver::matcher(
-            mysql: "TIMESTAMPDIFF({$interval->value}, $value, $firstColumnName)",
+            mysql: "TIMESTAMPDIFF({$interval->value}, $secondColumnName, $firstColumnName)",
             pgsql: Str::concat(
                 "EXTRACT({$interval->value} FROM ",
-                self::wrap(self::minus($firstColumnName, $value)),
+                self::wrap(self::minus($firstColumnName, $secondColumnName)),
                 ')'
             )
         );
@@ -203,7 +203,7 @@ final class RawQuery
         return 'NOW()';
     }
 
-    public static function compare(string $firstColumnName, string $secondColumnName, Operator $operator = Operator::SameWith): string
+    public static function compare(string $firstColumnName, string $secondColumnName = '?', Operator $operator = Operator::SameWith): string
     {
         return "$firstColumnName {$operator->value} $secondColumnName";
     }
