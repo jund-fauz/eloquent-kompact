@@ -6,7 +6,7 @@ use Illuminate\Support\ServiceProvider;
 
 class EloquentKompactServiceProvider extends ServiceProvider
 {
-    public function boot()
+    public function boot(): void
     {
         $this->loadTranslationsFrom(__DIR__.'/../lang', 'eloquent-kompact');
         $this->loadJsonTranslationsFrom(__DIR__.'/../lang');
