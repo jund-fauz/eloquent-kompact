@@ -5,6 +5,7 @@ namespace JundFauz\EloquentKompact\Query;
 use Illuminate\Support\Facades\DB;
 use JundFauz\EloquentKompact\Column\Convert;
 use JundFauz\EloquentKompact\Helper\Str;
+use JundFauz\EloquentKompact\Query\Driver\Driver;
 use function array_is_list;
 use function array_shift;
 use function is_string;
@@ -12,7 +13,7 @@ use function join;
 use function substr;
 
 /**
- * NOTE: Built to compatible with MySQL & PostgreSQL database
+ * NOTE: Built to compatible with MySQL & PostgresSQL database
  */
 final class RawQuery
 {
@@ -185,5 +186,17 @@ final class RawQuery
     public static function dateAfter(int $count, string $sourceColumnName, Interval $type = Interval::Day): string
     {
         return "$sourceColumnName + INTERVAL '$count' {$type->value}";
+    }
+
+    public static function diff(string $firstColumnName, string $secondColumnName, Interval $interval = Interval::Day): string
+    {
+        return Driver::matcher(
+            mysql: "TIMESTAMPDIFF({$interval->value}, $secondColumnName, $firstColumnName)",
+            pgsql: Str::concat(
+                "EXTRACT({$interval->value} FROM ",
+                self::wrap(self::minus($firstColumnName, $secondColumnName)),
+                ')'
+            )
+        );
     }
 }
