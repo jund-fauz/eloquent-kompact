@@ -2,15 +2,15 @@
 
 namespace JundFauz\EloquentKompact\Model\Traits;
 
-use App\Database\Models\Concerns\BaseModel;
 use Illuminate\Database\Eloquent\Attributes\Scope;
 use Illuminate\Database\Eloquent\Builder;
+use Illuminate\Database\Eloquent\Model;
 
 trait AdditionalQueries
 {
 
 
-    public function copyRelationsTo(BaseModel $target, array $relations): void
+    public function copyRelationsTo(Model $target, array $relations): void
     {
         foreach ($relations as $relationName => $columns) {
             $datas = $this
@@ -27,7 +27,7 @@ trait AdditionalQueries
     }
 
     #[Scope]
-    protected function wheres(Builder $query, BaseModel $other, ...$columns): Builder
+    protected function wheres(Builder $query, Model $other, ...$columns): Builder
     {
         foreach ($columns as $column) {
             $query->where($column, $other->{$column});

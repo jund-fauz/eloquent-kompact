@@ -4,7 +4,7 @@
         "Read more about it at https://getcomposer.org/doc/01-basic-usage.md#installing-dependencies",
         "This file is @generated automatically"
     ],
-    "content-hash": "9ec51e69b546000b1d9762fea88fbdf8",
+    "content-hash": "f01efd5b18e1c9c09fd33501a1b68f0f",
     "packages": [
         {
             "name": "brick/math",
@@ -1058,6 +1058,43 @@
                 }
             ],
             "time": "2026-08-24T17:13:02+00:00"
+        },
+        {
+            "name": "jund-fauz/regex-builder",
+            "version": "v1.1.0",
+            "source": {
+                "type": "git",
+                "url": "https://github.com/jund-fauz/php-regex-builder.git",
+                "reference": "9c6629e6cccb42f7a379f3d128736966c8e9e7b1"
+            },
+            "dist": {
+                "type": "zip",
+                "url": "https://api.github.com/repos/jund-fauz/php-regex-builder/zipball/9c6629e6cccb42f7a379f3d128736966c8e9e7b1",
+                "reference": "9c6629e6cccb42f7a379f3d128736966c8e9e7b1",
+                "shasum": ""
+            },
+            "type": "library",
+            "autoload": {
+                "psr-4": {
+                    "JundFauz\\RegexBuilder\\": "src/"
+                }
+            },
+            "notification-url": "https://packagist.org/downloads/",
+            "license": [
+                "MIT"
+            ],
+            "authors": [
+                {
+                    "name": "jund-fauz",
+                    "email": "mujadidjundifauzi200@gmail.com"
+                }
+            ],
+            "description": "Build regex expression without need to memorize any regex symbol",
+            "support": {
+                "issues": "https://github.com/jund-fauz/php-regex-builder/issues",
+                "source": "https://github.com/jund-fauz/php-regex-builder/tree/v1.1.0"
+            },
+            "time": "2026-10-23T04:27:39+00:00"
         },
         {
             "name": "laravel/framework",

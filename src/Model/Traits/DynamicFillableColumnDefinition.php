@@ -14,7 +14,7 @@ trait DynamicFillableColumnDefinition
         return static::$DFCache[static::class] ??= array_values(array_unique(array_merge(
             collect(ColumnListing::of($this->getTable()))
                 ->reject(function ($column) {
-                    foreach (config('fillable.excluded_columns_by_regex') as $exclude) {
+                    foreach (config('eloquent-kompact.fillable.excluded_columns_by_regex') as $exclude) {
                         if (preg_match($exclude, $column)) {
                             return true;
                         }

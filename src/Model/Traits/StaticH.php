@@ -3,7 +3,8 @@
 namespace JundFauz\EloquentKompact\Model\Traits;
 
 use Illuminate\Database\Schema\Blueprint;
-use Illuminate\Support\Str;
+use Illuminate\Support\Str as LaravelStr;
+use JundFauz\EloquentKompact\Helper\Str;
 
 trait StaticH
 {
@@ -15,8 +16,8 @@ trait StaticH
     public static function getModel(Blueprint $column): ?string
     {
         $tableName = $column->getTable();
-        $modelName = Str::studly(Str::singular($tableName));
-        $modelClass = static::basicModelNamespace . $modelName;
+        $modelName = LaravelStr::studly(LaravelStr::singular($tableName));
+        $modelClass = Str::concat(config('eloquent-kompact.path.model'), $modelName);
 
         return class_exists($modelClass) ? $modelClass : null;
     }

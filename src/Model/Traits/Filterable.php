@@ -3,6 +3,7 @@
 namespace JundFauz\EloquentKompact\Model\Traits;
 
 use JundFauz\EloquentKompact\Model\KompactModel;
+use JundFauz\EloquentKompact\Query\RawQuery;
 
 trait Filterable
 {
@@ -15,7 +16,7 @@ trait Filterable
             if (str_contains($column, '.')) {
                 $relationalColumns[] = $column;
             } else {
-                $selects[] = "COUNT(NULLIF($column, '')) as {$column}_count";
+                $selects[] = RawQuery::as(RawQuery::count(RawQuery::replaceIfNull($column, '')), "{$column}_count");
             }
         }
 

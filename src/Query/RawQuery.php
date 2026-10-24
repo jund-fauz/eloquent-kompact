@@ -29,13 +29,9 @@ final class RawQuery
         return $result;
     }
 
-    public static function nullIfZero(string ...$columnNames): string|array
+    public static function replaceIfNull(string $columnName, string $replaceValue): string|array
     {
-        $result = array_map(fn (string $columnName) => "NULLIF($columnName, 0)", $columnNames);
-        if (count($result) === 1) {
-            $result = $result[0];
-        }
-        return $result;
+        return "NULLIF($columnName, $replaceValue)";
     }
 
     public static function isZeroOrNull(...$columnNames): string
@@ -89,7 +85,7 @@ final class RawQuery
     {
         $result = [
             self::multiply(array_shift($columnNames), '1.0'),
-            ...array_map(fn (string $columnName) => self::nullIfZero($columnName), $columnNames)
+            ...array_map(fn (string $columnName) => self::replaceIfNull($columnName, '0'), $columnNames)
         ];
 
         return join(' / ', $result);
@@ -206,6 +202,11 @@ final class RawQuery
     public static function compare(string $firstColumnName, string $secondColumnName = '?', Operator $operator = Operator::SameWith): string
     {
         return "$firstColumnName {$operator->value} $secondColumnName";
+    }
+
+    public static function count(string $argument)
+    {
+        return "COUNT($argument)";
     }
 
     public static function queryConcat(string ...$expressions): string

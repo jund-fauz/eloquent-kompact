@@ -5,9 +5,10 @@ namespace JundFauz\EloquentKompact\Model\Traits;
 use BadMethodCallException;
 use Illuminate\Database\Eloquent\Relations\MorphTo;
 use Illuminate\Database\Eloquent\Relations\Relation;
-use Illuminate\Support\Str;
+use Illuminate\Support\Str as LaravelStr;
 use JundFauz\EloquentKompact\Column\ColumnListing;
 use JundFauz\EloquentKompact\Column\Creator;
+use JundFauz\EloquentKompact\Helper\Str;
 use ReflectionClass;
 use ReflectionException;
 use ReflectionMethod;
@@ -48,21 +49,21 @@ trait DynamicModelRelation
             return self::$dynamicRelationCache[static::class][$relationName];
         }
 
-        $isPlural = Str::plural($relationName) === $relationName;
-        $singularRelation = Str::singular($relationName);
+        $isPlural = LaravelStr::plural($relationName) === $relationName;
+        $singularRelation = LaravelStr::singular($relationName);
         $parts = preg_split('/(?=[A-Z])/', $singularRelation, -1, PREG_SPLIT_NO_EMPTY);
         $originalParts = $parts;
 
         while (count($parts) > 0) {
             $attemptedClassName = implode('', array_map(ucfirst(...), $parts));
-            $className = self::basicModelNamespace . $attemptedClassName;
+            $className = Str::concat(config('eloquent-kompact.path.model'), $attemptedClassName);
 
             if (class_exists($className)) {
                 $prefixParts = array_slice($originalParts, 0, count($originalParts) - count($parts));
                 $prefix = implode('_', array_map(strtolower(...), $prefixParts));
 
                 if ($isPlural) {
-                    $parentModelName = Str::snake(class_basename(static::class));
+                    $parentModelName = LaravelStr::snake(class_basename(static::class));
                     $foreignKey = Creator::relation($prefix ? "{$prefix}_$parentModelName" : $parentModelName);
                     $table = (new $className)->getTable();
 
@@ -78,7 +79,7 @@ trait DynamicModelRelation
                         ));
                     }
                 } else {
-                    $foreignKey = Creator::relation(Str::snake($relationName));
+                    $foreignKey = Creator::relation(LaravelStr::snake($relationName));
                     $type = 'belongsTo';
                 }
 
@@ -137,13 +138,13 @@ trait DynamicModelRelation
 
     protected static function hasDynamicRelation(string $relationName): bool
     {
-        $isPlural = Str::plural($relationName) === $relationName;
-        $singularRelation = $isPlural ? Str::singular($relationName) : $relationName;
+        $isPlural = LaravelStr::plural($relationName) === $relationName;
+        $singularRelation = $isPlural ? LaravelStr::singular($relationName) : $relationName;
 
         $parts = preg_split('/(?=[A-Z])/', $singularRelation, flags: PREG_SPLIT_NO_EMPTY);
         while (count($parts) > 0) {
             $attemptedClassName = implode('', array_map(ucfirst(...), $parts));
-            if (class_exists(self::basicModelNamespace . $attemptedClassName)) {
+            if (class_exists(Str::concat(config('eloquent-kompact.path.model'), $attemptedClassName))) {
                 return true;
             }
             array_shift($parts);
