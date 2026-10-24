@@ -109,10 +109,10 @@ class RawQuery implements Stringable
         return $this->set($result . "\nEND");
     }
 
-    public static function flexibleCase(string|array $conditions, mixed $defaultValue = null): string
+    public static function flexibleCase(string|self|array $conditions, mixed $defaultValue = null): string
     {
         $result = 'CASE';
-        if (is_string($conditions)) {
+        if (! is_array($conditions)) {
             $conditions = [$conditions];
         }
         if (array_is_list($conditions)) {

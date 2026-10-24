@@ -66,6 +66,27 @@ class RawQueryTest extends TestCase
             'price * qty + COALESCE(shipping, 0)',
         ];
         yield 'wrap for precedence' => [RawQuery::create('price')->plus('tax')->wrap()->multiply('qty'), '(price + tax) * qty'];
+        yield 'builder in replaceIfNull' => [
+            RawQuery::create('price')->replaceIfNull(RawQuery::create('discount')->zeroIfNull()),
+            'NULLIF(price, COALESCE(discount, 0))',
+        ];
+        yield 'builder in if' => [
+            RawQuery::create('stock')->compare(RawQuery::create('min_stock')->zeroIfNull(), Operator::MoreThan)
+                ->if(RawQuery::create('stock')->minus('min_stock'), '0'),
+            'CASE WHEN stock > COALESCE(min_stock, 0) THEN stock - min_stock ELSE 0 END',
+        ];
+        yield 'builder in switchCase values' => [
+            RawQuery::create('type')->switchCase([1 => RawQuery::create('price')->multiply('qty')], RawQuery::create('price')),
+            "\nCASE type\n  WHEN 1 THEN price * qty\n  ELSE price\nEND",
+        ];
+        yield 'builder in and' => [
+            RawQuery::create('a')->isNull()->and(RawQuery::create('b')->isNull()),
+            'a IS NULL AND b IS NULL',
+        ];
+        yield 'builder in concat' => [
+            RawQuery::create('code')->concat(RawQuery::create('id')->cast(RawQuery::CHAR)),
+            "CONCAT_WS('', code, CAST(id AS CHAR))",
+        ];
         yield 'long chain' => [
             RawQuery::create('paid')->sum()->divide(RawQuery::create('total')->sum())->as('paid_ratio'),
             'SUM(paid) * 1.0 / NULLIF(SUM(total), 0) AS paid_ratio',
@@ -106,6 +127,11 @@ class RawQueryTest extends TestCase
             RawQuery::flexibleCase(['a = 1' => "'one'"], "'other'")
         );
         $this->assertSame("CASE\n  WHEN a = 1 THEN 1\n  ELSE 0\nEND", RawQuery::flexibleCase(['a = 1' => '1'], 0));
+        $this->assertSame("CASE\n  WHEN a IS NULL THEN ?\nEND", RawQuery::flexibleCase(RawQuery::create('a')->isNull()));
+        $this->assertSame(
+            "CASE\n  WHEN a IS NULL THEN ?\n  ELSE COALESCE(b, 0)\nEND",
+            RawQuery::flexibleCase([RawQuery::create('a')->isNull()], RawQuery::create('b')->zeroIfNull())
+        );
     }
 
     #[Test]
