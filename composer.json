@@ -6,6 +6,14 @@
     "autoload": {
         "psr-4": {
             "JundFauz\\EloquentKompact\\": "src/"
+        },
+        "files": [
+            "src/Helper/Functions.php"
+        ]
+    },
+    "autoload-dev": {
+        "psr-4": {
+            "JundFauz\\EloquentKompact\\Tests\\": "tests/"
         }
     },
     "authors": [
@@ -20,7 +28,12 @@
         "jund-fauz/regex-builder": "^1.1"
     },
     "require-dev": {
-        "laravel/framework": "^13.38"
+        "laravel/framework": "^13.38",
+        "phpunit/phpunit": "^13.4",
+        "orchestra/testbench": "^11.3"
+    },
+    "scripts": {
+        "test": "phpunit"
     },
     "extra": {
         "laravel": {

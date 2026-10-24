@@ -16,7 +16,11 @@ trait Filterable
             if (str_contains($column, '.')) {
                 $relationalColumns[] = $column;
             } else {
-                $selects[] = RawQuery::as(RawQuery::count(RawQuery::replaceIfNull($column, '')), "{$column}_count");
+                $selects[] = RawQuery::create($column)
+                    ->replaceIfNull(RawQuery::string())
+                    ->count()
+                    ->as("{$column}_count")
+                    ->build();
             }
         }
 

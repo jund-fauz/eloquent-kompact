@@ -6,106 +6,107 @@ use Illuminate\Support\Facades\DB;
 use JundFauz\EloquentKompact\Column\Convert;
 use JundFauz\EloquentKompact\Helper\Str;
 use JundFauz\EloquentKompact\Query\Driver\Driver;
-use function array_is_list;
-use function array_shift;
-use function is_string;
-use function join;
-use function substr;
+use Stringable;
 
 /**
  * NOTE: Built to compatible with MySQL & PostgresSQL database
  */
-final class RawQuery
+class RawQuery implements Stringable
 {
     public const string CHAR = 'CHAR';
     public const string NULL = 'NULL';
 
-    public static function zeroIfNull(string ...$columnNames): string|array
+    protected string $result = '';
+
+    public static function create(string|self $expression = ''): static
     {
-        $result = array_map(fn (string $columnName) => "COALESCE($columnName, 0)", $columnNames);
-        if (count($result) === 1) {
-            $result = $result[0];
-        }
-        return $result;
+        return (new static)->set((string) $expression);
     }
 
-    public static function replaceIfNull(string $columnName, string $replaceValue): string|array
+    public function zeroIfNull(): static
     {
-        return "NULLIF($columnName, $replaceValue)";
+        return $this->set("COALESCE($this->result, 0)");
     }
 
-    public static function isZeroOrNull(...$columnNames): string
+    /**
+     * NOTE: On PostgreSQL, the replace value must match the column type, e.g. NULLIF(integer_column, '') fails because '' is not a valid integer
+     */
+    public function replaceIfNull(string|self $replaceValue): static
     {
-        $firstColumn = array_shift($columnNames);
-        $result = "$firstColumn = 0 OR $firstColumn IS NULL";
-
-        foreach ($columnNames as $columnName) {
-            $result .= " OR $columnName = 0 OR $columnName IS NULL";
-        }
-
-        return $result;
+        return $this->set("NULLIF($this->result, $replaceValue)");
     }
 
-    public static function isNull(string $columnName): string
+    public function isZeroOrNull(string|self ...$columnNames): static
     {
-        return "$columnName IS NULL";
+        $conditions = array_map(
+            fn (string $columnName) => "$columnName = 0 OR $columnName IS NULL",
+            $this->withResult(...$columnNames)
+        );
+
+        return $this->set(join(' OR ', $conditions));
     }
 
-    public static function and(...$condition): string
+    public function isNull(): static
     {
-        return join(' AND ', $condition);
+        return $this->set("$this->result IS NULL");
     }
 
-    public static function wrap(string $expression): string
+    public function and(string|self ...$conditions): static
     {
-        return "($expression)";
+        return $this->set(join(' AND ', $this->withResult(...$conditions)));
     }
 
-    public static function sum(string $columnNames): string
+    public function wrap(): static
     {
-        return "SUM($columnNames)";
+        return $this->set("($this->result)");
     }
 
-    public static function plus(string ...$columnNames): string
+    public function sum(): static
     {
-        return join(' + ', $columnNames);
+        return $this->set("SUM($this->result)");
     }
 
-    public static function minus(string ...$columnNames): string
+    public function plus(string|self ...$columnNames): static
     {
-        return join(' - ', $columnNames);
+        return $this->set(join(' + ', $this->withResult(...$columnNames)));
     }
 
-    public static function multiply(string ...$columnNames): string
+    public function minus(string|self ...$columnNames): static
     {
-        return join(' * ', $columnNames);
+        return $this->set(join(' - ', $this->withResult(...$columnNames)));
     }
 
-    public static function divide(string ...$columnNames): string
+    public function multiply(string|self ...$columnNames): static
     {
+        return $this->set(join(' * ', $this->withResult(...$columnNames)));
+    }
+
+    public function divide(string|self ...$columnNames): static
+    {
+        $columnNames = $this->withResult(...$columnNames);
         $result = [
-            self::multiply(array_shift($columnNames), '1.0'),
-            ...array_map(fn (string $columnName) => self::replaceIfNull($columnName, '0'), $columnNames)
+            array_shift($columnNames) . ' * 1.0',
+            ...array_map(fn (string $columnName) => "NULLIF($columnName, 0)", $columnNames)
         ];
 
-        return join(' / ', $result);
+        return $this->set(join(' / ', $result));
     }
 
-    public static function if(string $condition, string $trueValue, string $falseValue): string
+    public function if(string|self $trueValue, string|self $falseValue): static
     {
-        return "CASE WHEN $condition THEN $trueValue ELSE $falseValue END";
+        return $this->set("CASE WHEN $this->result THEN $trueValue ELSE $falseValue END");
     }
 
-    public static function switchCase(string $columnName, array $conditions, mixed $defaultValue = null): string
+    public function switchCase(array $conditions, mixed $defaultValue = null): static
     {
-        $result = "\nCASE $columnName";
+        $result = "\nCASE $this->result";
         foreach ($conditions as $condition => $value) {
             $result .= "\n  WHEN $condition THEN $value";
         }
-        if ($defaultValue) {
+        if (is_not_null($defaultValue)) {
             $result .= "\n  ELSE $defaultValue";
         }
-        return $result . "\nEND";
+        return $this->set($result . "\nEND");
     }
 
     public static function flexibleCase(string|array $conditions, mixed $defaultValue = null): string
@@ -123,34 +124,34 @@ final class RawQuery
                 $result .= "\n  WHEN $condition THEN $value";
             }
         }
-        if ($defaultValue) {
+        if (is_not_null($defaultValue)) {
             $result .= "\n  ELSE $defaultValue";
         }
         return $result . "\nEND";
     }
 
-    public static function concat(string ...$values): string
+    public function concat(string|self ...$values): static
     {
-        return Str::concat(
+        return $this->set(Str::concat(
             "CONCAT_WS('', ",
-            join(', ', $values),
+            join(', ', $this->withResult(...$values)),
             ')'
-        );
+        ));
     }
 
-    public static function cast(string $columnName, string $as): string
+    public function cast(string $as): static
     {
-        return "CAST($columnName AS $as)";
+        return $this->set("CAST($this->result AS $as)");
     }
 
-    public static function as(string $expression, string $as): string
+    public function as(string $as): static
     {
-        return "$expression AS $as";
+        return $this->set("$this->result AS $as");
     }
 
-    public static function max(string $columnName): string
+    public function max(): static
     {
-        return "MAX($columnName)";
+        return $this->set("MAX($this->result)");
     }
 
     public static function relations(string $columnName, ...$relationClasses): string
@@ -169,29 +170,26 @@ final class RawQuery
         return $result;
     }
 
-    public static function string($value): string
+    public static function string(mixed $value = ''): string
     {
         return DB::escape($value);
     }
 
-    public static function dateAfter(int $count, string $sourceColumnName, Interval $type = Interval::Day): string
+    public function dateAfter(int $count, Interval $type = Interval::Day): static
     {
-        return "$sourceColumnName + INTERVAL '$count' {$type->value}";
+        return $this->set("$this->result + INTERVAL '$count' {$type->value}");
     }
 
     /**
      * NOTE: Currently, only support 'DAY' interval
+     * NOTE: On PostgreSQL, at least one of the columns must be a TIMESTAMP, because subtracting two DATE columns returns an integer instead of an interval
      */
-    public static function diff(string $firstColumnName, string $secondColumnName, Interval $interval = Interval::Day): string
+    public function diff(string|self $secondColumnName, Interval $interval = Interval::Day): static
     {
-        return Driver::matcher(
-            mysql: "TIMESTAMPDIFF({$interval->value}, $secondColumnName, $firstColumnName)",
-            pgsql: Str::concat(
-                "EXTRACT({$interval->value} FROM ",
-                self::wrap(self::minus($firstColumnName, $secondColumnName)),
-                ')'
-            )
-        );
+        return $this->set(Driver::matcher(
+            mysql: "TIMESTAMPDIFF({$interval->value}, $secondColumnName, $this->result)",
+            pgsql: "EXTRACT({$interval->value} FROM ($this->result - $secondColumnName))"
+        ));
     }
 
     public static function now(): string
@@ -199,18 +197,43 @@ final class RawQuery
         return 'NOW()';
     }
 
-    public static function compare(string $firstColumnName, string $secondColumnName = '?', Operator $operator = Operator::SameWith): string
+    public function compare(string|self $secondColumnName = '?', Operator $operator = Operator::SameWith): static
     {
-        return "$firstColumnName {$operator->value} $secondColumnName";
+        return $this->set("$this->result {$operator->value} $secondColumnName");
     }
 
-    public static function count(string $argument)
+    public function count(): static
     {
-        return "COUNT($argument)";
+        return $this->set("COUNT($this->result)");
     }
 
-    public static function queryConcat(string ...$expressions): string
+    public static function queryConcat(string|self ...$expressions): string
     {
-        return join(' ', $expressions);
+        return join(' ', array_map(fn (string|self $expression) => (string) $expression, $expressions));
+    }
+
+    public function build(): string
+    {
+        return $this->result;
+    }
+
+    public function __toString(): string
+    {
+        return $this->build();
+    }
+
+    protected function set(string $expression): static
+    {
+        $this->result = $expression;
+        return $this;
+    }
+
+    /**
+     * Puts the current expression in front of the given operands, unless it is still empty
+     */
+    protected function withResult(string|self ...$expressions): array
+    {
+        $expressions = array_map(fn (string|self $expression) => (string) $expression, $expressions);
+        return $this->result === '' ? $expressions : [$this->result, ...$expressions];
     }
 }
