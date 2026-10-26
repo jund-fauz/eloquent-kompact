@@ -5,6 +5,9 @@ namespace JundFauz\EloquentKompact\Query\Driver;
 use Illuminate\Support\Facades\DB;
 use RuntimeException;
 
+/**
+ * @internal
+ */
 class Driver
 {
     public const string PostgresSQL = 'pgsql';

@@ -27,4 +27,11 @@ abstract class KompactModel extends Model
             static::traitBootSoftDeletes();
         }
     }
+
+    public static function flushKompactCache(): void
+    {
+        self::$autoCastCache = [];
+        self::$DFCache = null;
+        self::$dynamicRelationCache = [];
+    }
 }

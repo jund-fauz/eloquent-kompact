@@ -3,12 +3,13 @@
 namespace JundFauz\EloquentKompact\Model\Traits;
 
 use BadMethodCallException;
+use Closure;
 use Illuminate\Database\Eloquent\Relations\MorphTo;
 use Illuminate\Database\Eloquent\Relations\Relation;
-use Illuminate\Support\Str as LaravelStr;
+use Illuminate\Support\Str;
 use JundFauz\EloquentKompact\Column\ColumnListing;
 use JundFauz\EloquentKompact\Column\Creator;
-use JundFauz\EloquentKompact\Helper\Str;
+use JundFauz\EloquentKompact\Helper\Path;
 use ReflectionClass;
 use ReflectionException;
 use ReflectionMethod;
@@ -18,8 +19,6 @@ use function sprintf;
 
 trait DynamicModelRelation
 {
-    const string basicModelNamespace = '\App\Database\Models\\';
-
     protected static array $dynamicRelationCache = [];
 
     /**
@@ -49,21 +48,21 @@ trait DynamicModelRelation
             return self::$dynamicRelationCache[static::class][$relationName];
         }
 
-        $isPlural = LaravelStr::plural($relationName) === $relationName;
-        $singularRelation = LaravelStr::singular($relationName);
+        $isPlural = Str::plural($relationName) === $relationName;
+        $singularRelation = Str::singular($relationName);
         $parts = preg_split('/(?=[A-Z])/', $singularRelation, -1, PREG_SPLIT_NO_EMPTY);
         $originalParts = $parts;
 
         while (count($parts) > 0) {
             $attemptedClassName = implode('', array_map(ucfirst(...), $parts));
-            $className = Str::concat(config('eloquent-kompact.path.model'), $attemptedClassName);
+            $className = Path::namespaceConcat(config('eloquent-kompact.path.model'), $attemptedClassName);
 
             if (class_exists($className)) {
                 $prefixParts = array_slice($originalParts, 0, count($originalParts) - count($parts));
                 $prefix = implode('_', array_map(strtolower(...), $prefixParts));
 
                 if ($isPlural) {
-                    $parentModelName = LaravelStr::snake(class_basename(static::class));
+                    $parentModelName = Str::snake(class_basename(static::class));
                     $foreignKey = Creator::relation($prefix ? "{$prefix}_$parentModelName" : $parentModelName);
                     $table = (new $className)->getTable();
 
@@ -79,7 +78,7 @@ trait DynamicModelRelation
                         ));
                     }
                 } else {
-                    $foreignKey = Creator::relation(LaravelStr::snake($relationName));
+                    $foreignKey = Creator::relation(Str::snake($relationName));
                     $type = 'belongsTo';
                 }
 
@@ -106,61 +105,17 @@ trait DynamicModelRelation
         };
     }
 
-    public function __call($method, $parameters)
-    {
-        if ($config = static::resolveDynamicRelationConfig($method)) {
-            return $this->buildDynamicRelation($config);
-        }
-
-        return parent::__call($method, $parameters);
-    }
-
-    public function getRelationValue($key)
-    {
-        if ($this->relationLoaded($key)) {
-            return $this->relations[$key];
-        }
-
-        if (method_exists($this, $key)) {
-            return parent::getRelationValue($key);
-        }
-
-        if ($config = static::resolveDynamicRelationConfig($key)) {
-            $relation = $this->buildDynamicRelation($config);
-
-            return tap($relation->getResults(), function ($results) use ($key) {
-                $this->setRelation($key, $results);
-            });
-        }
-
-        return parent::getRelationValue($key);
-    }
-
-    protected static function hasDynamicRelation(string $relationName): bool
-    {
-        $isPlural = LaravelStr::plural($relationName) === $relationName;
-        $singularRelation = $isPlural ? LaravelStr::singular($relationName) : $relationName;
-
-        $parts = preg_split('/(?=[A-Z])/', $singularRelation, flags: PREG_SPLIT_NO_EMPTY);
-        while (count($parts) > 0) {
-            $attemptedClassName = implode('', array_map(ucfirst(...), $parts));
-            if (class_exists(Str::concat(config('eloquent-kompact.path.model'), $attemptedClassName))) {
-                return true;
-            }
-            array_shift($parts);
-        }
-
-        return false;
-    }
-
-    public function relationResolver($class, $key)
+    /**
+     * @throws ReflectionException
+     */
+    public function relationResolver($class, $key): ?Closure
     {
         if ($resolver = parent::relationResolver($class, $key)) {
             return $resolver;
         }
 
-        if (static::hasDynamicRelation($key)) {
-            return fn ($model) => $model->$key();
+        if ($config = static::resolveDynamicRelationConfig($key)) {
+            return fn ($model) => $model->buildDynamicRelation($config);
         }
 
         return null;

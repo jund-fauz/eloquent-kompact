@@ -4,7 +4,7 @@ namespace JundFauz\EloquentKompact\Model\Traits;
 
 use Illuminate\Database\Schema\Blueprint;
 use Illuminate\Support\Str as LaravelStr;
-use JundFauz\EloquentKompact\Helper\Str;
+use JundFauz\EloquentKompact\Helper\Path;
 
 trait StaticH
 {
@@ -17,7 +17,7 @@ trait StaticH
     {
         $tableName = $column->getTable();
         $modelName = LaravelStr::studly(LaravelStr::singular($tableName));
-        $modelClass = Str::concat(config('eloquent-kompact.path.model'), $modelName);
+        $modelClass = Path::namespaceConcat(config('eloquent-kompact.path.model'), $modelName);
 
         return class_exists($modelClass) ? $modelClass : null;
     }

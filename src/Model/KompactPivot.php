@@ -12,4 +12,9 @@ use Illuminate\Database\Eloquent\SoftDeletes;
 abstract class KompactPivot extends Pivot
 {
     use AdditionalQueries, DynamicModelRelation, RelationData, StaticH, SoftDeletes;
+
+    public static function flushKompactCache(): void
+    {
+        self::$dynamicRelationCache = [];
+    }
 }

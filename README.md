@@ -6,6 +6,38 @@ A set of automation & helper tools to improve development experience and conveni
 composer require jund-fauz/eloquent-kompact
 ```
 
+## Configuration
+
+The package works without publishing its config. To change the defaults, publish it:
+
+```bash
+php artisan vendor:publish --tag=eloquent-kompact-config
+```
+
+| Key | Default | Used for |
+|---|---|---|
+| `path.model` | `App\Database\Models` | Namespace where dynamic relations and `StaticH::getModel()` look for models |
+| `path.database_enum` | `App\Database\Enums` | Namespace where `AutoCast` looks for enums |
+| `fillable.excluded_columns_by_regex` | `id`, columns ending in `_at` | Columns left out of the dynamic fillable list |
+
+A namespace may be written with or without a trailing backslash (`App\Models` or `App\Models\`).
+
+> **Note:** your published config is merged with the package defaults on the **top-level keys only** (Laravel's `mergeConfigFrom()`). If you keep a top-level key such as `path`, keep **every** key inside it, because the package defaults for that key are not filled in. For example, a published config with only `'path' => ['model' => ...]` leaves `path.database_enum` empty.
+
+### Column cache
+
+Model columns are read from the database once and cached (file cache, plus memory for the running process). They feed the dynamic fillable list, auto casts, and dynamic relations.
+
+The cache is cleared automatically after `php artisan migrate` (including `migrate:fresh` and `migrate:rollback`). To clear it by hand, e.g. after changing the schema without migrations:
+
+```php
+\JundFauz\EloquentKompact\Column\ColumnListing::flush();
+\JundFauz\EloquentKompact\Model\KompactModel::flushKompactCache();
+\JundFauz\EloquentKompact\Model\KompactPivot::flushKompactCache();
+```
+
+Long-running processes (queue workers, Octane) keep their in-memory copy until they restart, so run `php artisan queue:restart` / `php artisan octane:reload` after migrating in production.
+
 ## RawQuery
 
 `JundFauz\EloquentKompact\Query\RawQuery` builds raw SQL expressions (for `selectRaw`, `whereRaw`, `orderByRaw`, etc.) with a fluent chain, compatible with MySQL & PostgreSQL.
@@ -15,11 +47,26 @@ Start with `create()`, chain the operations in reading order, then call `build()
 ```php
 use JundFauz\EloquentKompact\Query\RawQuery;
 
-$total = RawQuery::create('price')->zeroIfNull()->sum()->as('total_price')->build();
+RawQuery::create('price')->zeroIfNull()->sum()->as('total_price')->build();
 // SUM(COALESCE(price, 0)) AS total_price
-
-Order::selectRaw($total)->first();
 ```
+
+### Using it with Laravel
+
+`build()` is optional when passing a `RawQuery` to Laravel's raw methods (`selectRaw`, `whereRaw`, `orWhereRaw`, `havingRaw`, `groupByRaw`, `orderByRaw`, `DB::raw`). A `RawQuery` is `Stringable`, so Laravel turns it into SQL when compiling the query:
+
+```php
+Order::selectRaw(RawQuery::create('price')->zeroIfNull()->sum()->as('total_price'))->first();
+```
+
+A `RawQuery` is also a Laravel query `Expression`, so methods that normally take a column or table name (`select`, `orderBy`, `groupBy`, `DB::table`, `from`, …) use it as raw SQL instead of quoting it:
+
+```php
+DB::table(RawQuery::create('(SELECT customer, SUM(price) AS total FROM orders GROUP BY customer) AS t'))->get();
+// select * from (SELECT customer, SUM(price) AS total FROM orders GROUP BY customer) AS t
+```
+
+Call `build()` when you need the SQL as a real `string`, e.g. to store it, compare it, or pass it to a parameter typed as `string` from a file with `declare(strict_types=1)`.
 
 ### How the chain works
 
@@ -41,6 +88,16 @@ Methods with several operands (`plus`, `minus`, `multiply`, `divide`, `and`, `co
 ```php
 RawQuery::create('price')->plus('tax', 'shipping')->build(); // price + tax + shipping
 RawQuery::create()->plus('tax', 'shipping')->build();        // tax + shipping
+```
+
+Every chained method returns a **new** `RawQuery` and leaves the original unchanged, so one base can be reused:
+
+```php
+$price = RawQuery::create('price')->zeroIfNull();
+
+$price->sum()->build(); // SUM(COALESCE(price, 0))
+$price->max()->build(); // MAX(COALESCE(price, 0))
+$price->build();        // COALESCE(price, 0)
 ```
 
 ### Nesting
@@ -68,7 +125,7 @@ RawQuery::create('price')->plus('tax')->wrap()->multiply('qty')->build();
 
 ```php
 Order::whereRaw(
-    RawQuery::create('total')->compare(operator: Operator::MoreThanOrSame)->build(),
+    RawQuery::create('total')->compare(operator: Operator::MoreThanOrSame),
     [100_000]
 )->get();
 // WHERE total >= ?

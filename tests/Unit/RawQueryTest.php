@@ -87,6 +87,12 @@ class RawQueryTest extends TestCase
             RawQuery::create('code')->concat(RawQuery::create('id')->cast(RawQuery::CHAR)),
             "CONCAT_WS('', code, CAST(id AS CHAR))",
         ];
+        yield 'if with isZeroOrNull subject' => [
+            RawQuery::create('initial_weight')
+                ->isZeroOrNull('final_weight')
+                ->if(RawQuery::NULL, RawQuery::create('initial_weight')->minus('final_weight')),
+            'CASE WHEN initial_weight = 0 OR initial_weight IS NULL OR final_weight = 0 OR final_weight IS NULL THEN NULL ELSE initial_weight - final_weight END',
+        ];
         yield 'long chain' => [
             RawQuery::create('paid')->sum()->divide(RawQuery::create('total')->sum())->as('paid_ratio'),
             'SUM(paid) * 1.0 / NULLIF(SUM(total), 0) AS paid_ratio',
@@ -109,12 +115,23 @@ class RawQueryTest extends TestCase
     }
 
     #[Test]
-    public function it_changes_the_same_instance(): void
+    public function it_returns_a_new_instance_and_keeps_the_original(): void
     {
         $query = RawQuery::create('price');
-        $query->sum();
+        $sum = $query->sum();
 
-        $this->assertSame('SUM(price)', $query->build());
+        $this->assertNotSame($query, $sum);
+        $this->assertSame('price', $query->build());
+        $this->assertSame('SUM(price)', $sum->build());
+    }
+
+    #[Test]
+    public function it_branches_from_the_same_base(): void
+    {
+        $price = RawQuery::create('price')->zeroIfNull();
+
+        $this->assertSame('SUM(COALESCE(price, 0))', $price->sum()->build());
+        $this->assertSame('MAX(COALESCE(price, 0))', $price->max()->build());
     }
 
     #[Test]

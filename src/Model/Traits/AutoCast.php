@@ -4,6 +4,7 @@ namespace JundFauz\EloquentKompact\Model\Traits;
 
 use Illuminate\Support\Str as LaravelStr;
 use JundFauz\EloquentKompact\Column\Creator;
+use JundFauz\EloquentKompact\Helper\Path;
 use JundFauz\EloquentKompact\Helper\Str;
 
 trait AutoCast
@@ -42,10 +43,12 @@ trait AutoCast
 
     protected function resolveEnumCast(string $column): string
     {
-        $enum = Str::concat(
+        $enum = Path::namespaceConcat(
             config('eloquent-kompact.path.database_enum'),
-            LaravelStr::studly(LaravelStr::singular($this->getTable())),
-            LaravelStr::studly(Creator::getPlainColumnName($column))
+            Str::concat(
+                LaravelStr::studly(LaravelStr::singular($this->getTable())),
+                LaravelStr::studly(Creator::getPlainColumnName($column))
+            )
         );
 
         return class_exists($enum) ? $enum : 'string';

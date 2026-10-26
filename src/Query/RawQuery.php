@@ -2,6 +2,8 @@
 
 namespace JundFauz\EloquentKompact\Query;
 
+use Illuminate\Contracts\Database\Query\Expression;
+use Illuminate\Database\Grammar;
 use Illuminate\Support\Facades\DB;
 use JundFauz\EloquentKompact\Column\Convert;
 use JundFauz\EloquentKompact\Helper\Str;
@@ -11,7 +13,7 @@ use Stringable;
 /**
  * NOTE: Built to compatible with MySQL & PostgresSQL database
  */
-class RawQuery implements Stringable
+class RawQuery implements Stringable, Expression
 {
     public const string CHAR = 'CHAR';
     public const string NULL = 'NULL';
@@ -224,8 +226,9 @@ class RawQuery implements Stringable
 
     protected function set(string $expression): static
     {
-        $this->result = $expression;
-        return $this;
+        $newQuery = new static;
+        $newQuery->result = $expression;
+        return $newQuery;
     }
 
     /**
@@ -235,5 +238,10 @@ class RawQuery implements Stringable
     {
         $expressions = array_map(fn (string|self $expression) => (string) $expression, $expressions);
         return $this->result === '' ? $expressions : [$this->result, ...$expressions];
+    }
+
+    public function getValue(Grammar $grammar): string
+    {
+        return $this->build();
     }
 }

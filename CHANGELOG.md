@@ -1,0 +1,232 @@
+# Changelog
+
+All notable changes to this project will be documented in this file.
+
+The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
+and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
+
+## [Unreleased]
+
+## [0.15.0] - 2026-10-26
+
+### Changed
+
+- **BREAKING:** `RawQuery` is immutable. Every chained method returns a new instance and leaves the original unchanged, so code that relied on mutating an instance must use the returned value.
+
+  ```php
+  // 0.14
+  $query = RawQuery::create('price');
+  $query->sum();
+  $query->build(); // SUM(price)
+
+  // 0.15
+  $query = RawQuery::create('price');
+  $query->sum()->build(); // SUM(price)
+  $query->build();        // price
+  ```
+
+- **BREAKING:** `RawQuery` implements Laravel's query `Expression`, so methods that take a column or table name (`select`, `orderBy`, `groupBy`, `DB::table`, `from`, …) use it as raw SQL instead of quoting it. `DB::table(RawQuery::create('orders'))` now compiles to `from orders` instead of `from "orders"`, and a subquery no longer needs `DB::raw()`.
+- **BREAKING:** The default `path.database_enum` namespace is now `App\Database\Enums` (was `App\Database\Enum`).
+- **BREAKING:** Removed the `DynamicModelRelation::basicModelNamespace` constant.
+- Dynamic relations are resolved only through `relationResolver()`; the `getRelationValue()` and `__call()` overrides and `hasDynamicRelation()` were removed.
+- `Driver` is marked `@internal`.
+
+### Added
+
+- `php artisan vendor:publish --tag=eloquent-kompact-config` to publish the package config.
+- `KompactModel::flushKompactCache()` and `KompactPivot::flushKompactCache()` to clear the in-memory column, cast, fillable and relation caches.
+- Configuration and column cache sections in the README.
+
+### Fixed
+
+- The package config was never loaded, so `KompactModel` failed with `foreach() argument must be of type array|object, null given` unless the config was published. It is now merged with `mergeConfigFrom()`.
+- Model and enum namespaces were joined without a separator (e.g. `App\Database\ModelsUser`), so dynamic relations, enum auto casts and `StaticH::getModel()` never found their classes. Namespaces may now be written with or without a trailing backslash.
+- Dynamic relations bypassed `Model::preventLazyLoading()` and `Model::automaticallyEagerLoadRelationships()`.
+- The column cache was never cleared after the schema changed, so new columns were missing from the dynamic fillable list and auto casts. It is now cleared automatically after `php artisan migrate`.
+
+### Tests
+
+- Added tests for passing `RawQuery` instances to Laravel query builder methods, and for `RawQuery` immutability.
+
+## [0.14.0] - 2026-10-24
+
+### Changed
+
+- `RawQuery::flexibleCase()` now accepts `RawQuery` instances as conditions and values.
+
+### Tests
+
+- Added unit tests for using `RawQuery` builders inside `replaceIfNull()`, `if()`, `switchCase()`, `and()`, `concat()` and `flexibleCase()`.
+
+## [0.13.0] - 2026-10-24
+
+### Changed
+
+- **BREAKING:** `RawQuery` is now a fluent, chainable builder instead of a set of static string helpers.
+  Start an expression with `RawQuery::create($expression)`, chain methods, then call `build()` or cast it to a string.
+
+  ```php
+  // 0.12
+  RawQuery::sum(RawQuery::zeroIfNull('price'));
+
+  // 0.13
+  RawQuery::create('price')->zeroIfNull()->sum()->build();
+  ```
+
+  The affected methods no longer take the source column as their first argument and now return `static`:
+  `zeroIfNull()`, `isNull()`, `and()`, `wrap()`, `sum()`, `plus()`, `minus()`, `multiply()`, `divide()`, `if()`,
+  `switchCase()`, `concat()`, `cast()`, `as()`, `max()`, `dateAfter()`, `diff()` and `compare()`.
+- **BREAKING:** `RawQuery::nullIfZero()` was replaced by `replaceIfNull(string|RawQuery $replaceValue)`.
+- **BREAKING:** Model traits now type against `Illuminate\Database\Eloquent\Model`, and model / enum namespaces are read from the new `eloquent-kompact` config.
+- `Filterable` now builds its count expression with `RawQuery`.
+- `RawQuery::queryConcat()` and most builder methods accept `RawQuery` instances as operands.
+
+### Added
+
+- `RawQuery::create()`, `count()`, `build()` and `__toString()`.
+- `config/eloquent-kompact.php` with a regex-based list of columns excluded from dynamic fillable.
+- Global `is_not_null()` helper function.
+- Dependency on `jund-fauz/regex-builder`.
+- PHPUnit and Orchestra Testbench test setup with a `composer test` script, and unit tests for `RawQuery`.
+
+## [0.12.0] - 2026-10-24
+
+### Added
+
+- `KompactModel` base model, combining these traits (soft deletes can be toggled with a static property):
+  - `AdditionalQueries`: copy relations and scope queries based on other models.
+  - `AutoCast`: cast attributes automatically from column types and enums.
+  - `DynamicFillableColumnDefinition`: determine fillable columns dynamically, excluding them by regex.
+  - `DynamicModelRelation`: resolve relations dynamically from naming conventions.
+  - `Filterable`: count non-empty values for given columns, including relational ones.
+  - `RelationData`: read nested relation data.
+  - `StaticH`: static helpers such as the table name and resolving a model from a schema blueprint.
+- `KompactPivot` base pivot with the dynamic relation traits and soft deletes.
+
+## [0.11.0] - 2026-10-23
+
+### Added
+
+- `RawQuery::queryConcat()` to join several query expressions with spaces.
+
+## [0.10.0] - 2026-10-23
+
+### Added
+
+- `Operator` enum for SQL comparison operators.
+- `RawQuery::compare()` to build comparison expressions using `Operator`.
+
+### Removed
+
+- `RawQuery::sameWith()`; use `RawQuery::compare()` instead.
+
+### Fixed
+
+- `RawQuery::diff()` now takes two column names and uses the second one correctly in the MySQL and PostgreSQL expressions.
+
+## [0.9.0] - 2026-10-23
+
+### Added
+
+- `RawQuery::now()` returning the current timestamp expression.
+
+### Changed
+
+- `RawQuery::diff()` only supports the `DAY` interval for now.
+
+## [0.8.0] - 2026-10-23
+
+### Added
+
+- `RawQuery::diff()` to compute the interval difference between dates. It generates driver-specific SQL for MySQL, MariaDB and PostgreSQL; other drivers (e.g. SQLite, SQL Server) throw a `RuntimeException`.
+- Translated error message for unsupported drivers (`en`, `id`).
+
+## [0.7.0] - 2026-10-23
+
+### Added
+
+- `Interval` enum (`Second`, `Minute`, `Hour`, `Day`, `Month`, `Year`).
+
+### Changed
+
+- `RawQuery::dateAfter()` takes an interval count and an `Interval` type.
+
+## [0.6.0] - 2026-10-23
+
+### Added
+
+- `RawQuery::nullIfZero()`, `dateAfter()` and `string()` (escapes a value with `DB::escape`).
+
+### Changed
+
+- `RawQuery::if()` uses `CASE WHEN` for broader database support.
+- `RawQuery::concat()` uses `CONCAT_WS` with an empty separator.
+- `RawQuery::divide()` casts the first operand to float and wraps the divisors with `nullIfZero()`.
+- `RawQuery::sum()` accepts a single expression.
+
+## [0.5.0] - 2026-10-23
+
+### Added
+
+- `RawQuery::sum()` and `RawQuery::plus()`.
+
+### Changed
+
+- `RawQuery` methods use strict `string` type hints for column names and values.
+
+## [0.4.1] - 2026-10-23
+
+### Fixed
+
+- Wrong delimiter when concatenating relation strings in `RawQuery`.
+
+## [0.4.0] - 2026-10-23
+
+### Added
+
+- `Arr` helper with `pull()` and `isKeysDontExist()`.
+- `Str` helper with `concat()` and `ifTrue()`.
+
+## [0.3.0] - 2026-10-23
+
+### Added
+
+- `UuidCast` to cast attributes to and from `UuidInterface`.
+
+## [0.2.0] - 2026-10-23
+
+### Added
+
+- `Relation\Arrange` with `relation()` and `relations()` to build relation strings from model classes and column names.
+
+### Fixed
+
+- Typo in the package description.
+
+## [0.1.0] - 2026-10-23
+
+### Added
+
+- Initial release for PHP 8.3+ and Laravel 11, 12 and 13.
+- `EloquentKompactServiceProvider`, registered through Laravel package discovery.
+- Column utilities: `Checker`, `ColumnListing`, `Config`, `Convert`, `Creator` and `Payload`.
+- `RawQuery` static helpers for raw SQL expressions.
+- Translations for `en` and `id`.
+
+[Unreleased]: https://github.com/jund-fauz/eloquent-kompact/compare/v0.15.0...HEAD
+[0.15.0]: https://github.com/jund-fauz/eloquent-kompact/compare/v0.14.0...v0.15.0
+[0.14.0]: https://github.com/jund-fauz/eloquent-kompact/compare/v0.13.0...v0.14.0
+[0.13.0]: https://github.com/jund-fauz/eloquent-kompact/compare/v0.12.0...v0.13.0
+[0.12.0]: https://github.com/jund-fauz/eloquent-kompact/compare/v0.11.0...v0.12.0
+[0.11.0]: https://github.com/jund-fauz/eloquent-kompact/compare/v0.10.0...v0.11.0
+[0.10.0]: https://github.com/jund-fauz/eloquent-kompact/compare/v0.9.0...v0.10.0
+[0.9.0]: https://github.com/jund-fauz/eloquent-kompact/compare/v0.8.0...v0.9.0
+[0.8.0]: https://github.com/jund-fauz/eloquent-kompact/compare/v0.7.0...v0.8.0
+[0.7.0]: https://github.com/jund-fauz/eloquent-kompact/compare/v0.6.0...v0.7.0
+[0.6.0]: https://github.com/jund-fauz/eloquent-kompact/compare/v0.5.0...v0.6.0
+[0.5.0]: https://github.com/jund-fauz/eloquent-kompact/compare/v0.4.1...v0.5.0
+[0.4.1]: https://github.com/jund-fauz/eloquent-kompact/compare/v0.4.0...v0.4.1
+[0.4.0]: https://github.com/jund-fauz/eloquent-kompact/compare/v0.3.0...v0.4.0
+[0.3.0]: https://github.com/jund-fauz/eloquent-kompact/compare/v0.2.0...v0.3.0
+[0.2.0]: https://github.com/jund-fauz/eloquent-kompact/compare/v0.1.0...v0.2.0
+[0.1.0]: https://github.com/jund-fauz/eloquent-kompact/releases/tag/v0.1.0
