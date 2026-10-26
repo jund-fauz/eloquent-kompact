@@ -5,13 +5,13 @@ use JundFauz\RegexBuilder\Regex;
 
 return [
     'path' => [
-        'model' => Path::namespaceConcat('App', 'Database', 'Models'),
-        'database_enum' => Path::namespaceConcat('App', 'Database', 'Enums')
+        'model' => Path::namespaceConcat('App', 'Models'),
+        'database_enum' => Path::namespaceConcat('App', 'Enums')
     ],
     'fillable' => [
         'excluded_columns_by_regex' => [
-            Regex::create(Regex::exact('id')),
-            Regex::create(Regex::endsWith('_at'))
+            Regex::create('id')->exact(),
+            Regex::create()->endsWith('_at')
         ]
     ]
 ];

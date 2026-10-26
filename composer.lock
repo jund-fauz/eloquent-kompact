@@ -4,7 +4,7 @@
         "Read more about it at https://getcomposer.org/doc/01-basic-usage.md#installing-dependencies",
         "This file is @generated automatically"
     ],
-    "content-hash": "fcb9403b128434fd38d9318ccfb4df35",
+    "content-hash": "8f53f4151b0507daf82889ed4d702639",
     "packages": [
         {
             "name": "brick/math",
@@ -646,16 +646,16 @@
         },
         {
             "name": "guzzlehttp/guzzle",
-            "version": "8.3.0",
+            "version": "8.3.1",
             "source": {
                 "type": "git",
                 "url": "https://github.com/guzzle/guzzle.git",
-                "reference": "b920e5fcaf81d761b8fabe600ca90999beaefdb7"
+                "reference": "7d9b1f430bb65ac664e120af227bf9a795ad6333"
             },
             "dist": {
                 "type": "zip",
-                "url": "https://api.github.com/repos/guzzle/guzzle/zipball/b920e5fcaf81d761b8fabe600ca90999beaefdb7",
-                "reference": "b920e5fcaf81d761b8fabe600ca90999beaefdb7",
+                "url": "https://api.github.com/repos/guzzle/guzzle/zipball/7d9b1f430bb65ac664e120af227bf9a795ad6333",
+                "reference": "7d9b1f430bb65ac664e120af227bf9a795ad6333",
                 "shasum": ""
             },
             "require": {
@@ -752,7 +752,7 @@
             ],
             "support": {
                 "issues": "https://github.com/guzzle/guzzle/issues",
-                "source": "https://github.com/guzzle/guzzle/tree/8.3.0"
+                "source": "https://github.com/guzzle/guzzle/tree/8.3.1"
             },
             "funding": [
                 {
@@ -768,7 +768,7 @@
                     "type": "tidelift"
                 }
             ],
-            "time": "2026-10-18T13:38:43+00:00"
+            "time": "2026-10-25T21:35:34+00:00"
         },
         {
             "name": "guzzlehttp/promises",
@@ -1061,16 +1061,16 @@
         },
         {
             "name": "jund-fauz/regex-builder",
-            "version": "v1.1.0",
+            "version": "v2.0.0",
             "source": {
                 "type": "git",
                 "url": "https://github.com/jund-fauz/php-regex-builder.git",
-                "reference": "9c6629e6cccb42f7a379f3d128736966c8e9e7b1"
+                "reference": "d4f7f820a23c2e78b6085ac9245811293434ba1c"
             },
             "dist": {
                 "type": "zip",
-                "url": "https://api.github.com/repos/jund-fauz/php-regex-builder/zipball/9c6629e6cccb42f7a379f3d128736966c8e9e7b1",
-                "reference": "9c6629e6cccb42f7a379f3d128736966c8e9e7b1",
+                "url": "https://api.github.com/repos/jund-fauz/php-regex-builder/zipball/d4f7f820a23c2e78b6085ac9245811293434ba1c",
+                "reference": "d4f7f820a23c2e78b6085ac9245811293434ba1c",
                 "shasum": ""
             },
             "type": "library",
@@ -1092,9 +1092,9 @@
             "description": "Build regex expression without need to memorize any regex symbol",
             "support": {
                 "issues": "https://github.com/jund-fauz/php-regex-builder/issues",
-                "source": "https://github.com/jund-fauz/php-regex-builder/tree/v1.1.0"
+                "source": "https://github.com/jund-fauz/php-regex-builder/tree/v2.0.0"
             },
-            "time": "2026-10-23T04:27:39+00:00"
+            "time": "2026-10-26T06:30:56+00:00"
         },
         {
             "name": "laravel/framework",
@@ -2113,16 +2113,16 @@
         },
         {
             "name": "nesbot/carbon",
-            "version": "3.15.0",
+            "version": "3.15.1",
             "source": {
                 "type": "git",
                 "url": "https://github.com/CarbonPHP/carbon.git",
-                "reference": "217d38553209bdb44e01590d9e9a2e4df8354cce"
+                "reference": "ce0e5636fae7d1e99856eb70cae4c719a284aa08"
             },
             "dist": {
                 "type": "zip",
-                "url": "https://api.github.com/repos/CarbonPHP/carbon/zipball/217d38553209bdb44e01590d9e9a2e4df8354cce",
-                "reference": "217d38553209bdb44e01590d9e9a2e4df8354cce",
+                "url": "https://api.github.com/repos/CarbonPHP/carbon/zipball/ce0e5636fae7d1e99856eb70cae4c719a284aa08",
+                "reference": "ce0e5636fae7d1e99856eb70cae4c719a284aa08",
                 "shasum": ""
             },
             "require": {
@@ -2215,7 +2215,7 @@
                     "type": "tidelift"
                 }
             ],
-            "time": "2026-10-18T18:27:53+00:00"
+            "time": "2026-10-25T14:32:48+00:00"
         },
         {
             "name": "nette/schema",
@@ -5803,16 +5803,16 @@
         },
         {
             "name": "vlucas/phpdotenv",
-            "version": "v5.7.0",
+            "version": "v5.8.0",
             "source": {
                 "type": "git",
                 "url": "https://github.com/phpdotenv/phpdotenv.git",
-                "reference": "301c07936b16d88628b126b01d082ba153cf4c40"
+                "reference": "96149103e62ac67e915f6d2ef59b72dee2e011e0"
             },
             "dist": {
                 "type": "zip",
-                "url": "https://api.github.com/repos/phpdotenv/phpdotenv/zipball/301c07936b16d88628b126b01d082ba153cf4c40",
-                "reference": "301c07936b16d88628b126b01d082ba153cf4c40",
+                "url": "https://api.github.com/repos/phpdotenv/phpdotenv/zipball/96149103e62ac67e915f6d2ef59b72dee2e011e0",
+                "reference": "96149103e62ac67e915f6d2ef59b72dee2e011e0",
                 "shasum": ""
             },
             "require": {
@@ -5839,7 +5839,7 @@
                     "forward-command": false
                 },
                 "branch-alias": {
-                    "dev-master": "5.6-dev"
+                    "dev-master": "5.8-dev"
                 }
             },
             "autoload": {
@@ -5870,8 +5870,8 @@
                 "environment"
             ],
             "support": {
-                "issues": "https://github.com/vlucas/phpdotenv/issues",
-                "source": "https://github.com/vlucas/phpdotenv/tree/v5.7.0"
+                "issues": "https://github.com/phpdotenv/phpdotenv/issues",
+                "source": "https://github.com/phpdotenv/phpdotenv/tree/v5.8.0"
             },
             "funding": [
                 {
@@ -5883,7 +5883,7 @@
                     "type": "tidelift"
                 }
             ],
-            "time": "2026-08-24T18:07:49+00:00"
+            "time": "2026-10-25T16:26:19+00:00"
         },
         {
             "name": "voku/portable-ascii",
