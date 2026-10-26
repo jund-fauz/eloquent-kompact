@@ -1,7 +1,7 @@
 <?php
 
 use JundFauz\EloquentKompact\Helper\Path;
-use JundFauz\RegexBuilder\Regex;
+use JundFauz\EloquentKompact\Regex\Regex;
 
 return [
     'path' => [

@@ -21,4 +21,9 @@ class Arr
     {
         return array_reduce($keys, fn(bool $acc, string $key) => $acc && ! array_key_exists($key, $array), true);
     }
+
+    public static function arrange(array $array): string
+    {
+        return join('', $array);
+    }
 }
