@@ -15,4 +15,13 @@ trait RelationData
 
         return $columnName ? $result?->{$columnName} : $result;
     }
+
+    public function getDatasFromRelation(array $columnNames, ...$relationClasses): array
+    {
+        $result = [];
+        foreach ($columnNames as $columnName) {
+            $result[] = $this->getDataFromRelation($columnName, ...$relationClasses);
+        }
+        return $result;
+    }
 }
