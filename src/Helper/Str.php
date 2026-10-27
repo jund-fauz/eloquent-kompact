@@ -2,7 +2,7 @@
 
 namespace JundFauz\EloquentKompact\Helper;
 
-class Str
+class Str extends \Illuminate\Support\Str
 {
     public static function concat(string ...$strings): string
     {
