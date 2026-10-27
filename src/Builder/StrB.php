@@ -17,14 +17,25 @@ final class StrB extends Builder
     public function __call(string $name, array $arguments)
     {
         if (in_array($name, ['trim', 'ltrim', 'rtrim'])) {
-            return $this->set($name(...$arguments));
+            $parameters = [$this->result];
+            if (isset($arguments[0])) {
+                $parameters[] = $arguments[0];
+            }
+            return $this->set($name(...$parameters));
         }
 
         self::methodNotFound($name);
     }
 
-    public function replace(array|string $search, array|string $replace): self
+    /**
+     * @param array<string>|string $search
+     * @param array<string>|string $replace
+     * @param bool $useRegex
+     * @return self
+     */
+    public function replace(array|string $search, array|string $replace, bool $useRegex = false): self
     {
-        return $this->set(str_replace($search, $replace, $this->result));
+        $method = $useRegex ? 'preg_replace' : 'str_replace';
+        return $this->set($method($search, $replace, $this->result));
     }
 }
