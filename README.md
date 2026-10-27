@@ -6,6 +6,12 @@ A set of automation & helper tools to improve development experience and conveni
 composer require jund-fauz/eloquent-kompact
 ```
 
+## Versioning
+
+This package follows [Semantic Versioning](https://semver.org). It is still in initial development (`0.x`): a minor release (`0.x.0`) may contain breaking changes, while a patch release (`0.x.y`) never does. Composer's `^0.x` constraint only allows patch updates, so require it as e.g. `^0.20`. The API is considered stable from `1.0.0`.
+
+Classes and methods marked `@internal` or `@experimental` are not covered by this promise and may change in any release.
+
 ## Configuration
 
 The package works without publishing its config. To change the defaults, publish it:
@@ -16,8 +22,8 @@ php artisan vendor:publish --tag=eloquent-kompact-config
 
 | Key | Default | Used for |
 |---|---|---|
-| `path.model` | `App\Database\Models` | Namespace where dynamic relations and `StaticH::getModel()` look for models |
-| `path.database_enum` | `App\Database\Enums` | Namespace where `AutoCast` looks for enums |
+| `path.model` | `App\Models` | Namespace where dynamic relations and `StaticH::getModel()` look for models |
+| `path.database_enum` | `App\Enums` | Namespace where `AutoCast` looks for enums |
 | `fillable.excluded_columns_by_regex` | `id`, columns ending in `_at` | Columns left out of the dynamic fillable list |
 
 A namespace may be written with or without a trailing backslash (`App\Models` or `App\Models\`).

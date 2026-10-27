@@ -7,6 +7,22 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [0.20.1] - 2026-10-27
+
+### Changed
+
+- `RelationData::getDataFromRelation()` and `getDatasFromRelation()` type the relation classes as `string`.
+- `RelationData::getDatasFromRelation()` is marked `@experimental` and may change in a minor release.
+
+### Added
+
+- Versioning and backward compatibility policy in the README.
+- GitHub Actions workflow that runs the tests on PHP 8.3 to 8.5 against Laravel 11, 12 and 13, on every push and every week, to catch clashes with new Laravel releases early.
+
+### Fixed
+
+- The README listed `App\Database\Models` and `App\Database\Enums` as the default namespaces; they are `App\Models` and `App\Enums` since `0.16.0`.
+
 ## [0.20.0] - 2026-10-27
 
 ### Changed
@@ -290,7 +306,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - `RawQuery` static helpers for raw SQL expressions.
 - Translations for `en` and `id`.
 
-[Unreleased]: https://github.com/jund-fauz/eloquent-kompact/compare/v0.20.0...HEAD
+[Unreleased]: https://github.com/jund-fauz/eloquent-kompact/compare/v0.20.1...HEAD
+[0.20.1]: https://github.com/jund-fauz/eloquent-kompact/compare/v0.20.0...v0.20.1
 [0.20.0]: https://github.com/jund-fauz/eloquent-kompact/compare/v0.19.1...v0.20.0
 [0.19.1]: https://github.com/jund-fauz/eloquent-kompact/compare/v0.19.0...v0.19.1
 [0.19.0]: https://github.com/jund-fauz/eloquent-kompact/compare/v0.18.0...v0.19.0
