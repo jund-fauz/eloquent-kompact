@@ -4,9 +4,9 @@ namespace JundFauz\EloquentKompact\Regex;
 
 use JundFauz\EloquentKompact\Helper\Arr;
 use JundFauz\EloquentKompact\Helper\Str;
-use Stringable;
+use JundFauz\EloquentKompact\Internal\Concerns\Builder;
 
-class Regex implements Stringable
+class Regex extends Builder
 {
     public const string DELIMITER = '/';
 
@@ -57,18 +57,6 @@ class Regex implements Stringable
     public function build(): string
     {
         return Str::concat(static::DELIMITER, $this->result, static::DELIMITER);
-    }
-
-    public function __toString(): string
-    {
-        return $this->build();
-    }
-
-    protected function set(string $pattern): static
-    {
-        $newRegex = new static;
-        $newRegex->result = $pattern;
-        return $newRegex;
     }
 
     /**

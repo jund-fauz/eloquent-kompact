@@ -7,23 +7,20 @@ use Illuminate\Database\Grammar;
 use Illuminate\Support\Facades\DB;
 use JundFauz\EloquentKompact\Column\Convert;
 use JundFauz\EloquentKompact\Helper\Str;
+use JundFauz\EloquentKompact\Internal\Concerns\Builder;
 use JundFauz\EloquentKompact\Internal\Database\Driver;
 use Stringable;
 
 /**
  * NOTE: Built to compatible with MySQL & PostgreSQL database
+ * @method static self create(string|self $expression = '')
  */
-class RawQuery implements Stringable, Expression
+class RawQuery extends Builder implements Expression
 {
     public const string CHAR = 'CHAR';
     public const string NULL = 'NULL';
 
-    protected string $result = '';
-
-    public static function create(string|self $expression = ''): static
-    {
-        return (new static)->set((string) $expression);
-    }
+    protected static ?string $initiationFunction = 'create';
 
     public function zeroIfNull(): static
     {
@@ -212,23 +209,6 @@ class RawQuery implements Stringable, Expression
     public static function queryConcat(string|self ...$expressions): string
     {
         return join(' ', array_map(fn (string|self $expression) => (string) $expression, $expressions));
-    }
-
-    public function build(): string
-    {
-        return $this->result;
-    }
-
-    public function __toString(): string
-    {
-        return $this->build();
-    }
-
-    protected function set(string $expression): static
-    {
-        $newQuery = new static;
-        $newQuery->result = $expression;
-        return $newQuery;
     }
 
     /**
