@@ -7,6 +7,22 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [0.21.0] - 2026-10-27
+
+### Added
+
+- `Builder\StrB`, an immutable string builder started with `StrB::initiate()`, with `replace()` (plain or regex), `trim()`, `ltrim()` and `rtrim()`.
+- `Path::fullPathOnApp()` to turn a namespace-like path into an absolute path inside the app directory.
+
+  ```php
+  Path::fullPathOnApp('App/Database/Models/'); // {app_path}\Database/Models
+  ```
+
+### Changed
+
+- `RawQuery` and `Regex` share an internal `Builder` base class; `RawQuery::create()`, `build()` and string casting behave as before.
+- `Checker` and `Creator` throw their `BadMethodCallException` through a shared internal helper. No behavior change.
+
 ## [0.20.3] - 2026-10-27
 
 ### Changed
@@ -318,7 +334,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - `RawQuery` static helpers for raw SQL expressions.
 - Translations for `en` and `id`.
 
-[Unreleased]: https://github.com/jund-fauz/eloquent-kompact/compare/v0.20.3...HEAD
+[Unreleased]: https://github.com/jund-fauz/eloquent-kompact/compare/v0.21.0...HEAD
+[0.21.0]: https://github.com/jund-fauz/eloquent-kompact/compare/v0.20.3...v0.21.0
 [0.20.3]: https://github.com/jund-fauz/eloquent-kompact/compare/v0.20.2...v0.20.3
 [0.20.2]: https://github.com/jund-fauz/eloquent-kompact/compare/v0.20.1...v0.20.2
 [0.20.1]: https://github.com/jund-fauz/eloquent-kompact/compare/v0.20.0...v0.20.1
