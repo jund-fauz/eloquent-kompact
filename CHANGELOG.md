@@ -7,6 +7,50 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [0.18.0] - 2026-10-27
+
+### Added
+
+- Global `is_all_null()` helper function.
+- Dependency on `symfony/polyfill-php84`, so `is_all_null()` can use `array_all()` on PHP 8.3.
+
+## [0.17.0] - 2026-10-26
+
+### Changed
+
+- **BREAKING:** Removed the dependency on `jund-fauz/regex-builder`. The package now ships its own `JundFauz\EloquentKompact\Regex\Regex`. A published `config/eloquent-kompact.php` that imports `JundFauz\RegexBuilder\Regex` must import `JundFauz\EloquentKompact\Regex\Regex` instead, or the app must require `jund-fauz/regex-builder` itself.
+
+  ```php
+  // 0.16
+  use JundFauz\RegexBuilder\Regex;
+
+  // 0.17
+  use JundFauz\EloquentKompact\Regex\Regex;
+  ```
+
+### Added
+
+- `Regex` fluent pattern builder with `create()`, `exact()`, `endsWith()`, `exceptWord()`, `contain()`, `range()` and `build()`.
+- `Quantifier` enum (`zeroOrMore`, `oneOrMore`, `zeroOrOne`).
+- `Arr::arrange()` to join array elements into a string.
+
+## [0.16.0] - 2026-10-26
+
+### Changed
+
+- **BREAKING:** The default `path.model` namespace is now `App\Models` (was `App\Database\Models`), and the default `path.database_enum` namespace is now `App\Enums` (was `App\Database\Enums`). Apps that keep their models or enums in the old namespaces must publish the config and set these paths.
+- **BREAKING:** Requires `jund-fauz/regex-builder` `~2.0` (was `^1.1`). A published config must use the 2.x syntax:
+
+  ```php
+  // 0.15
+  Regex::create(Regex::exact('id'));
+  Regex::create(Regex::endsWith('_at'));
+
+  // 0.16
+  Regex::create('id')->exact();
+  Regex::create()->endsWith('_at');
+  ```
+
 ## [0.15.0] - 2026-10-26
 
 ### Changed
@@ -213,7 +257,10 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - `RawQuery` static helpers for raw SQL expressions.
 - Translations for `en` and `id`.
 
-[Unreleased]: https://github.com/jund-fauz/eloquent-kompact/compare/v0.15.0...HEAD
+[Unreleased]: https://github.com/jund-fauz/eloquent-kompact/compare/v0.18.0...HEAD
+[0.18.0]: https://github.com/jund-fauz/eloquent-kompact/compare/v0.17.0...v0.18.0
+[0.17.0]: https://github.com/jund-fauz/eloquent-kompact/compare/v0.16.0...v0.17.0
+[0.16.0]: https://github.com/jund-fauz/eloquent-kompact/compare/v0.15.0...v0.16.0
 [0.15.0]: https://github.com/jund-fauz/eloquent-kompact/compare/v0.14.0...v0.15.0
 [0.14.0]: https://github.com/jund-fauz/eloquent-kompact/compare/v0.13.0...v0.14.0
 [0.13.0]: https://github.com/jund-fauz/eloquent-kompact/compare/v0.12.0...v0.13.0
