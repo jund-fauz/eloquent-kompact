@@ -1,6 +1,6 @@
 <?php
 
-namespace JundFauz\EloquentKompact\Query\Driver;
+namespace JundFauz\EloquentKompact\Internal\Database;
 
 use Illuminate\Support\Facades\DB;
 use RuntimeException;

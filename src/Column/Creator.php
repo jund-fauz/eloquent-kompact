@@ -125,8 +125,8 @@ final class Creator
             // ToBeReplaced itu zero-width, jadi sisipkan penanda uji sekali
             // untuk tahu di sisi mana dia menaruh token.
             return Str::startsWith(preg_replace(self::ToBeReplaced, 'X', 'a'), 'X')
-                ? "/{$anchor}({$alternation})/"  // skema prefix  → /^(enum_|array_|…)/
-                : "/({$alternation}){$anchor}/"; // skema suffix  → /(_enum|_array|…)$/
+                ? "/$anchor($alternation)/"  // skema prefix  → /^(enum_|array_|…)/
+                : "/($alternation)$anchor/"; // skema suffix  → /(_enum|_array|…)$/
         })();
     }
 

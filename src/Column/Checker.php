@@ -2,6 +2,7 @@
 
 namespace JundFauz\EloquentKompact\Column;
 
+use BadMethodCallException;
 use Illuminate\Support\Str;
 
 /**
@@ -29,7 +30,7 @@ final class Checker
             }
         }
 
-        throw new \BadMethodCallException(__('eloquent-kompact::messages.method_not_found', [
+        throw new BadMethodCallException(__('eloquent-kompact::messages.method_not_found', [
             'class' => self::class,
             'method' => $method,
         ]));

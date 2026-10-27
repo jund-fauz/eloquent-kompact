@@ -7,11 +7,11 @@ use Illuminate\Database\Grammar;
 use Illuminate\Support\Facades\DB;
 use JundFauz\EloquentKompact\Column\Convert;
 use JundFauz\EloquentKompact\Helper\Str;
-use JundFauz\EloquentKompact\Query\Driver\Driver;
+use JundFauz\EloquentKompact\Internal\Database\Driver;
 use Stringable;
 
 /**
- * NOTE: Built to compatible with MySQL & PostgresSQL database
+ * NOTE: Built to compatible with MySQL & PostgreSQL database
  */
 class RawQuery implements Stringable, Expression
 {
@@ -31,7 +31,7 @@ class RawQuery implements Stringable, Expression
     }
 
     /**
-     * NOTE: On PostgreSQL, the replace value must match the column type, e.g. NULLIF(integer_column, '') fails because '' is not a valid integer
+     * NOTE: On PostgreSQL, the replacement value must match the column type, e.g. NULLIF(integer_column, '') fails because '' is not a valid integer
      */
     public function replaceIfNull(string|self $replaceValue): static
     {
@@ -179,7 +179,7 @@ class RawQuery implements Stringable, Expression
 
     public function dateAfter(int $count, Interval $type = Interval::Day): static
     {
-        return $this->set("$this->result + INTERVAL '$count' {$type->value}");
+        return $this->set("$this->result + INTERVAL '$count' $type->value");
     }
 
     /**
@@ -189,8 +189,8 @@ class RawQuery implements Stringable, Expression
     public function diff(string|self $secondColumnName, Interval $interval = Interval::Day): static
     {
         return $this->set(Driver::matcher(
-            mysql: "TIMESTAMPDIFF({$interval->value}, $secondColumnName, $this->result)",
-            pgsql: "EXTRACT({$interval->value} FROM ($this->result - $secondColumnName))"
+            mysql: "TIMESTAMPDIFF($interval->value, $secondColumnName, $this->result)",
+            pgsql: "EXTRACT($interval->value FROM ($this->result - $secondColumnName))"
         ));
     }
 
@@ -201,7 +201,7 @@ class RawQuery implements Stringable, Expression
 
     public function compare(string|self $secondColumnName = '?', Operator $operator = Operator::SameWith): static
     {
-        return $this->set("$this->result {$operator->value} $secondColumnName");
+        return $this->set("$this->result $operator->value $secondColumnName");
     }
 
     public function count(): static

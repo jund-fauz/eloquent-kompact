@@ -2,7 +2,7 @@
 
 namespace JundFauz\EloquentKompact\Tests\Unit;
 
-use JundFauz\EloquentKompact\Query\Driver\Driver;
+use JundFauz\EloquentKompact\Internal\Database\Driver;
 use JundFauz\EloquentKompact\Query\Interval;
 use JundFauz\EloquentKompact\Query\Operator;
 use JundFauz\EloquentKompact\Query\RawQuery;
