@@ -6,7 +6,7 @@ use JundFauz\EloquentKompact\Column\Convert;
 
 trait RelationData
 {
-    public function getDataFromRelation(string $columnName = '', ...$relationClasses)
+    public function getDataFromRelation(string $columnName = '', string ...$relationClasses)
     {
         $result = $this;
         foreach ($relationClasses as $relationClass) {
@@ -16,7 +16,13 @@ trait RelationData
         return $columnName ? $result?->{$columnName} : $result;
     }
 
-    public function getDatasFromRelation(array $columnNames, ...$relationClasses): array
+    /**
+     * @experimental This method may change in a minor release.
+     * @param array $columnNames
+     * @param string ...$relationClasses
+     * @return array
+     */
+    public function getDatasFromRelation(array $columnNames, string ...$relationClasses): array
     {
         $result = [];
         foreach ($columnNames as $columnName) {
