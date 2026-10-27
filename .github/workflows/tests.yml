@@ -40,6 +40,11 @@ jobs:
           php-version: ${{ matrix.php }}
           coverage: none
 
+      # Laravel 11 is out of security support, so Composer refuses to install it by default
+      - name: Allow Laravel versions with security advisories
+        if: matrix.laravel == '11.*'
+        run: composer config policy.advisories.block false
+
       - name: Install dependencies
         run: |
           composer require "laravel/framework:${{ matrix.laravel }}" "orchestra/testbench:${{ matrix.testbench }}" "phpunit/phpunit:^10.5|^11.0|^12.0|^13.0" --dev --no-update --no-interaction
