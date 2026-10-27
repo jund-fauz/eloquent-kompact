@@ -4,6 +4,7 @@ namespace JundFauz\EloquentKompact\Column;
 
 use BadMethodCallException;
 use Illuminate\Support\Str;
+use JundFauz\EloquentKompact\Internal\Error\ErrorThrow;
 
 /**
  * @method static bool isEnum(mixed $column)
@@ -18,6 +19,8 @@ use Illuminate\Support\Str;
  */
 final class Checker
 {
+    use ErrorThrow;
+
     public static function __callStatic(string $method, array $parameters)
     {
         if (Str::startsWith($method, 'is')) {
@@ -30,9 +33,6 @@ final class Checker
             }
         }
 
-        throw new BadMethodCallException(__('eloquent-kompact::messages.method_not_found', [
-            'class' => self::class,
-            'method' => $method,
-        ]));
+        self::methodNotFound($method);
     }
 }

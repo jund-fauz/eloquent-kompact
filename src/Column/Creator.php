@@ -4,6 +4,7 @@ namespace JundFauz\EloquentKompact\Column;
 
 use BadMethodCallException;
 use Illuminate\Support\Str;
+use JundFauz\EloquentKompact\Internal\Error\ErrorThrow;
 use ReflectionClass;
 use ReflectionClassConstant;
 
@@ -21,6 +22,8 @@ use ReflectionClassConstant;
  */
 final class Creator
 {
+    use ErrorThrow;
+
     // Satu-satunya tempat skema penamaan kolom ditentukan.
     // Ganti ke '/^/' untuk beralih ke skema prefix; penyisipan, pencocokan,
     // dan pelucutan token semuanya ikut menyesuaikan sendiri.
@@ -70,10 +73,7 @@ final class Creator
         $constant = self::class.'::'.Str::pascal($method);
 
         if (! defined($constant) || ! in_array(constant($constant), self::tokens(), true)) {
-            throw new BadMethodCallException(__('eloquent-kompact::messages.method_not_found', [
-                'class' => self::class,
-                'method' => $method,
-            ]));
+            self::methodNotFound($method);
         }
 
         return preg_replace(self::ToBeReplaced, constant($constant), $parameters[0]);
