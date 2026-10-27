@@ -7,6 +7,12 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [0.20.3] - 2026-10-27
+
+### Changed
+
+- `AutoCast` and `StaticH` no longer import `Illuminate\Support\Str` under the `LaravelStr` alias; `AutoCast` uses the package `Str` helper instead. No behavior change.
+
 ## [0.20.2] - 2026-10-27
 
 ### Changed
@@ -312,7 +318,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - `RawQuery` static helpers for raw SQL expressions.
 - Translations for `en` and `id`.
 
-[Unreleased]: https://github.com/jund-fauz/eloquent-kompact/compare/v0.20.2...HEAD
+[Unreleased]: https://github.com/jund-fauz/eloquent-kompact/compare/v0.20.3...HEAD
+[0.20.3]: https://github.com/jund-fauz/eloquent-kompact/compare/v0.20.2...v0.20.3
 [0.20.2]: https://github.com/jund-fauz/eloquent-kompact/compare/v0.20.1...v0.20.2
 [0.20.1]: https://github.com/jund-fauz/eloquent-kompact/compare/v0.20.0...v0.20.1
 [0.20.0]: https://github.com/jund-fauz/eloquent-kompact/compare/v0.19.1...v0.20.0
