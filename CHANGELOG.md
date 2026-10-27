@@ -7,6 +7,27 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [0.20.0] - 2026-10-27
+
+### Changed
+
+- **BREAKING:** `Helper\Arr::pull()` with several keys was renamed to `pullMany()`. `Arr::pull()` is now Laravel's `pull($array, $key, $default = null)`, so an old call with several keys does not fail but treats the second key as the default value and returns only the first key's value.
+
+  ```php
+  // 0.19
+  Arr::pull($data, 'name', 'email');
+
+  // 0.20
+  Arr::pullMany($data, 'name', 'email');
+  ```
+
+- `Helper\Arr` extends `Illuminate\Support\Arr` and `Helper\Str` extends `Illuminate\Support\Str`, so every Laravel `Arr` / `Str` method is available on the package helpers.
+- `Arrange::relation()` and `Arrange::relations()` accept relation classes as nested arrays, and pass through relation names that are not class names as-is.
+
+  ```php
+  Arrange::relations('', [User::class, 'posts']); // users.posts
+  ```
+
 ## [0.19.1] - 2026-10-27
 
 ### Fixed
@@ -269,7 +290,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - `RawQuery` static helpers for raw SQL expressions.
 - Translations for `en` and `id`.
 
-[Unreleased]: https://github.com/jund-fauz/eloquent-kompact/compare/v0.19.1...HEAD
+[Unreleased]: https://github.com/jund-fauz/eloquent-kompact/compare/v0.20.0...HEAD
+[0.20.0]: https://github.com/jund-fauz/eloquent-kompact/compare/v0.19.1...v0.20.0
 [0.19.1]: https://github.com/jund-fauz/eloquent-kompact/compare/v0.19.0...v0.19.1
 [0.19.0]: https://github.com/jund-fauz/eloquent-kompact/compare/v0.18.0...v0.19.0
 [0.18.0]: https://github.com/jund-fauz/eloquent-kompact/compare/v0.17.0...v0.18.0
