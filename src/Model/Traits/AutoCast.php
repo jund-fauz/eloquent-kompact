@@ -2,7 +2,6 @@
 
 namespace JundFauz\EloquentKompact\Model\Traits;
 
-use Illuminate\Support\Str as LaravelStr;
 use JundFauz\EloquentKompact\Column\Creator;
 use JundFauz\EloquentKompact\Helper\Path;
 use JundFauz\EloquentKompact\Helper\Str;
@@ -46,8 +45,8 @@ trait AutoCast
         $enum = Path::namespaceConcat(
             config('eloquent-kompact.path.database_enum'),
             Str::concat(
-                LaravelStr::studly(LaravelStr::singular($this->getTable())),
-                LaravelStr::studly(Creator::getPlainColumnName($column))
+                Str::studly(Str::singular($this->getTable())),
+                Str::studly(Creator::getPlainColumnName($column))
             )
         );
 
