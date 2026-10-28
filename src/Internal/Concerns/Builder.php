@@ -5,6 +5,9 @@ namespace JundFauz\EloquentKompact\Internal\Concerns;
 use JundFauz\EloquentKompact\Internal\Error\ErrorThrow;
 use Stringable;
 
+/**
+ * @internal
+ */
 class Builder implements Stringable
 {
     use ErrorThrow;
