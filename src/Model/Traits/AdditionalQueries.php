@@ -8,8 +8,6 @@ use Illuminate\Database\Eloquent\Model;
 
 trait AdditionalQueries
 {
-
-
     public function copyRelationsTo(Model $target, array $relations): void
     {
         foreach ($relations as $relationName => $columns) {
@@ -27,7 +25,7 @@ trait AdditionalQueries
     }
 
     #[Scope]
-    protected function wheres(Builder $query, Model $other, ...$columns): Builder
+    protected function wheres(Builder $query, Model $other, mixed ...$columns): Builder
     {
         foreach ($columns as $column) {
             $query->where($column, $other->{$column});
@@ -39,5 +37,43 @@ trait AdditionalQueries
     public function getOr(string ...$columnNames)
     {
         return array_reduce($columnNames, fn ($acc, $column) => $acc ?? $this?->{$column});
+    }
+
+    /**
+     * Checks whether the model attributes match every given condition, using strict comparison
+     *
+     * An array value matches if the attribute equals one of its items, unless the attribute itself is an array
+     *
+     * Example: $user->match(['role' => ['admin', 'editor'], 'is_active' => true])
+     *
+     * @param array<string, array|mixed> $conditions Column name => expected value, or a list of allowed values
+     * @return bool False if no condition is given
+     */
+    public function match(array $conditions): bool
+    {
+        if (! count($conditions)) {
+            return false;
+        }
+
+        return array_all($conditions, fn ($value, $column) => is_array($value) && is_not_array($this->{$column})
+            ? in_array($this->{$column}, $value, true)
+            : $this->sameWith($column, $value)
+        );
+    }
+
+    /**
+     * Shorthand for: $this->{$columnName} === $value
+     *
+     * The attribute is compared after casting, so the value must have the cast type,
+     * e.g. an enum case for an enum column. Object attributes such as dates are compared by identity,
+     * so they never match another instance with the same value
+     *
+     * @param string $columnName
+     * @param mixed $value
+     * @return bool
+     */
+    public function sameWith(string $columnName, mixed $value): bool
+    {
+        return $this->{$columnName} === $value;
     }
 }

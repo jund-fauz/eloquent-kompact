@@ -16,3 +16,10 @@ if (! function_exists('is_all_null')) {
         return array_all($values, fn (mixed $value) => is_null($value));
     }
 }
+
+if (! function_exists('is_not_array')) {
+    function is_not_array($value): bool
+    {
+        return ! is_array($value);
+    }
+}
