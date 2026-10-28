@@ -7,6 +7,19 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [0.24.0] - 2026-10-28
+
+### Added
+
+- `AdditionalQueries::match()` to check whether a model's attributes match every given condition, using strict comparison. An array value matches if the attribute equals one of its items, unless the attribute itself is an array.
+
+  ```php
+  $user->match(['role' => ['admin', 'editor'], 'is_active' => true]);
+  ```
+
+- `AdditionalQueries::sameWith()`, a shorthand for `$model->{$column} === $value`. The attribute is compared after casting, so the value must have the cast type.
+- Global `is_not_array()` helper function.
+
 ## [0.23.0] - 2026-10-28
 
 ### Added
@@ -373,7 +386,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - `RawQuery` static helpers for raw SQL expressions.
 - Translations for `en` and `id`.
 
-[Unreleased]: https://github.com/jund-fauz/eloquent-kompact/compare/v0.23.0...HEAD
+[Unreleased]: https://github.com/jund-fauz/eloquent-kompact/compare/v0.24.0...HEAD
+[0.24.0]: https://github.com/jund-fauz/eloquent-kompact/compare/v0.23.0...v0.24.0
 [0.23.0]: https://github.com/jund-fauz/eloquent-kompact/compare/v0.22.0...v0.23.0
 [0.22.0]: https://github.com/jund-fauz/eloquent-kompact/compare/v0.21.0...v0.22.0
 [0.21.0]: https://github.com/jund-fauz/eloquent-kompact/compare/v0.20.3...v0.21.0
