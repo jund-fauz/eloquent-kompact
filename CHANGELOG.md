@@ -7,6 +7,26 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [0.25.0] - 2026-10-28
+
+### Added
+
+- `Builder\BoolB`, an immutable boolean builder started with `BoolB::create()`, with `and()`, `or()` and `set()`. The value is read from the readonly `result` property.
+
+  ```php
+  BoolB::create($user->is_active)->and($user->is_verified)->or($user->is_admin)->result;
+  ```
+
+- `same_with()` helper function in the `JundFauz\EloquentKompact\Helper` namespace, a strict `===` comparison. It is not global, so import it with `use function JundFauz\EloquentKompact\Helper\same_with;`.
+
+### Changed
+
+- The `Internal\Concerns\Builder` base class is marked `@internal`. The methods it provides to `RawQuery`, `Regex` and `StrB` stay public API.
+
+### Tests
+
+- Added unit tests for `BoolB` and `same_with()`.
+
 ## [0.24.0] - 2026-10-28
 
 ### Added
@@ -386,7 +406,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - `RawQuery` static helpers for raw SQL expressions.
 - Translations for `en` and `id`.
 
-[Unreleased]: https://github.com/jund-fauz/eloquent-kompact/compare/v0.24.0...HEAD
+[Unreleased]: https://github.com/jund-fauz/eloquent-kompact/compare/v0.25.0...HEAD
+[0.25.0]: https://github.com/jund-fauz/eloquent-kompact/compare/v0.24.0...v0.25.0
 [0.24.0]: https://github.com/jund-fauz/eloquent-kompact/compare/v0.23.0...v0.24.0
 [0.23.0]: https://github.com/jund-fauz/eloquent-kompact/compare/v0.22.0...v0.23.0
 [0.22.0]: https://github.com/jund-fauz/eloquent-kompact/compare/v0.21.0...v0.22.0
