@@ -7,6 +7,31 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [0.22.0] - 2026-10-28
+
+### Added
+
+- `StrB::remove()`, `join()` and `emptyIfFalse()`.
+
+### Deprecated
+
+- `Helper\Str`; use `Builder\StrB` for the package methods and `Illuminate\Support\Str` for the Laravel methods.
+- `Str::concat()`; use `StrB::join()` instead.
+
+  ```php
+  // 0.21
+  Str::concat('a', 'b', 'c');
+
+  // 0.22
+  StrB::initiate('a')->join('', 'b', 'c')->build();
+  ```
+
+- `Str::ifTrue()`; use `StrB::emptyIfFalse()` instead. Unlike `ifTrue()`, `emptyIfFalse()` only accepts a `bool`.
+
+### Changed
+
+- The internal `methodNotFound()` helper is now `protected`, so it is no longer callable from outside the package classes.
+
 ## [0.21.0] - 2026-10-27
 
 ### Added
@@ -334,7 +359,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - `RawQuery` static helpers for raw SQL expressions.
 - Translations for `en` and `id`.
 
-[Unreleased]: https://github.com/jund-fauz/eloquent-kompact/compare/v0.21.0...HEAD
+[Unreleased]: https://github.com/jund-fauz/eloquent-kompact/compare/v0.22.0...HEAD
+[0.22.0]: https://github.com/jund-fauz/eloquent-kompact/compare/v0.21.0...v0.22.0
 [0.21.0]: https://github.com/jund-fauz/eloquent-kompact/compare/v0.20.3...v0.21.0
 [0.20.3]: https://github.com/jund-fauz/eloquent-kompact/compare/v0.20.2...v0.20.3
 [0.20.2]: https://github.com/jund-fauz/eloquent-kompact/compare/v0.20.1...v0.20.2
