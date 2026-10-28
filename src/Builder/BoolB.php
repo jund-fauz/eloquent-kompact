@@ -8,7 +8,17 @@ final readonly class BoolB
 
     private function __construct() {}
 
+    /**
+     * @deprecated since 0.26.0, use BoolB::initiate() instead
+     * @param bool $condition
+     * @return self
+     */
     public static function create(bool $condition): self
+    {
+        return self::initiate($condition);
+    }
+
+    public static function initiate(bool $condition): self
     {
         return (new self)->set($condition);
     }
