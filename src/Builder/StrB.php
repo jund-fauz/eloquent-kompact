@@ -2,13 +2,24 @@
 
 namespace JundFauz\EloquentKompact\Builder;
 
+use Countable;
+use Illuminate\Support\Str;
 use JundFauz\EloquentKompact\Internal\Concerns\Builder;
 
 /**
+ * Credit: Some of StrB methods are backed by Laravel/Illuminate Str methods
+ *
  * @method static self initiate(string|self $string = '')
  * @method self trim(string $characters = " \n\r\t\v\0")
  * @method self ltrim(string $characters = " \n\r\t\v\0")
  * @method self rtrim(string $characters = " \n\r\t\v\0")
+ *
+ * Laravel Str backed method:
+ * @method self singular()
+ * @method self plural(int|array|Countable $count = 2, bool $prependCount = false) $prependCount requires Laravel 12+
+ * @method self pascal(bool $normalize = false) $normalize requires Laravel 13+
+ * @method self camel()
+ * @method self snake(string $delimiter = '_')
  */
 final class StrB extends Builder
 {
@@ -16,12 +27,17 @@ final class StrB extends Builder
 
     public function __call(string $name, array $arguments)
     {
+        $parameters = [$this->result];
         if (in_array($name, ['trim', 'ltrim', 'rtrim'])) {
-            $parameters = [$this->result];
             if (isset($arguments[0])) {
                 $parameters[] = $arguments[0];
             }
             return $this->set($name(...$parameters));
+        } elseif (in_array($name, ['singular', 'plural', 'pascal', 'camel', 'snake'])) {
+            if (count($arguments)) {
+                $parameters = array_merge($parameters, $arguments);
+            }
+            return $this->set(Str::{$name}(...$parameters));
         }
 
         self::methodNotFound($name);
