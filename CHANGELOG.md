@@ -7,6 +7,32 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [0.28.0] - 2026-10-28
+
+### Added
+
+- `StrB::concat()` to append strings without a delimiter.
+
+  ```php
+  StrB::initiate('a')->concat('b', 'c')->build(); // abc
+  ```
+
+### Changed
+
+- The `Str::concat()` deprecation now points to `StrB::concat()` instead of `StrB::join()`.
+
+  ```php
+  // 0.27
+  StrB::initiate('a')->join('', 'b', 'c')->build();
+
+  // 0.28
+  StrB::initiate('a')->concat('b', 'c')->build();
+  ```
+
+### Tests
+
+- Added unit tests for `StrB::concat()`.
+
 ## [0.27.0] - 2026-10-28
 
 ### Added
@@ -450,7 +476,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - `RawQuery` static helpers for raw SQL expressions.
 - Translations for `en` and `id`.
 
-[Unreleased]: https://github.com/jund-fauz/eloquent-kompact/compare/v0.27.0...HEAD
+[Unreleased]: https://github.com/jund-fauz/eloquent-kompact/compare/v0.28.0...HEAD
+[0.28.0]: https://github.com/jund-fauz/eloquent-kompact/compare/v0.27.0...v0.28.0
 [0.27.0]: https://github.com/jund-fauz/eloquent-kompact/compare/v0.26.0...v0.27.0
 [0.26.0]: https://github.com/jund-fauz/eloquent-kompact/compare/v0.25.0...v0.26.0
 [0.25.0]: https://github.com/jund-fauz/eloquent-kompact/compare/v0.24.0...v0.25.0
