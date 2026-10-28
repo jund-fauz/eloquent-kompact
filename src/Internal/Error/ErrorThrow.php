@@ -9,7 +9,7 @@ use BadMethodCallException;
  */
 trait ErrorThrow
 {
-    public static function methodNotFound(string $method)
+    protected static function methodNotFound(string $method)
     {
         throw new BadMethodCallException(__('eloquent-kompact::messages.method_not_found', [
             'class' => static::class,

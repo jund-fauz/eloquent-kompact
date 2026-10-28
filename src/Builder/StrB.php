@@ -38,4 +38,24 @@ final class StrB extends Builder
         $method = $useRegex ? 'preg_replace' : 'str_replace';
         return $this->set($method($search, $replace, $this->result));
     }
+
+    /**
+     * @param array<string>|string $search
+     * @param bool $useRegex
+     * @return self
+     */
+    public function remove(array|string $search, bool $useRegex = false): self
+    {
+        return $this->replace($search, '', $useRegex);
+    }
+
+    public function join(string $delimiter, string ...$otherStrings): self
+    {
+        return $this->set(join($delimiter, array_merge([$this->result], $otherStrings)));
+    }
+
+    public function emptyIfFalse(bool $condition): self
+    {
+        return $this->set($condition ? $this->result : '');
+    }
 }
