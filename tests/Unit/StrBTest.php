@@ -29,6 +29,16 @@ class StrBTest extends TestCase
         yield 'replace keeps regex text literal' => [StrB::initiate('a.c')->replace('/./', '_'), 'a.c'];
         yield 'remove' => [StrB::initiate('a-b-c')->remove('-'), 'abc'];
         yield 'remove regex' => [StrB::initiate('a1b22c')->remove('/\d+/', true), 'abc'];
+        yield 'replaceStart' => [StrB::initiate('app/Models/app')->replaceStart('app/', 'src/'), 'src/Models/app'];
+        yield 'replaceStart no match' => [StrB::initiate('app/Models')->replaceStart('Models', 'x'), 'app/Models'];
+        yield 'replaceStart empty search' => [StrB::initiate('app')->replaceStart('', 'x'), 'app'];
+        yield 'replaceEnd' => [StrB::initiate('app/Models/app')->replaceEnd('/app', '/src'), 'app/Models/src'];
+        yield 'replaceEnd no match' => [StrB::initiate('app/Models')->replaceEnd('app', 'x'), 'app/Models'];
+        yield 'replaceEnd empty search' => [StrB::initiate('app')->replaceEnd('', 'x'), 'app'];
+        yield 'removeStart' => [StrB::initiate('app/Models/app')->removeStart('app/'), 'Models/app'];
+        yield 'removeStart no match' => [StrB::initiate('app/Models')->removeStart('Models'), 'app/Models'];
+        yield 'removeEnd' => [StrB::initiate('app/Models/app')->removeEnd('/app'), 'app/Models'];
+        yield 'removeEnd no match' => [StrB::initiate('app/Models')->removeEnd('app'), 'app/Models'];
 
         yield 'join' => [StrB::initiate('a')->join('', 'b', 'c'), 'abc'];
         yield 'join delimiter' => [StrB::initiate('a')->join('.', 'b', 'c'), 'a.b.c'];

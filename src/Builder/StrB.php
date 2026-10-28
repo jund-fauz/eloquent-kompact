@@ -20,6 +20,10 @@ use JundFauz\EloquentKompact\Internal\Concerns\Builder;
  * @method self pascal(bool $normalize = false) $normalize requires Laravel 13+
  * @method self camel()
  * @method self snake(string $delimiter = '_')
+ * @method self replaceStart(string $search, string $replace)
+ * @method self replaceEnd(string $search, string $replace)
+ * @method self removeStart(string $search)
+ * @method self removeEnd(string $search)
  */
 final class StrB extends Builder
 {
@@ -38,6 +42,12 @@ final class StrB extends Builder
                 $parameters = array_merge($parameters, $arguments);
             }
             return $this->set(Str::{$name}(...$parameters));
+        } elseif (in_array($name, ['replaceStart', 'replaceEnd'])) {
+            $parameters = array_merge($arguments, $parameters);
+            return $this->set(Str::{$name}(...$parameters));
+        } elseif (in_array($name, ['removeStart', 'removeEnd'])) {
+            $parameters = [$arguments[0], ''];
+            return $this->{str_replace('remove', 'replace', $name)}(...$parameters);
         }
 
         self::methodNotFound($name);
