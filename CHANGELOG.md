@@ -7,6 +7,20 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [0.23.0] - 2026-10-28
+
+### Added
+
+- `StrB::singular()`, `plural()`, `pascal()`, `camel()` and `snake()`, backed by Laravel's `Str`. The `plural()` `$prependCount` argument requires Laravel 12+ and the `pascal()` `$normalize` argument requires Laravel 13+; older versions ignore them.
+
+  ```php
+  StrB::initiate('blog_post')->plural()->pascal()->build(); // BlogPosts
+  ```
+
+### Tests
+
+- Added unit tests for `StrB`.
+
 ## [0.22.0] - 2026-10-28
 
 ### Added
@@ -359,7 +373,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - `RawQuery` static helpers for raw SQL expressions.
 - Translations for `en` and `id`.
 
-[Unreleased]: https://github.com/jund-fauz/eloquent-kompact/compare/v0.22.0...HEAD
+[Unreleased]: https://github.com/jund-fauz/eloquent-kompact/compare/v0.23.0...HEAD
+[0.23.0]: https://github.com/jund-fauz/eloquent-kompact/compare/v0.22.0...v0.23.0
 [0.22.0]: https://github.com/jund-fauz/eloquent-kompact/compare/v0.21.0...v0.22.0
 [0.21.0]: https://github.com/jund-fauz/eloquent-kompact/compare/v0.20.3...v0.21.0
 [0.20.3]: https://github.com/jund-fauz/eloquent-kompact/compare/v0.20.2...v0.20.3
