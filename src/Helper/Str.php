@@ -8,7 +8,7 @@ namespace JundFauz\EloquentKompact\Helper;
 class Str extends \Illuminate\Support\Str
 {
     /**
-     * @deprecated since 0.22.0, use join() in StrB instead
+     * @deprecated since 0.22.0, use concat() in StrB instead
      * @param string ...$strings
      * @return string
      */

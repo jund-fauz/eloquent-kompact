@@ -67,7 +67,12 @@ final class StrB extends Builder
 
     public function join(string $delimiter, string ...$otherStrings): self
     {
-        return $this->set(join($delimiter, array_merge([$this->result], $otherStrings)));
+        return $this->set(join($delimiter, [$this->result, ...$otherStrings]));
+    }
+
+    public function concat(string ...$otherStrings): self
+    {
+        return $this->join('', ...$otherStrings);
     }
 
     public function emptyIfFalse(bool $condition): self

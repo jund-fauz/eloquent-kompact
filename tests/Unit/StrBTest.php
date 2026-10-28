@@ -33,6 +33,9 @@ class StrBTest extends TestCase
         yield 'join' => [StrB::initiate('a')->join('', 'b', 'c'), 'abc'];
         yield 'join delimiter' => [StrB::initiate('a')->join('.', 'b', 'c'), 'a.b.c'];
         yield 'join nothing' => [StrB::initiate('a')->join('.'), 'a'];
+        yield 'concat' => [StrB::initiate('a')->concat('b', 'c'), 'abc'];
+        yield 'concat nothing' => [StrB::initiate('a')->concat(), 'a'];
+        yield 'concat empty' => [StrB::initiate()->concat('a', '', 'b'), 'ab'];
         yield 'emptyIfFalse true' => [StrB::initiate('a')->emptyIfFalse(true), 'a'];
         yield 'emptyIfFalse false' => [StrB::initiate('a')->emptyIfFalse(false), ''];
 
