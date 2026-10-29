@@ -2,6 +2,9 @@
 
 namespace JundFauz\EloquentKompact\Helper;
 
+/**
+ * @deprecated since 0.30.0, use BoolB::compare() instead
+ */
 final readonly class Compare
 {
     private mixed $value;

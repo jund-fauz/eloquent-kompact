@@ -24,7 +24,7 @@ class Builder implements Stringable
         self::methodNotFound($name);
     }
 
-    public function set(string $newResult): static
+    protected function set(string $newResult): static
     {
         $newClass = new static;
         $newClass->result = $newResult;

@@ -2,20 +2,17 @@
 
 namespace JundFauz\EloquentKompact\Builder;
 
+use JundFauz\EloquentKompact\Internal\Logic\Compare;
+
 final readonly class BoolB
 {
     public bool $result;
 
-    private function __construct() {}
+    private function __construct() { }
 
-    /**
-     * @deprecated since 0.26.0, use BoolB::initiate() instead
-     * @param bool $condition
-     * @return self
-     */
-    public static function create(bool $condition): self
+    public static function compare(mixed $firstValue): Compare
     {
-        return self::initiate($condition);
+        return Compare::of($firstValue, fn (bool $condition) => (new self)->set($condition));
     }
 
     public static function initiate(bool $condition): self
@@ -23,17 +20,17 @@ final readonly class BoolB
         return (new self)->set($condition);
     }
 
-    public function and(bool $condition): self
+    public function and(mixed $valueToCompare): Compare
     {
-        return $this->set($this->result && $condition);
+        return Compare::of($valueToCompare, fn (bool $secondCondition) => $this->set($this->result && $secondCondition));
     }
 
-    public function or(bool $condition): self
+    public function or(mixed $valueToCompare): Compare
     {
-        return $this->set($this->result || $condition);
+        return Compare::of($valueToCompare, fn (bool $secondCondition) => $this->set($this->result || $secondCondition));
     }
 
-    public function set(bool $newCondition): self
+    private function set(bool $newCondition): self
     {
         $newClass = new self;
         $newClass->result = $newCondition;
