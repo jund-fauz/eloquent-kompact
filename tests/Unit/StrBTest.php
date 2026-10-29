@@ -24,6 +24,11 @@ class StrBTest extends TestCase
         yield 'rtrim' => [StrB::initiate('  a  ')->rtrim(), '  a'];
         yield 'rtrim characters' => [StrB::initiate('/a//')->rtrim('/'), '/a'];
 
+        yield 'lower' => [StrB::initiate('BlogPost')->lower(), 'blogpost'];
+        yield 'lower multibyte' => [StrB::initiate('ÄÖÜ')->lower(), 'äöü'];
+        yield 'upper' => [StrB::initiate('BlogPost')->upper(), 'BLOGPOST'];
+        yield 'upper multibyte' => [StrB::initiate('äöü')->upper(), 'ÄÖÜ'];
+
         yield 'replace' => [StrB::initiate('a-b-c')->replace('-', '_'), 'a_b_c'];
         yield 'replace many' => [StrB::initiate('a-b.c')->replace(['-', '.'], '_'), 'a_b_c'];
         yield 'replace regex' => [StrB::initiate('App/Models')->replace('/^app(\/|$)/i', '', true), 'Models'];
@@ -155,7 +160,7 @@ class StrBTest extends TestCase
     {
         $this->expectException(BadMethodCallException::class);
 
-        StrB::initiate('a')->upper();
+        StrB::initiate('a')->unknownMethod();
     }
 
     #[Test]

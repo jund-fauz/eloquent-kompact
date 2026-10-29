@@ -5,7 +5,6 @@ namespace JundFauz\EloquentKompact\Relation;
 use BadMethodCallException;
 use Illuminate\Support\Arr;
 use JundFauz\EloquentKompact\Column\Convert;
-use JundFauz\EloquentKompact\Helper\Str;
 use function substr;
 
 /**
@@ -20,7 +19,7 @@ final class Arrange
             $columnName = array_shift($arguments);
             $result = '';
             foreach (Arr::flatten($arguments) as $relationClass) {
-                $result .= Str::concat(class_exists($relationClass) ? Convert::modelToRelation($relationClass, $name === 'relations') : $relationClass, '.');
+                $result .= str_concat(class_exists($relationClass) ? Convert::modelToRelation($relationClass, $name === 'relations') : $relationClass, '.');
             }
 
             if ($columnName) {

@@ -2,9 +2,9 @@
 
 namespace JundFauz\EloquentKompact\Model\Traits;
 
+use JundFauz\EloquentKompact\Builder\StrB;
 use JundFauz\EloquentKompact\Column\Creator;
 use JundFauz\EloquentKompact\Helper\Path;
-use JundFauz\EloquentKompact\Helper\Str;
 
 trait AutoCast
 {
@@ -44,10 +44,13 @@ trait AutoCast
     {
         $enum = Path::namespaceConcat(
             config('eloquent-kompact.path.database_enum'),
-            Str::concat(
-                Str::studly(Str::singular($this->getTable())),
-                Str::studly(Creator::getPlainColumnName($column))
-            )
+            (string) StrB::initiate($this->getTable())
+                ->singular()
+                ->pascal()
+                ->concat(
+                    StrB::initiate(Creator::getPlainColumnName($column))
+                        ->pascal()
+                )
         );
 
         return class_exists($enum) ? $enum : 'string';

@@ -13,6 +13,8 @@ use JundFauz\EloquentKompact\Internal\Concerns\Builder;
  * @method self trim(string $characters = " \n\r\t\v\0")
  * @method self ltrim(string $characters = " \n\r\t\v\0")
  * @method self rtrim(string $characters = " \n\r\t\v\0")
+ * @method self lower()
+ * @method self upper()
  *
  * Laravel Str backed method:
  * @method self singular()
@@ -34,6 +36,8 @@ final class StrB extends Builder
 {
     protected static ?string $initiationFunction = 'initiate';
 
+    private const array laravelBackedMethods = ['singular', 'plural', 'pascal', 'camel', 'snake', 'before', 'beforeLast', 'after', 'afterLast', 'between', 'lower', 'upper'];
+
     public function __call(string $name, array $arguments)
     {
         $parameters = [$this->result];
@@ -42,7 +46,7 @@ final class StrB extends Builder
                 $parameters[] = $arguments[0];
             }
             return $this->set($name(...$parameters));
-        } elseif (in_array($name, ['singular', 'plural', 'pascal', 'camel', 'snake', 'before', 'beforeLast', 'after', 'afterLast', 'between'])) {
+        } elseif (in_array($name, self::laravelBackedMethods)) {
             if (count($arguments)) {
                 $parameters = array_merge($parameters, $arguments);
             }

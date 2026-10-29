@@ -3,7 +3,6 @@
 namespace JundFauz\EloquentKompact\Regex;
 
 use JundFauz\EloquentKompact\Helper\Arr;
-use JundFauz\EloquentKompact\Helper\Str;
 use JundFauz\EloquentKompact\Internal\Concerns\Builder;
 
 class Regex extends Builder
@@ -19,7 +18,7 @@ class Regex extends Builder
 
     public function exact(string|self ...$sentenceOrWord): static
     {
-        return $this->set(Str::concat(
+        return $this->set(str_concat(
             '^',
             Arr::arrange($this->withResult(...$sentenceOrWord)),
             '$'
@@ -28,17 +27,17 @@ class Regex extends Builder
 
     public function endsWith(string|self ...$sentenceOrWord): static
     {
-        return $this->set(Arr::arrange($this->withResult(...$sentenceOrWord)) . '$');
+        return $this->set(str_concat(Arr::arrange($this->withResult(...$sentenceOrWord)), '$'));
     }
 
     public function exceptWord(string|self $word): static
     {
-        return $this->set(Arr::arrange($this->withResult('(?!' . static::raw($word) . ')')));
+        return $this->set(Arr::arrange($this->withResult(str_concat('(?!', static::raw($word), ')'))));
     }
 
     public function contain(Quantifier|string $conditionCount = '', string|self ...$requirements): static
     {
-        return $this->set(Str::concat(
+        return $this->set(str_concat(
             '[',
             Arr::arrange($this->withResult(...$requirements)),
             ']',
@@ -56,7 +55,7 @@ class Regex extends Builder
      */
     public function build(): string
     {
-        return Str::concat(static::DELIMITER, $this->result, static::DELIMITER);
+        return str_concat(static::DELIMITER, $this->result, static::DELIMITER);
     }
 
     /**

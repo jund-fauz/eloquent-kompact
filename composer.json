@@ -8,8 +8,7 @@
             "JundFauz\\EloquentKompact\\": "src/"
         },
         "files": [
-            "src/Helper/Functions.php",
-            "src/Helper/FunctionsWithNamespace.php"
+            "src/Helper/Functions.php"
         ]
     },
     "autoload-dev": {

@@ -23,3 +23,10 @@ if (! function_exists('is_not_array')) {
         return ! is_array($value);
     }
 }
+
+if (! function_exists('str_concat')) {
+    function str_concat(string ...$values): string
+    {
+        return join('', $values);
+    }
+}

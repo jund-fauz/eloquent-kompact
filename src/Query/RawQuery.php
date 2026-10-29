@@ -6,10 +6,8 @@ use Illuminate\Contracts\Database\Query\Expression;
 use Illuminate\Database\Grammar;
 use Illuminate\Support\Facades\DB;
 use JundFauz\EloquentKompact\Column\Convert;
-use JundFauz\EloquentKompact\Helper\Str;
 use JundFauz\EloquentKompact\Internal\Concerns\Builder;
 use JundFauz\EloquentKompact\Internal\Database\Driver;
-use Stringable;
 
 /**
  * NOTE: Built to compatible with MySQL & PostgreSQL database
@@ -84,7 +82,7 @@ class RawQuery extends Builder implements Expression
     {
         $columnNames = $this->withResult(...$columnNames);
         $result = [
-            array_shift($columnNames) . ' * 1.0',
+            str_concat(array_shift($columnNames), ' * 1.0'),
             ...array_map(fn (string $columnName) => "NULLIF($columnName, 0)", $columnNames)
         ];
 
@@ -105,7 +103,7 @@ class RawQuery extends Builder implements Expression
         if (is_not_null($defaultValue)) {
             $result .= "\n  ELSE $defaultValue";
         }
-        return $this->set($result . "\nEND");
+        return $this->set(str_concat($result, "\nEND"));
     }
 
     public static function flexibleCase(string|self|array $conditions, mixed $defaultValue = null): string
@@ -126,12 +124,12 @@ class RawQuery extends Builder implements Expression
         if (is_not_null($defaultValue)) {
             $result .= "\n  ELSE $defaultValue";
         }
-        return $result . "\nEND";
+        return str_concat($result, "\nEND");
     }
 
     public function concat(string|self ...$values): static
     {
-        return $this->set(Str::concat(
+        return $this->set(str_concat(
             "CONCAT_WS('', ",
             join(', ', $this->withResult(...$values)),
             ')'
@@ -157,7 +155,7 @@ class RawQuery extends Builder implements Expression
     {
         $result = '';
         foreach ($relationClasses as $relationClass) {
-            $result .= Convert::modelToRelation($relationClass, true, true) . '.';
+            $result .= str_concat(Convert::modelToRelation($relationClass, true, true), '.');
         }
 
         if ($columnName) {
@@ -214,7 +212,7 @@ class RawQuery extends Builder implements Expression
     /**
      * Puts the current expression in front of the given operands, unless it is still empty
      */
-    protected function withResult(string|self ...$expressions): array
+    private function withResult(string|self ...$expressions): array
     {
         $expressions = array_map(fn (string|self $expression) => (string) $expression, $expressions);
         return $this->result === '' ? $expressions : [$this->result, ...$expressions];

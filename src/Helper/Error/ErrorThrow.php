@@ -1,12 +1,9 @@
 <?php
 
-namespace JundFauz\EloquentKompact\Internal\Error;
+namespace JundFauz\EloquentKompact\Helper\Error;
 
 use BadMethodCallException;
 
-/**
- * @internal
- */
 trait ErrorThrow
 {
     protected static function methodNotFound(string $method)

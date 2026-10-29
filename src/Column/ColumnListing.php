@@ -35,7 +35,7 @@ final class ColumnListing
 
     private static function key(string $table): string
     {
-        return 'schema_columns:' . Schema::getConnection()->getDatabaseName() . ":$table";
+        return str_concat('schema_columns:', Schema::getConnection()->getDatabaseName(), ":$table");
     }
 
     private static function store(): Repository

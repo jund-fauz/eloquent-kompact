@@ -2,7 +2,7 @@
 
 namespace JundFauz\EloquentKompact\Internal\Concerns;
 
-use JundFauz\EloquentKompact\Internal\Error\ErrorThrow;
+use JundFauz\EloquentKompact\Helper\Error\ErrorThrow;
 use Stringable;
 
 /**

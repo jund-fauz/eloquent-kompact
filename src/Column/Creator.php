@@ -2,9 +2,8 @@
 
 namespace JundFauz\EloquentKompact\Column;
 
-use BadMethodCallException;
 use Illuminate\Support\Str;
-use JundFauz\EloquentKompact\Internal\Error\ErrorThrow;
+use JundFauz\EloquentKompact\Helper\Error\ErrorThrow;
 use ReflectionClass;
 use ReflectionClassConstant;
 
