@@ -7,6 +7,22 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [0.32.0] - 2026-10-29
+
+### Added
+
+- `StrB::before()`, `beforeLast()`, `after()`, `afterLast()` and `between()`, backed by Laravel's `Str`, to take the part of a string before, after or between given strings. If a given string is not found or empty, the whole string is kept. `between()` takes the part from the first `$from` to the last `$to`.
+
+  ```php
+  StrB::initiate('App\Models\User')->afterLast('\\')->build();          // User
+  StrB::initiate('App\Models\User')->after('\\')->beforeLast('\\')->build(); // Models
+  StrB::initiate('[a] [b]')->between('[', ']')->build();                // a] [b
+  ```
+
+### Tests
+
+- Added unit tests for `StrB::before()`, `beforeLast()`, `after()`, `afterLast()` and `between()`.
+
 ## [0.31.0] - 2026-10-29
 
 ### Added
@@ -558,7 +574,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - `RawQuery` static helpers for raw SQL expressions.
 - Translations for `en` and `id`.
 
-[Unreleased]: https://github.com/jund-fauz/eloquent-kompact/compare/v0.31.0...HEAD
+[Unreleased]: https://github.com/jund-fauz/eloquent-kompact/compare/v0.32.0...HEAD
+[0.32.0]: https://github.com/jund-fauz/eloquent-kompact/compare/v0.31.0...v0.32.0
 [0.31.0]: https://github.com/jund-fauz/eloquent-kompact/compare/v0.30.0...v0.31.0
 [0.30.0]: https://github.com/jund-fauz/eloquent-kompact/compare/v0.29.0...v0.30.0
 [0.29.0]: https://github.com/jund-fauz/eloquent-kompact/compare/v0.28.0...v0.29.0
