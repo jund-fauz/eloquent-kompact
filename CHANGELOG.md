@@ -7,6 +7,27 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [0.31.0] - 2026-10-29
+
+### Added
+
+- `BoolB::andGroup()` and `orGroup()` to combine with another `BoolB` (or a `bool`) as a group, instead of chaining from left to right.
+
+  ```php
+  // $isAdmin && ($isActive || $isVerified)
+  BoolB::compare($user->role)->sameWith('admin')
+      ->andGroup(BoolB::compare($user->status)->sameWith('active')->or($user->verified_at)->notSameWith(null))
+      ->result;
+  ```
+
+### Changed
+
+- `BoolB::initiate()` also accepts a `BoolB`, and returns it as-is.
+
+### Tests
+
+- Added unit tests for `BoolB::andGroup()`, `orGroup()` and `initiate()` with a `BoolB`.
+
 ## [0.30.0] - 2026-10-29
 
 ### Added
@@ -537,7 +558,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - `RawQuery` static helpers for raw SQL expressions.
 - Translations for `en` and `id`.
 
-[Unreleased]: https://github.com/jund-fauz/eloquent-kompact/compare/v0.30.0...HEAD
+[Unreleased]: https://github.com/jund-fauz/eloquent-kompact/compare/v0.31.0...HEAD
+[0.31.0]: https://github.com/jund-fauz/eloquent-kompact/compare/v0.30.0...v0.31.0
 [0.30.0]: https://github.com/jund-fauz/eloquent-kompact/compare/v0.29.0...v0.30.0
 [0.29.0]: https://github.com/jund-fauz/eloquent-kompact/compare/v0.28.0...v0.29.0
 [0.28.0]: https://github.com/jund-fauz/eloquent-kompact/compare/v0.27.0...v0.28.0
