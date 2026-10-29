@@ -42,7 +42,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   ```php
   // 0.33
   Str::concat('a', 'b');
-  Str::ifTrue('a', $condition);
+  Str::ifTrue($condition, 'a');
 
   // 0.34
   StrB::initiate('a')->concat('b')->build(); // or str_concat('a', 'b')
