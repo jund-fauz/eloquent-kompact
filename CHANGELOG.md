@@ -7,6 +7,20 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [0.33.0] - 2026-10-29
+
+### Changed
+
+- `StrB::emptyIfFalse()` accepts any value instead of only a `bool`, and empties the string when the value is falsy (`false`, `0`, `''`, `'0'`, `null`, `[]`).
+
+  ```php
+  StrB::initiate('a')->emptyIfFalse($user->nickname)->build();
+  ```
+
+### Tests
+
+- Added unit tests for `StrB::emptyIfFalse()` with non-boolean values.
+
 ## [0.32.0] - 2026-10-29
 
 ### Added
@@ -574,7 +588,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - `RawQuery` static helpers for raw SQL expressions.
 - Translations for `en` and `id`.
 
-[Unreleased]: https://github.com/jund-fauz/eloquent-kompact/compare/v0.32.0...HEAD
+[Unreleased]: https://github.com/jund-fauz/eloquent-kompact/compare/v0.33.0...HEAD
+[0.33.0]: https://github.com/jund-fauz/eloquent-kompact/compare/v0.32.0...v0.33.0
 [0.32.0]: https://github.com/jund-fauz/eloquent-kompact/compare/v0.31.0...v0.32.0
 [0.31.0]: https://github.com/jund-fauz/eloquent-kompact/compare/v0.30.0...v0.31.0
 [0.30.0]: https://github.com/jund-fauz/eloquent-kompact/compare/v0.29.0...v0.30.0
