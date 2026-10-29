@@ -56,6 +56,24 @@ class StrBTest extends TestCase
         yield 'camel' => [StrB::initiate('blog_post')->camel(), 'blogPost'];
         yield 'snake' => [StrB::initiate('BlogPost')->snake(), 'blog_post'];
         yield 'snake delimiter' => [StrB::initiate('BlogPost')->snake('-'), 'blog-post'];
+
+        yield 'before' => [StrB::initiate('App/Models/User')->before('/'), 'App'];
+        yield 'before no match' => [StrB::initiate('App/Models')->before('.'), 'App/Models'];
+        yield 'before empty search' => [StrB::initiate('App/Models')->before(''), 'App/Models'];
+        yield 'beforeLast' => [StrB::initiate('App/Models/User')->beforeLast('/'), 'App/Models'];
+        yield 'beforeLast no match' => [StrB::initiate('App/Models')->beforeLast('.'), 'App/Models'];
+        yield 'beforeLast empty search' => [StrB::initiate('App/Models')->beforeLast(''), 'App/Models'];
+        yield 'after' => [StrB::initiate('App/Models/User')->after('/'), 'Models/User'];
+        yield 'after no match' => [StrB::initiate('App/Models')->after('.'), 'App/Models'];
+        yield 'after empty search' => [StrB::initiate('App/Models')->after(''), 'App/Models'];
+        yield 'afterLast' => [StrB::initiate('App/Models/User')->afterLast('/'), 'User'];
+        yield 'afterLast no match' => [StrB::initiate('App/Models')->afterLast('.'), 'App/Models'];
+        yield 'afterLast empty search' => [StrB::initiate('App/Models')->afterLast(''), 'App/Models'];
+        yield 'between' => [StrB::initiate('[a]')->between('[', ']'), 'a'];
+        yield 'between first and last' => [StrB::initiate('[a] [b]')->between('[', ']'), 'a] [b'];
+        yield 'between no match' => [StrB::initiate('a')->between('[', ']'), 'a'];
+        yield 'between empty from' => [StrB::initiate('[a]')->between('', ']'), '[a]'];
+        yield 'between empty to' => [StrB::initiate('[a]')->between('[', ''), '[a]'];
     }
 
     #[Test]
@@ -90,6 +108,15 @@ class StrBTest extends TestCase
         $this->assertSame(
             'BlogPosts',
             StrB::initiate('App/blog_post/')->remove('/^app(\/|$)/i', true)->trim('/')->plural()->pascal()->build()
+        );
+    }
+
+    #[Test]
+    public function it_chains_substring_methods(): void
+    {
+        $this->assertSame(
+            'Models',
+            StrB::initiate('App\Models\User')->after('\\')->beforeLast('\\')->build()
         );
     }
 

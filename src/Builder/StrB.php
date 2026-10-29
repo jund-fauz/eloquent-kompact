@@ -20,6 +20,11 @@ use JundFauz\EloquentKompact\Internal\Concerns\Builder;
  * @method self pascal(bool $normalize = false) $normalize requires Laravel 13+
  * @method self camel()
  * @method self snake(string $delimiter = '_')
+ * @method self before(string $search)
+ * @method self beforeLast(string $search)
+ * @method self after(string $search)
+ * @method self afterLast(string $search)
+ * @method self between(string $from, string $to)
  * @method self replaceStart(string $search, string $replace)
  * @method self replaceEnd(string $search, string $replace)
  * @method self removeStart(string $search)
@@ -37,7 +42,7 @@ final class StrB extends Builder
                 $parameters[] = $arguments[0];
             }
             return $this->set($name(...$parameters));
-        } elseif (in_array($name, ['singular', 'plural', 'pascal', 'camel', 'snake'])) {
+        } elseif (in_array($name, ['singular', 'plural', 'pascal', 'camel', 'snake', 'before', 'beforeLast', 'after', 'afterLast', 'between'])) {
             if (count($arguments)) {
                 $parameters = array_merge($parameters, $arguments);
             }
