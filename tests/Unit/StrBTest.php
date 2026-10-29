@@ -8,6 +8,7 @@ use JundFauz\EloquentKompact\Builder\StrB;
 use JundFauz\EloquentKompact\Tests\TestCase;
 use PHPUnit\Framework\Attributes\DataProvider;
 use PHPUnit\Framework\Attributes\Test;
+use stdClass;
 
 class StrBTest extends TestCase
 {
@@ -48,6 +49,15 @@ class StrBTest extends TestCase
         yield 'concat empty' => [StrB::initiate()->concat('a', '', 'b'), 'ab'];
         yield 'emptyIfFalse true' => [StrB::initiate('a')->emptyIfFalse(true), 'a'];
         yield 'emptyIfFalse false' => [StrB::initiate('a')->emptyIfFalse(false), ''];
+        yield 'emptyIfFalse truthy int' => [StrB::initiate('a')->emptyIfFalse(1), 'a'];
+        yield 'emptyIfFalse zero' => [StrB::initiate('a')->emptyIfFalse(0), ''];
+        yield 'emptyIfFalse truthy string' => [StrB::initiate('a')->emptyIfFalse('x'), 'a'];
+        yield 'emptyIfFalse empty string' => [StrB::initiate('a')->emptyIfFalse(''), ''];
+        yield 'emptyIfFalse string zero' => [StrB::initiate('a')->emptyIfFalse('0'), ''];
+        yield 'emptyIfFalse null' => [StrB::initiate('a')->emptyIfFalse(null), ''];
+        yield 'emptyIfFalse filled array' => [StrB::initiate('a')->emptyIfFalse(['x']), 'a'];
+        yield 'emptyIfFalse empty array' => [StrB::initiate('a')->emptyIfFalse([]), ''];
+        yield 'emptyIfFalse object' => [StrB::initiate('a')->emptyIfFalse(new stdClass), 'a'];
 
         yield 'singular' => [StrB::initiate('users')->singular(), 'user'];
         yield 'plural' => [StrB::initiate('user')->plural(), 'users'];

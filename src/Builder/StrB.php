@@ -90,7 +90,7 @@ final class StrB extends Builder
         return $this->join('', ...$otherStrings);
     }
 
-    public function emptyIfFalse(bool $condition): self
+    public function emptyIfFalse(mixed $condition): self
     {
         return $this->set($condition ? $this->result : '');
     }
