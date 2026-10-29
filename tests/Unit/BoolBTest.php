@@ -46,6 +46,47 @@ class BoolBTest extends TestCase
         yield 'compare then and' => [BoolB::compare(1)->sameWith(1)->and(2)->sameWith(3), false];
         yield 'compare then or' => [BoolB::compare(1)->sameWith(2)->or(3)->sameWith(3), true];
         yield 'compare chain left to right' => [BoolB::compare(1)->sameWith(1)->or(2)->sameWith(3)->and(4)->sameWith(5), false];
+
+        yield 'initiate true BoolB' => [BoolB::initiate(BoolB::initiate(true)), true];
+        yield 'initiate false BoolB' => [BoolB::initiate(BoolB::initiate(false)), false];
+        yield 'initiate group then and' => [BoolB::initiate(BoolB::compare(1)->sameWith(2)->or(3)->sameWith(3))->and(4)->sameWith(4), true];
+        yield 'initiate group then or' => [BoolB::initiate(BoolB::compare(1)->sameWith(2)->and(3)->sameWith(3))->or(4)->sameWith(5), false];
+
+        yield 'true andGroup true' => [BoolB::initiate(true)->andGroup(BoolB::initiate(true)), true];
+        yield 'true andGroup false' => [BoolB::initiate(true)->andGroup(BoolB::initiate(false)), false];
+        yield 'false andGroup true' => [BoolB::initiate(false)->andGroup(BoolB::initiate(true)), false];
+        yield 'false andGroup false' => [BoolB::initiate(false)->andGroup(BoolB::initiate(false)), false];
+
+        yield 'true orGroup true' => [BoolB::initiate(true)->orGroup(BoolB::initiate(true)), true];
+        yield 'true orGroup false' => [BoolB::initiate(true)->orGroup(BoolB::initiate(false)), true];
+        yield 'false orGroup true' => [BoolB::initiate(false)->orGroup(BoolB::initiate(true)), true];
+        yield 'false orGroup false' => [BoolB::initiate(false)->orGroup(BoolB::initiate(false)), false];
+
+        yield 'andGroup bool' => [BoolB::initiate(true)->andGroup(false), false];
+        yield 'orGroup bool' => [BoolB::initiate(false)->orGroup(true), true];
+
+        // false && (false || true) vs left to right (false && false) || true
+        yield 'andGroup keeps group' => [
+            BoolB::compare(1)->sameWith(2)->andGroup(BoolB::compare(1)->sameWith(2)->or(3)->sameWith(3)),
+            false,
+        ];
+        yield 'left to right without group' => [
+            BoolB::compare(1)->sameWith(2)->and(1)->sameWith(2)->or(3)->sameWith(3),
+            true,
+        ];
+        // true || (false && false) vs left to right (true || false) && false
+        yield 'orGroup keeps group' => [
+            BoolB::compare(1)->sameWith(1)->orGroup(BoolB::compare(1)->sameWith(2)->and(3)->sameWith(4)),
+            true,
+        ];
+        yield 'left to right without or group' => [
+            BoolB::compare(1)->sameWith(1)->or(1)->sameWith(2)->and(3)->sameWith(4),
+            false,
+        ];
+        yield 'group then chain' => [
+            BoolB::initiate(true)->andGroup(BoolB::compare('a')->sameWith('a'))->or(1)->sameWith(2),
+            true,
+        ];
     }
 
     #[Test]
@@ -93,6 +134,28 @@ class BoolBTest extends TestCase
         $this->expectException(Error::class);
 
         $condition->result = false;
+    }
+
+    #[Test]
+    public function it_returns_the_same_instance_when_initiated_with_a_boolb(): void
+    {
+        $condition = BoolB::initiate(true);
+
+        $this->assertSame($condition, BoolB::initiate($condition));
+    }
+
+    #[Test]
+    public function it_returns_a_new_instance_from_groups(): void
+    {
+        $condition = BoolB::initiate(true);
+        $group = BoolB::initiate(false);
+        $combined = $condition->andGroup($group);
+
+        $this->assertNotSame($condition, $combined);
+        $this->assertNotSame($group, $combined);
+        $this->assertTrue($condition->result);
+        $this->assertFalse($group->result);
+        $this->assertFalse($combined->result);
     }
 
     #[Test]
