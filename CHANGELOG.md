@@ -7,6 +7,51 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [0.30.0] - 2026-10-29
+
+### Added
+
+- `BoolB::compare()` to start a boolean from a strict comparison, with `sameWith()` and `notSameWith()`.
+
+  ```php
+  BoolB::compare($status)->sameWith('active')->result;
+  ```
+
+### Changed
+
+- **BREAKING:** `BoolB::and()` and `or()` take a value to compare instead of a `bool`, and return a comparison to finish with `sameWith()` or `notSameWith()`. Chains are still evaluated from left to right.
+
+  ```php
+  // 0.29
+  BoolB::initiate($user->is_active)->and($user->role === 'admin')->result;
+
+  // 0.30
+  BoolB::initiate($user->is_active)->and($user->role)->sameWith('admin')->result;
+  ```
+
+- **BREAKING:** `BoolB::set()` is now `private`.
+- **BREAKING:** The `set()` method of the `Internal\Concerns\Builder` base class is now `protected`, so `RawQuery::set()`, `Regex::set()` and `StrB::set()` can no longer be called from outside.
+
+### Removed
+
+- **BREAKING:** `BoolB::create()`, deprecated since 0.26.0; use `BoolB::initiate()` instead.
+
+### Deprecated
+
+- `Helper\Compare`; use `BoolB::compare()` instead.
+
+  ```php
+  // 0.29
+  Compare::of($a)->sameWith($b);
+
+  // 0.30
+  BoolB::compare($a)->sameWith($b)->result;
+  ```
+
+### Tests
+
+- Updated the `BoolB` unit tests for `compare()`, `sameWith()` and `notSameWith()` chains.
+
 ## [0.29.0] - 2026-10-28
 
 ### Added
@@ -492,7 +537,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - `RawQuery` static helpers for raw SQL expressions.
 - Translations for `en` and `id`.
 
-[Unreleased]: https://github.com/jund-fauz/eloquent-kompact/compare/v0.29.0...HEAD
+[Unreleased]: https://github.com/jund-fauz/eloquent-kompact/compare/v0.30.0...HEAD
+[0.30.0]: https://github.com/jund-fauz/eloquent-kompact/compare/v0.29.0...v0.30.0
 [0.29.0]: https://github.com/jund-fauz/eloquent-kompact/compare/v0.28.0...v0.29.0
 [0.28.0]: https://github.com/jund-fauz/eloquent-kompact/compare/v0.27.0...v0.28.0
 [0.27.0]: https://github.com/jund-fauz/eloquent-kompact/compare/v0.26.0...v0.27.0
