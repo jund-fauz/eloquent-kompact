@@ -7,6 +7,65 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [0.34.0] - 2026-10-29
+
+### Added
+
+- `StrB::lower()` and `upper()`, backed by Laravel's `Str`, multibyte safe.
+
+  ```php
+  StrB::initiate('BlogPost')->lower()->build(); // blogpost
+  ```
+
+- Global `str_concat()` helper function to join strings without a delimiter.
+
+  ```php
+  str_concat('a', 'b', 'c'); // abc
+  ```
+
+### Changed
+
+- **BREAKING:** The `ErrorThrow` trait moved from `Internal\Error` to `Helper\Error` and is no longer `@internal`.
+
+  ```php
+  // 0.33
+  use JundFauz\EloquentKompact\Internal\Error\ErrorThrow;
+
+  // 0.34
+  use JundFauz\EloquentKompact\Helper\Error\ErrorThrow;
+  ```
+
+### Removed
+
+- **BREAKING:** `Helper\Str`, deprecated since 0.22.0. Use `Builder\StrB` for the package methods and `Illuminate\Support\Str` for the Laravel methods.
+
+  ```php
+  // 0.33
+  Str::concat('a', 'b');
+  Str::ifTrue('a', $condition);
+
+  // 0.34
+  StrB::initiate('a')->concat('b')->build(); // or str_concat('a', 'b')
+  StrB::initiate('a')->emptyIfFalse($condition)->build();
+  ```
+
+- **BREAKING:** `Helper\Compare`, deprecated since 0.30.0; use `BoolB::compare()` instead.
+
+  ```php
+  // 0.33
+  Compare::of($a)->sameWith($b);
+
+  // 0.34
+  BoolB::compare($a)->sameWith($b)->result;
+  ```
+
+- **BREAKING:** `same_with()`, deprecated since 0.27.0; use `BoolB::compare()->sameWith()` instead.
+
+### Tests
+
+- Added unit tests for `StrB::lower()`, `upper()` and `str_concat()`.
+- Removed the tests for `Helper\Compare` and `same_with()`.
+
 ## [0.33.0] - 2026-10-29
 
 ### Changed
@@ -588,7 +647,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - `RawQuery` static helpers for raw SQL expressions.
 - Translations for `en` and `id`.
 
-[Unreleased]: https://github.com/jund-fauz/eloquent-kompact/compare/v0.33.0...HEAD
+[Unreleased]: https://github.com/jund-fauz/eloquent-kompact/compare/v0.34.0...HEAD
+[0.34.0]: https://github.com/jund-fauz/eloquent-kompact/compare/v0.33.0...v0.34.0
 [0.33.0]: https://github.com/jund-fauz/eloquent-kompact/compare/v0.32.0...v0.33.0
 [0.32.0]: https://github.com/jund-fauz/eloquent-kompact/compare/v0.31.0...v0.32.0
 [0.31.0]: https://github.com/jund-fauz/eloquent-kompact/compare/v0.30.0...v0.31.0
