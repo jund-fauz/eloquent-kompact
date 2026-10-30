@@ -441,8 +441,8 @@ RawQuery::create('paid')->sum()->divide(RawQuery::create('total')->sum())->as('p
 | `join($delimiter, ...$strings)` | The value and the strings joined with `$delimiter` |
 | `add(...$strings)` / `concat(...$strings)` | The strings appended without a delimiter |
 | `addAtStart(...$strings)` | The strings prepended without a delimiter |
-| `addNamespace(...$namespaces)` | The namespaces appended with `\` |
-| `addNamespaceAtStart(...$namespaces)` | The namespaces prepended with `\` |
+| `addNamespace(...$namespaces)` | The namespaces appended with `\`, trimming the backslashes of each part |
+| `addNamespaceAtStart(...$namespaces)` | The namespaces prepended with `\`, trimming the backslashes of each part |
 | `emptyIfFalse($condition)` | The value, or `''` if `$condition` is falsy |
 | `relation()` | The value with the relation token, e.g. `user_id` |
 | `sameWith($value)` / `notSameWith($value)` | Strict `===` / `!==`, a Laravel `Stringable` is compared by its value |
