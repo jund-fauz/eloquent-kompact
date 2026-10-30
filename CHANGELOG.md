@@ -7,6 +7,30 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [0.43.0] - 2026-10-30
+
+### Added
+
+- `_type` column token (`Creator::Type`) for morph type columns, with `Creator::type()` and `Checker::isType()`.
+
+  ```php
+  Creator::type('commentable'); // commentable_type
+  ```
+
+- `AdditionalQueries::whereMorphType()` scope to filter a morph type column by a model class, using its morph alias if the class is in `Relation::morphMap()`.
+
+  ```php
+  Comment::whereMorphType('commentable', Post::class)->get(); // where commentable_type = 'App\Models\Post'
+  ```
+
+### Changed
+
+- Columns ending in `_type` are now read as having a token: `Creator::getColumnType('blood_type')` returns `_type` instead of `''`, and `Creator::getPlainColumnName('blood_type')` returns `blood` instead of `blood_type`. No cast is added for them.
+
+### Tests
+
+- Added unit tests for the `_type` token and `whereMorphType()`.
+
 ## [0.42.0] - 2026-10-30
 
 ### Added
@@ -860,7 +884,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - `RawQuery` static helpers for raw SQL expressions.
 - Translations for `en` and `id`.
 
-[Unreleased]: https://github.com/jund-fauz/eloquent-kompact/compare/v0.42.0...HEAD
+[Unreleased]: https://github.com/jund-fauz/eloquent-kompact/compare/v0.43.0...HEAD
+[0.43.0]: https://github.com/jund-fauz/eloquent-kompact/compare/v0.42.0...v0.43.0
 [0.42.0]: https://github.com/jund-fauz/eloquent-kompact/compare/v0.41.0...v0.42.0
 [0.41.0]: https://github.com/jund-fauz/eloquent-kompact/compare/v0.40.0...v0.41.0
 [0.40.0]: https://github.com/jund-fauz/eloquent-kompact/compare/v0.39.1...v0.40.0
