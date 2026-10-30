@@ -7,6 +7,20 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [0.37.0] - 2026-10-30
+
+### Removed
+
+- **BREAKING:** The `column.to_be_replaced` config. `Creator` always puts the column type token at the end of the column name (`user_id`), so a config that set `'/^/'` for the prefix scheme now silently gets the suffix scheme. A published config may keep the `column` key; it is ignored.
+
+### Changed
+
+- `Creator` no longer reads the config, so it works without a booted Laravel app.
+
+### Tests
+
+- Replaced the `Creator` tests for the `column.to_be_replaced` config with a test that the suffix scheme is always used.
+
 ## [0.36.0] - 2026-10-30
 
 ### Added
@@ -734,7 +748,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - `RawQuery` static helpers for raw SQL expressions.
 - Translations for `en` and `id`.
 
-[Unreleased]: https://github.com/jund-fauz/eloquent-kompact/compare/v0.36.0...HEAD
+[Unreleased]: https://github.com/jund-fauz/eloquent-kompact/compare/v0.37.0...HEAD
+[0.37.0]: https://github.com/jund-fauz/eloquent-kompact/compare/v0.36.0...v0.37.0
 [0.36.0]: https://github.com/jund-fauz/eloquent-kompact/compare/v0.35.0...v0.36.0
 [0.35.0]: https://github.com/jund-fauz/eloquent-kompact/compare/v0.34.0...v0.35.0
 [0.34.0]: https://github.com/jund-fauz/eloquent-kompact/compare/v0.33.0...v0.34.0
