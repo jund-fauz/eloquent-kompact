@@ -76,6 +76,7 @@ Most automation reads the **type of a column from its name**: a token at the end
 | `_at` | `Creator::Timestamp` | `paid_at` | – |
 | `_time` | `Creator::Time` | `start_time` | – |
 | `_dropdown` | `Creator::Dropdown` | `size_dropdown` | – |
+| `_type` | `Creator::Type` | `commentable_type` | – (morph type column) |
 
 `JundFauz\EloquentKompact\Column\Creator` builds and reads these names, so a migration never has to spell a token by hand:
 
@@ -155,6 +156,9 @@ $order->copyRelationsTo($newOrder, ['items' => ['product_id', 'qty_pcs']]);
 
 // where() on several columns, with the values taken from another model
 Order::wheres($otherOrder, 'tenant_id', 'branch_id')->get();
+
+// where() on a morph type column, using the morph alias of the class if there is one
+Comment::whereMorphType('commentable', Post::class)->get(); // where commentable_type = 'App\Models\Post'
 
 // The first non-null attribute
 $user->getOr('nickname', 'name');
