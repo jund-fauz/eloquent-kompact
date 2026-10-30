@@ -207,7 +207,7 @@ Dynamic relations are not methods, so IDEs cannot see them. Generate a helper fi
 php artisan kompact:ide-helper
 ```
 
-It writes `_ide_helper_kompact.php` (`@property-read` and `@method` for every dynamic relation of the models directly in `path.model` that use `DynamicModelRelation`) and registers it as a class mixin in `ide.json` for Laravel Idea. Other `classMixins` entries in `ide.json` are kept.
+It writes `_ide_helper_kompact.php` (`@property-read` and `@method` for every dynamic relation of the models directly in `path.model` that use `DynamicModelRelation`) and registers it as a class mixin in `ide.json` for Laravel Idea. Each mixin is a `_EK_`-prefixed class inside `EloquentKompact\IdeHelper`, e.g. `EloquentKompact\IdeHelper\App\Models\_EK_User` for `App\Models\User`, so it never shows up as a second `User` class. Other `classMixins` entries in `ide.json` are kept.
 
 Set `KOMPACT_IDE_HELPER=true` in `.env` to run it automatically after every `php artisan migrate` in the `local` environment. You will probably want to add `_ide_helper_kompact.php` to `.gitignore`.
 
