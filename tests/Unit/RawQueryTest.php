@@ -163,6 +163,7 @@ class RawQueryTest extends TestCase
     {
         $this->assertSame('users.blog_posts.title', RawQuery::relations('title', 'App\Models\User', 'App\Models\BlogPost'));
         $this->assertSame('users', RawQuery::relations('', 'App\Models\User'));
+        $this->assertIsString(RawQuery::relations('title', 'App\Models\User'));
     }
 
     #[Test]

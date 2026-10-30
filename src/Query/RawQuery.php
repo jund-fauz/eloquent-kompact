@@ -158,16 +158,12 @@ class RawQuery extends Builder implements Expression
     {
         $result = Str::of();
         foreach ($relationClasses as $relationClass) {
-            $result = $result->concat(Convert::modelToRelation($relationClass, true, true), '.');
+            $result = $result->add(Convert::modelToRelation($relationClass, true, true), '.');
         }
 
-        if ($columnName) {
-            $result = $result->concat($columnName);
-        } else {
-            $result = $result->substr(0, -1);
-        }
-
-        return (string) $result;
+        return (string) ($columnName
+            ? $result->add($columnName)
+            : $result->substr(0, -1));
     }
 
     public static function string(mixed $value = ''): string

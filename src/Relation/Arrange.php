@@ -8,8 +8,8 @@ use JundFauz\EloquentKompact\Builder\Str;
 use JundFauz\EloquentKompact\Column\Convert;
 
 /**
- * @method static Str relation(string $columnName, string ...$relationClasses)
- * @method static Str relations(string $columnName, string ...$relationClasses)
+ * @method static string relation(string $columnName, string ...$relationClasses)
+ * @method static string relations(string $columnName, string ...$relationClasses)
  */
 final class Arrange
 {
@@ -19,12 +19,12 @@ final class Arrange
             $columnName = array_shift($arguments);
             $result = Str::of();
             foreach (Arr::flatten($arguments) as $relationClass) {
-                $result = $result->concat(class_exists($relationClass) ? Convert::modelToRelation($relationClass, $name === 'relations') : $relationClass, '.');
+                $result = $result->add(class_exists($relationClass) ? Convert::modelToRelation($relationClass, $name === 'relations') : $relationClass, '.');
             }
 
-            return $columnName
-                ? $result->concat($columnName)
-                : $result->substr(0, -1);
+            return (string) ($columnName
+                ? $result->add($columnName)
+                : $result->substr(0, -1));
         }
 
         throw new BadMethodCallException("Method $name not found.");
