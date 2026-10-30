@@ -2,8 +2,8 @@
 
 namespace JundFauz\EloquentKompact\Regex;
 
-use JundFauz\EloquentKompact\Helper\Arr;
 use JundFauz\EloquentKompact\Internal\Concerns\Builder;
+use function JundFauz\EloquentKompact\str_concat;
 
 class Regex extends Builder
 {
@@ -20,26 +20,26 @@ class Regex extends Builder
     {
         return $this->set(str_concat(
             '^',
-            Arr::arrange($this->withResult(...$sentenceOrWord)),
+            $this->withResult(...$sentenceOrWord),
             '$'
         ));
     }
 
     public function endsWith(string|self ...$sentenceOrWord): static
     {
-        return $this->set(str_concat(Arr::arrange($this->withResult(...$sentenceOrWord)), '$'));
+        return $this->set(str_concat($this->withResult(...$sentenceOrWord), '$'));
     }
 
     public function exceptWord(string|self $word): static
     {
-        return $this->set(Arr::arrange($this->withResult(str_concat('(?!', static::raw($word), ')'))));
+        return $this->set(str_concat($this->withResult(str_concat('(?!', static::raw($word), ')'))));
     }
 
     public function contain(Quantifier|string $conditionCount = '', string|self ...$requirements): static
     {
         return $this->set(str_concat(
             '[',
-            Arr::arrange($this->withResult(...$requirements)),
+            $this->withResult(...$requirements),
             ']',
             is_string($conditionCount) ? $conditionCount : $conditionCount->value
         ));
@@ -47,7 +47,7 @@ class Regex extends Builder
 
     public function range(string $from, string $until): static
     {
-        return $this->set(Arr::arrange($this->withResult("$from-$until")));
+        return $this->set(str_concat($this->withResult("$from-$until")));
     }
 
     /**

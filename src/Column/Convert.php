@@ -2,14 +2,14 @@
 
 namespace JundFauz\EloquentKompact\Column;
 
-use Illuminate\Support\Str;
+use JundFauz\EloquentKompact\Builder\Str;
 
 final class Convert
 {
     public static function booleanToString(string $columnName): array
     {
-        $trueValue = __(Str::ucfirst(Creator::getPlainColumnName($columnName)));
-        $falseValue = __('Not :value', ['value' => Str::lower($trueValue)]);
+        $trueValue = __((string) Creator::getPlainColumnName($columnName)->ucfirst());
+        $falseValue = __('Not :value', ['value' => (string) Str::of($trueValue)->lower()]);
 
         return [$falseValue, $trueValue];
     }
@@ -26,21 +26,23 @@ final class Convert
 
     public static function modelToColumn(string $model, ?string $prefix = null): string
     {
-        $result = Creator::relation(Str::snake(class_basename($model)));
+        $result = Str::of($model)->classBasename()->snake()->relation();
         if ($prefix) {
-            $result = "{$prefix}_$result";
+            $result = $result->addAtStart($prefix, '_');
         }
 
-        return $result;
+        return (string) $result;
     }
 
     public static function modelToRelation(string $model, bool $isPlural = false, bool $isSnakeCase = false): string
     {
-        $baseName = class_basename($model);
+        $baseName = Str::of($model)->classBasename();
         if ($isPlural) {
-            $baseName = Str::plural($baseName);
+            $baseName = $baseName->plural();
         }
 
-        return $isSnakeCase ? Str::snake($baseName) : Str::camel($baseName);
+        return (string) ($isSnakeCase
+            ? $baseName->snake()
+            : $baseName->camel());
     }
 }

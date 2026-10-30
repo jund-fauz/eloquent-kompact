@@ -2,9 +2,8 @@
 
 namespace JundFauz\EloquentKompact\Model\Traits;
 
-use JundFauz\EloquentKompact\Builder\StrB;
+use JundFauz\EloquentKompact\Builder\Str;
 use JundFauz\EloquentKompact\Column\Creator;
-use JundFauz\EloquentKompact\Helper\Path;
 
 trait AutoCast
 {
@@ -13,8 +12,8 @@ trait AutoCast
 
     public function getCasts(): array
     {
-        // parent ditaruh di kiri supaya $casts eksplisit pada model
-        // menang atas hasil autocast.
+        // The parent is placed on the left so that explicit $casts on the model
+        // take precedence over the result of auto casting.
         return parent::getCasts() + (static::$autoCastCache[static::class] ??= $this->resolveAutoCasts());
     }
 
@@ -42,16 +41,11 @@ trait AutoCast
 
     protected function resolveEnumCast(string $column): string
     {
-        $enum = Path::namespaceConcat(
-            config('eloquent-kompact.path.database_enum'),
-            (string) StrB::initiate($this->getTable())
-                ->singular()
-                ->pascal()
-                ->concat(
-                    StrB::initiate(Creator::getPlainColumnName($column))
-                        ->pascal()
-                )
-        );
+        $enum = (string) Str::of($this->getTable())
+            ->singular()
+            ->pascal()
+            ->add(Creator::getPlainColumnName($column)->pascal())
+            ->addNamespaceAtStart(config('eloquent-kompact.path.database_enum'));
 
         return class_exists($enum) ? $enum : 'string';
     }

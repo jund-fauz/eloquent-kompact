@@ -5,6 +5,7 @@ namespace JundFauz\EloquentKompact\Model\Traits;
 use Illuminate\Database\Eloquent\Attributes\Scope;
 use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Database\Eloquent\Model;
+use function JundFauz\EloquentKompact\is_not_array;
 
 trait AdditionalQueries
 {

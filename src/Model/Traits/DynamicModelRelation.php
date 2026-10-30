@@ -9,12 +9,12 @@ use Illuminate\Database\Eloquent\Relations\Relation;
 use Illuminate\Support\Str;
 use JundFauz\EloquentKompact\Column\ColumnListing;
 use JundFauz\EloquentKompact\Column\Creator;
-use JundFauz\EloquentKompact\Helper\Path;
 use ReflectionClass;
 use ReflectionException;
 use ReflectionMethod;
 use function array_key_exists;
 use function count;
+use function JundFauz\EloquentKompact\namespace_concat;
 use function sprintf;
 
 trait DynamicModelRelation
@@ -55,7 +55,7 @@ trait DynamicModelRelation
 
         while (count($parts) > 0) {
             $attemptedClassName = implode('', array_map(ucfirst(...), $parts));
-            $className = Path::namespaceConcat(config('eloquent-kompact.path.model'), $attemptedClassName);
+            $className = namespace_concat(config('eloquent-kompact.path.model'), $attemptedClassName);
 
             if (class_exists($className)) {
                 $prefixParts = array_slice($originalParts, 0, count($originalParts) - count($parts));

@@ -5,9 +5,12 @@ namespace JundFauz\EloquentKompact\Query;
 use Illuminate\Contracts\Database\Query\Expression;
 use Illuminate\Database\Grammar;
 use Illuminate\Support\Facades\DB;
+use JundFauz\EloquentKompact\Builder\Str;
 use JundFauz\EloquentKompact\Column\Convert;
 use JundFauz\EloquentKompact\Internal\Concerns\Builder;
 use JundFauz\EloquentKompact\Internal\Database\Driver;
+use function JundFauz\EloquentKompact\is_not_null;
+use function JundFauz\EloquentKompact\str_concat;
 
 /**
  * NOTE: Built to compatible with MySQL & PostgreSQL database
@@ -153,18 +156,18 @@ class RawQuery extends Builder implements Expression
 
     public static function relations(string $columnName, ...$relationClasses): string
     {
-        $result = '';
+        $result = Str::of();
         foreach ($relationClasses as $relationClass) {
-            $result .= str_concat(Convert::modelToRelation($relationClass, true, true), '.');
+            $result = $result->concat(Convert::modelToRelation($relationClass, true, true), '.');
         }
 
         if ($columnName) {
-            $result .= $columnName;
+            $result = $result->concat($columnName);
         } else {
-            $result = substr($result, 0, -1);
+            $result = $result->substr(0, -1);
         }
 
-        return $result;
+        return (string) $result;
     }
 
     public static function string(mixed $value = ''): string

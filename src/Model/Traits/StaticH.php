@@ -3,8 +3,8 @@
 namespace JundFauz\EloquentKompact\Model\Traits;
 
 use Illuminate\Database\Schema\Blueprint;
-use Illuminate\Support\Str;
-use JundFauz\EloquentKompact\Helper\Path;
+use JundFauz\EloquentKompact\Builder\Str;
+use const JundFauz\EloquentKompact\NAMESPACE_DELIMITER;
 
 trait StaticH
 {
@@ -16,8 +16,10 @@ trait StaticH
     public static function getModel(Blueprint $column): ?string
     {
         $tableName = $column->getTable();
-        $modelName = Str::studly(Str::singular($tableName));
-        $modelClass = Path::namespaceConcat(config('eloquent-kompact.path.model'), $modelName);
+        $modelClass = (string) Str::of($tableName)
+            ->singular()
+            ->pascal()
+            ->addAtStart(config('eloquent-kompact.path.model'), NAMESPACE_DELIMITER);
 
         return class_exists($modelClass) ? $modelClass : null;
     }

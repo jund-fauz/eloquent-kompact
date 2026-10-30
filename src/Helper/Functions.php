@@ -1,32 +1,108 @@
 <?php
 
+namespace JundFauz\EloquentKompact;
+
 use Illuminate\Support\Arr;
+use JundFauz\EloquentKompact\Builder\Str;
 
-if (! function_exists('is_not_null')) {
-    function is_not_null($value): bool
-    {
-        return ! is_null($value);
-    }
+function is_not_null($value): bool
+{
+    return ! is_null($value);
 }
 
-if (! function_exists('is_all_null')) {
-    function is_all_null(mixed ...$values): bool
-    {
-        $values = Arr::flatten($values);
-        return array_all($values, fn (mixed $value) => is_null($value));
-    }
+function is_all_null(mixed ...$values): bool
+{
+    array_flat($values);
+    return array_all($values, fn (mixed $value) => is_null($value));
 }
 
-if (! function_exists('is_not_array')) {
-    function is_not_array($value): bool
-    {
-        return ! is_array($value);
-    }
+function is_not_array($value): bool
+{
+    return ! is_array($value);
 }
 
-if (! function_exists('str_concat')) {
-    function str_concat(string ...$values): string
-    {
-        return join('', $values);
-    }
+function str_concat(string|array ...$values): string
+{
+    array_flat($values);
+    return join('', $values);
+}
+
+function word_concat(string|array ...$values): string
+{
+    array_flat($values);
+    return join(' ', $values);
+}
+
+function schema_concat(string|array ...$values): string
+{
+    array_flat($values);
+    return join(':', $values);
+}
+
+function write_line(string|array ...$lines): string
+{
+    array_flat($lines);
+    return join(NEW_LINE, $lines);
+}
+
+function comment(string $sentence): string
+{
+    return word_concat('//', $sentence);
+}
+
+function namespace_concat(string|array ...$folderOrPackages): string
+{
+    array_flat($folderOrPackages);
+    return join(NAMESPACE_DELIMITER, array_map(fn (string $part) => trim($part, NAMESPACE_DELIMITER), $folderOrPackages));
+}
+
+function path_concat(string|array ...$folderOrPackages): string
+{
+    array_flat($folderOrPackages);
+    return join(PATH_DELIMITER, $folderOrPackages);
+}
+
+function full_path_on_app(string $path): string
+{
+    return app_path(
+        (string) Str::of($path)
+            ->replace(NAMESPACE_DELIMITER, PATH_DELIMITER)
+            ->replaceByRegex('/^app(\/|$)/i', '')
+            ->trim(PATH_DELIMITER)
+    );
+}
+
+function array_flat(array &$array): void
+{
+    $array = Arr::flatten($array);
+}
+
+function str_before_last(string $subject, string $search): string
+{
+    return \Illuminate\Support\Str::beforeLast($subject, $search);
+}
+
+function str_lower(string $subject): string
+{
+    return \Illuminate\Support\Str::lower($subject);
+}
+
+function str_upper(string $subject): string
+{
+    return \Illuminate\Support\Str::upper($subject);
+}
+
+function same_with(mixed $firstValue, mixed $secondValue): bool
+{
+    return $firstValue === $secondValue;
+}
+
+function not_same_with(mixed $firstValue, mixed $secondValue): bool
+{
+    return $firstValue !== $secondValue;
+}
+
+function not(bool $condition): bool
+{
+    return ! $condition;
 }

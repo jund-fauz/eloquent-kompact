@@ -4,6 +4,7 @@ namespace JundFauz\EloquentKompact\Internal\Concerns;
 
 use JundFauz\EloquentKompact\Helper\Error\ErrorThrow;
 use Stringable;
+use function JundFauz\EloquentKompact\is_not_null;
 
 /**
  * @internal

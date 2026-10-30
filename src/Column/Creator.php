@@ -2,7 +2,7 @@
 
 namespace JundFauz\EloquentKompact\Column;
 
-use Illuminate\Support\Str;
+use JundFauz\EloquentKompact\Builder\Str;
 use JundFauz\EloquentKompact\Helper\Error\ErrorThrow;
 use ReflectionClass;
 use ReflectionClassConstant;
@@ -22,11 +22,6 @@ use ReflectionClassConstant;
 final class Creator
 {
     use ErrorThrow;
-
-    // Satu-satunya tempat skema penamaan kolom ditentukan.
-    // Ganti ke '/^/' untuk beralih ke skema prefix; penyisipan, pencocokan,
-    // dan pelucutan token semuanya ikut menyesuaikan sendiri.
-    protected const string ToBeReplaced = '/$/';
 
     public const string Enum = '_enum';
 
@@ -48,12 +43,12 @@ final class Creator
     public const string Relation = '_id';
 
     /**
-     * Token kolom => tipe cast Eloquent.
+     * Column token => Eloquent cast type.
      *
-     * Sengaja protected supaya tidak ikut terjaring reflection di tokens().
-     * Token yang tidak terdaftar di sini memang tidak butuh cast.
-     * Enum tidak ada di sini karena kelas tujuannya bergantung pada tabel
-     * model, jadi di-resolve oleh AutoCast::resolveEnumCast().
+     * Intentionally marked as `protected` so it isn’t caught by reflection in `tokens()`.
+     * Tokens not listed here do not require a cast.
+     * Enums are not listed here because their target classes depend on the
+     * model table, so they are resolved by `AutoCast::resolveEnumCast()`.
      */
     protected const array Casts = [
         self::Array => 'array',
@@ -69,13 +64,13 @@ final class Creator
 
     public static function __callStatic(string $method, array $parameters): string
     {
-        $constant = self::class.'::'.Str::pascal($method);
+        $constant = (string) Str::of($method)->pascal()->addAtStart(self::class, '::');
 
         if (! defined($constant) || ! in_array(constant($constant), self::tokens(), true)) {
             self::methodNotFound($method);
         }
 
-        return preg_replace(self::ToBeReplaced, constant($constant), $parameters[0]);
+        return preg_replace(config('eloquent-kompact.column.to_be_replaced'), constant($constant), $parameters[0]);
     }
 
     public static function quantity(): array
@@ -87,8 +82,8 @@ final class Creator
     }
 
     /**
-     * Seluruh token penanda tipe kolom, yang terpanjang lebih dulu supaya
-     * token yang kebetulan jadi akhiran token lain tidak menang duluan.
+     * All column-type tokens, with the longest one first, so that
+     * tokens that happen to be the suffixes of other tokens do not win first.
      *
      * @return list<string>
      */
@@ -109,7 +104,7 @@ final class Creator
     }
 
     /**
-     * Regex pencocok token; posisinya diturunkan langsung dari ToBeReplaced.
+     * Token-matching regex; its position is derived directly from the config.
      */
     protected static function matcher(): string
     {
@@ -119,36 +114,38 @@ final class Creator
                 self::tokens()
             ));
 
-            $anchor = trim(self::ToBeReplaced, '/');
+            $toBeReplaceRegex = config('eloquent-kompact.column.to_be_replaced');
 
-            // ToBeReplaced itu zero-width, jadi sisipkan penanda uji sekali
-            // untuk tahu di sisi mana dia menaruh token.
-            return Str::startsWith(preg_replace(self::ToBeReplaced, 'X', 'a'), 'X')
+            $anchor = trim($toBeReplaceRegex, '/');
+
+            // “ToBeReplaced” is a zero-width character, so insert a test marker once
+            // to determine on which side it places the token.
+            return Str::of('a')->replaceByRegex($toBeReplaceRegex, 'X')->startsWith('X')
                 ? "/$anchor($alternation)/"  // skema prefix  → /^(enum_|array_|…)/
                 : "/($alternation)$anchor/"; // skema suffix  → /(_enum|_array|…)$/
         })();
     }
 
-    public static function getPlainColumnName(string $column): string
+    public static function getPlainColumnName(string $column): Str
     {
-        return preg_replace(self::matcher(), '', $column);
+        return Str::of($column)->removeByRegex(self::matcher());
     }
 
     /**
-     * Token tipe milik sebuah kolom, atau '' kalau kolomnya polos.
+     * A column's type token, or ‘’ if the column doesn't have token.
      */
     public static function getColumnType(string $column, bool $clean = false): string
     {
-        $result = Str::match(self::matcher(), $column);
+        $result = Str::of($column)->match(self::matcher());
         if ($clean) {
-            $result = Str::replace('_', '', $result);
+            $result = $result->remove('_');
         }
 
-        return $result;
+        return (string) $result;
     }
 
     /**
-     * Tipe cast Eloquent untuk sebuah token, atau null kalau tidak butuh cast.
+     * An Eloquent cast for a token, or null if no cast is needed.
      */
     public static function castOf(string $token): ?string
     {

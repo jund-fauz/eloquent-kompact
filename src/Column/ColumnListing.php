@@ -5,6 +5,8 @@ namespace JundFauz\EloquentKompact\Column;
 use Cache;
 use Illuminate\Cache\Repository;
 use Schema;
+use function JundFauz\EloquentKompact\schema_concat;
+use function JundFauz\EloquentKompact\str_lower;
 
 final class ColumnListing
 {
@@ -21,7 +23,7 @@ final class ColumnListing
 
     public static function has(string $table, string $column): bool
     {
-        return in_array(strtolower($column), array_map(strtolower(...), self::of($table)), true);
+        return in_array(str_lower($column), array_map(str_lower(...), self::of($table)), true);
     }
 
     public static function flush(): void
@@ -35,7 +37,7 @@ final class ColumnListing
 
     private static function key(string $table): string
     {
-        return str_concat('schema_columns:', Schema::getConnection()->getDatabaseName(), ":$table");
+        return schema_concat('schema_columns', Schema::getConnection()->getDatabaseName(), "$table");
     }
 
     private static function store(): Repository

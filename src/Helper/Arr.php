@@ -20,6 +20,11 @@ class Arr extends \Illuminate\Support\Arr
         return array_reduce($keys, fn(bool $acc, string $key) => $acc && ! array_key_exists($key, $array), true);
     }
 
+    /**
+     * @deprecated since 0.35.0, use str_concat() instead
+     * @param array $array
+     * @return string
+     */
     public static function arrange(array $array): string
     {
         return join('', $array);
