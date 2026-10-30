@@ -7,6 +7,27 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [0.36.0] - 2026-10-30
+
+### Added
+
+- `Str::removeStart()` and `removeEnd()` to remove a string only at the start or end, as `StrB` had before 0.35.0.
+
+  ```php
+  Str::of('app/Models/app')->removeStart('app/')->toString(); // Models/app
+  Str::of('app/Models/app')->removeEnd('/app')->toString();   // app/Models
+  ```
+
+- README sections for every feature: the column naming convention, `KompactModel` and its traits, the IDE helper, the migration helpers, `Str`, `BoolB`, `Regex`, the helper functions and the other helpers.
+
+### Fixed
+
+- The README said `RawQuery` methods change the same instance; they return a new one since 0.15.0.
+
+### Tests
+
+- Added unit tests for `Str::removeStart()` and `removeEnd()`.
+
 ## [0.35.0] - 2026-10-30
 
 ### Added
@@ -713,7 +734,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - `RawQuery` static helpers for raw SQL expressions.
 - Translations for `en` and `id`.
 
-[Unreleased]: https://github.com/jund-fauz/eloquent-kompact/compare/v0.35.0...HEAD
+[Unreleased]: https://github.com/jund-fauz/eloquent-kompact/compare/v0.36.0...HEAD
+[0.36.0]: https://github.com/jund-fauz/eloquent-kompact/compare/v0.35.0...v0.36.0
 [0.35.0]: https://github.com/jund-fauz/eloquent-kompact/compare/v0.34.0...v0.35.0
 [0.34.0]: https://github.com/jund-fauz/eloquent-kompact/compare/v0.33.0...v0.34.0
 [0.33.0]: https://github.com/jund-fauz/eloquent-kompact/compare/v0.32.0...v0.33.0
