@@ -58,6 +58,8 @@ class StrTest extends TestCase
         yield 'addAtStart nothing' => [Str::of('a')->addAtStart(), 'a'];
         yield 'addNamespace' => [Str::of('App')->addNamespace('Models', 'User'), 'App\Models\User'];
         yield 'addNamespace nothing' => [Str::of('App')->addNamespace(), 'App'];
+        yield 'addNamespace trims backslashes' => [Str::of('App\\')->addNamespace('\Models\\', 'User'), 'App\Models\User'];
+        yield 'addNamespace trims the value' => [Str::of('\App')->addNamespace('Models'), 'App\Models'];
         yield 'addNamespaceAtStart' => [Str::of('User')->addNamespaceAtStart('App', 'Models'), 'App\Models\User'];
         yield 'addNamespaceAtStart trims backslashes' => [Str::of('\User')->addNamespaceAtStart('\App\\', 'Models\\'), 'App\Models\User'];
 

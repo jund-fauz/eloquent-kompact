@@ -51,9 +51,9 @@ class Str extends Stringable
         return $this->join('', ...$otherStrings);
     }
 
-    public function addNamespace(string ...$otherStrings): self
+    public function addNamespace(string ...$otherNamespace): self
     {
-        return $this->join(NAMESPACE_DELIMITER, ...$otherStrings);
+        return new self(namespace_concat($this->value, $otherNamespace));
     }
 
     public function addAtStart(string ...$otherStrings): self
