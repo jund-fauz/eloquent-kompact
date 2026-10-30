@@ -51,9 +51,9 @@ class RawQuery extends Builder implements Expression
         return $this->set("$this->result IS NULL");
     }
 
-    public function and(string|self ...$conditions): static
+    public function and(string $otherColumn): static
     {
-        return $this->set(join(' AND ', $this->withResult(...$conditions)));
+        return $this->set("$this->result AND $otherColumn");
     }
 
     public function wrap(): static
@@ -109,7 +109,7 @@ class RawQuery extends Builder implements Expression
         return $this->set(str_concat($result, "\nEND"));
     }
 
-    public static function flexibleCase(string|self|array $conditions, mixed $defaultValue = null): string
+    public static function flexibleCase(string|self|array $conditions, mixed $defaultValue = null): self
     {
         $result = 'CASE';
         if (! is_array($conditions)) {
@@ -127,7 +127,7 @@ class RawQuery extends Builder implements Expression
         if (is_not_null($defaultValue)) {
             $result .= "\n  ELSE $defaultValue";
         }
-        return str_concat($result, "\nEND");
+        return self::create(str_concat($result, "\nEND"));
     }
 
     public function concat(string|self ...$values): static
@@ -154,16 +154,17 @@ class RawQuery extends Builder implements Expression
         return $this->set("MAX($this->result)");
     }
 
-    public static function relations(string $columnName, ...$relationClasses): string
+    public static function relations(string $columnName, ...$relationClasses): static
     {
         $result = Str::of();
         foreach ($relationClasses as $relationClass) {
             $result = $result->add(Convert::modelToRelation($relationClass, true, true), '.');
         }
 
-        return (string) ($columnName
+        return ($columnName
             ? $result->add($columnName)
-            : $result->substr(0, -1));
+            : $result->substr(0, -1))
+            ->asRawQuery();
     }
 
     public static function string(mixed $value = ''): string

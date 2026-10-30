@@ -23,7 +23,8 @@ class RawQueryTest extends TestCase
         yield 'isNull' => [RawQuery::create('deleted_at')->isNull(), 'deleted_at IS NULL'];
         yield 'isZeroOrNull single' => [RawQuery::create('a')->isZeroOrNull(), 'a = 0 OR a IS NULL'];
         yield 'isZeroOrNull many' => [RawQuery::create('a')->isZeroOrNull('b'), 'a = 0 OR a IS NULL OR b = 0 OR b IS NULL'];
-        yield 'and' => [RawQuery::create('a = 1')->and('b = 2', 'c = 3'), 'a = 1 AND b = 2 AND c = 3'];
+        yield 'and' => [RawQuery::create('a = 1')->and('b = 2'), 'a = 1 AND b = 2'];
+        yield 'and chained' => [RawQuery::create('a = 1')->and('b = 2')->and('c = 3'), 'a = 1 AND b = 2 AND c = 3'];
         yield 'wrap' => [RawQuery::create('a + b')->wrap(), '(a + b)'];
         yield 'sum' => [RawQuery::create('price')->sum(), 'SUM(price)'];
         yield 'max' => [RawQuery::create('price')->max(), 'MAX(price)'];
@@ -137,18 +138,25 @@ class RawQueryTest extends TestCase
     #[Test]
     public function it_builds_flexible_case(): void
     {
-        $this->assertSame("CASE\n  WHEN a = 1 THEN ?\nEND", RawQuery::flexibleCase('a = 1'));
-        $this->assertSame("CASE\n  WHEN a = 1 THEN ?\n  WHEN b = 2 THEN ?\nEND", RawQuery::flexibleCase(['a = 1', 'b = 2']));
+        $this->assertSame("CASE\n  WHEN a = 1 THEN ?\nEND", RawQuery::flexibleCase('a = 1')->build());
+        $this->assertSame("CASE\n  WHEN a = 1 THEN ?\n  WHEN b = 2 THEN ?\nEND", RawQuery::flexibleCase(['a = 1', 'b = 2'])->build());
         $this->assertSame(
             "CASE\n  WHEN a = 1 THEN 'one'\n  ELSE 'other'\nEND",
-            RawQuery::flexibleCase(['a = 1' => "'one'"], "'other'")
+            RawQuery::flexibleCase(['a = 1' => "'one'"], "'other'")->build()
         );
-        $this->assertSame("CASE\n  WHEN a = 1 THEN 1\n  ELSE 0\nEND", RawQuery::flexibleCase(['a = 1' => '1'], 0));
-        $this->assertSame("CASE\n  WHEN a IS NULL THEN ?\nEND", RawQuery::flexibleCase(RawQuery::create('a')->isNull()));
+        $this->assertSame("CASE\n  WHEN a = 1 THEN 1\n  ELSE 0\nEND", RawQuery::flexibleCase(['a = 1' => '1'], 0)->build());
+        $this->assertSame("CASE\n  WHEN a IS NULL THEN ?\nEND", RawQuery::flexibleCase(RawQuery::create('a')->isNull())->build());
         $this->assertSame(
             "CASE\n  WHEN a IS NULL THEN ?\n  ELSE COALESCE(b, 0)\nEND",
-            RawQuery::flexibleCase([RawQuery::create('a')->isNull()], RawQuery::create('b')->zeroIfNull())
+            RawQuery::flexibleCase([RawQuery::create('a')->isNull()], RawQuery::create('b')->zeroIfNull())->build()
         );
+    }
+
+    #[Test]
+    public function it_chains_from_flexible_case(): void
+    {
+        $this->assertInstanceOf(RawQuery::class, RawQuery::flexibleCase('a = 1'));
+        $this->assertSame("CASE\n  WHEN a = 1 THEN ?\nEND AS b", RawQuery::flexibleCase('a = 1')->as('b')->build());
     }
 
     #[Test]
@@ -161,9 +169,10 @@ class RawQueryTest extends TestCase
     #[Test]
     public function it_builds_relation_paths(): void
     {
-        $this->assertSame('users.blog_posts.title', RawQuery::relations('title', 'App\Models\User', 'App\Models\BlogPost'));
-        $this->assertSame('users', RawQuery::relations('', 'App\Models\User'));
-        $this->assertIsString(RawQuery::relations('title', 'App\Models\User'));
+        $this->assertSame('users.blog_posts.title', RawQuery::relations('title', 'App\Models\User', 'App\Models\BlogPost')->build());
+        $this->assertSame('users', RawQuery::relations('', 'App\Models\User')->build());
+        $this->assertInstanceOf(RawQuery::class, RawQuery::relations('title', 'App\Models\User'));
+        $this->assertSame('COUNT(users.title)', RawQuery::relations('title', 'App\Models\User')->count()->build());
     }
 
     #[Test]

@@ -6,6 +6,7 @@ use BadMethodCallException;
 use Illuminate\Foundation\Application;
 use Illuminate\Support\Stringable;
 use JundFauz\EloquentKompact\Builder\Str;
+use JundFauz\EloquentKompact\Query\RawQuery;
 use JundFauz\EloquentKompact\Tests\TestCase;
 use PHPUnit\Framework\Attributes\DataProvider;
 use PHPUnit\Framework\Attributes\Test;
@@ -137,6 +138,16 @@ class StrTest extends TestCase
         $this->assertSame(app_path('Models'), Str::of('Models')->appPath()->toString());
         $this->assertSame(app_path(), Str::of()->appPath()->toString());
         $this->assertInstanceOf(Str::class, Str::of('Models')->appPath());
+    }
+
+    #[Test]
+    public function it_converts_to_a_raw_query(): void
+    {
+        $query = Str::of('price')->asRawQuery();
+
+        $this->assertInstanceOf(RawQuery::class, $query);
+        $this->assertSame('price', $query->build());
+        $this->assertSame('SUM(price)', Str::of('price')->asRawQuery()->sum()->build());
     }
 
     #[Test]
