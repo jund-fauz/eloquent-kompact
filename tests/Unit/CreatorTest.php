@@ -5,26 +5,12 @@ namespace JundFauz\EloquentKompact\Tests\Unit;
 use BadMethodCallException;
 use JundFauz\EloquentKompact\Builder\Str;
 use JundFauz\EloquentKompact\Column\Creator;
-use JundFauz\EloquentKompact\Regex\Regex;
 use JundFauz\EloquentKompact\Tests\TestCase;
 use PHPUnit\Framework\Attributes\DataProvider;
 use PHPUnit\Framework\Attributes\Test;
-use ReflectionProperty;
 
 class CreatorTest extends TestCase
 {
-    protected function tearDown(): void
-    {
-        self::resetMatcher();
-
-        parent::tearDown();
-    }
-
-    private static function resetMatcher(): void
-    {
-        (new ReflectionProperty(Creator::class, 'matcher'))->setValue(null, null);
-    }
-
     public static function tokenMethodProvider(): iterable
     {
         yield 'enum' => ['enum', 'status_enum'];
@@ -137,34 +123,12 @@ class CreatorTest extends TestCase
     }
 
     #[Test]
-    public function it_accepts_a_regex_builder_in_the_config(): void
-    {
-        config(['eloquent-kompact.column.to_be_replaced' => Regex::create()->endsWith()]);
-        self::resetMatcher();
-
-        $this->assertSame('user_id', Creator::relation('user'));
-        $this->assertSame('user', Creator::getPlainColumnName('user_id')->toString());
-    }
-
-    #[Test]
-    public function it_accepts_a_string_pattern_in_the_config(): void
-    {
-        config(['eloquent-kompact.column.to_be_replaced' => '/$/']);
-        self::resetMatcher();
-
-        $this->assertSame('user_id', Creator::relation('user'));
-        $this->assertSame('user', Creator::getPlainColumnName('user_id')->toString());
-    }
-
-    #[Test]
-    public function it_switches_to_the_prefix_scheme(): void
+    public function it_always_uses_the_suffix_scheme(): void
     {
         config(['eloquent-kompact.column.to_be_replaced' => '/^/']);
-        self::resetMatcher();
 
-        $this->assertSame('_iduser', Creator::relation('user'));
-        $this->assertSame('user', Creator::getPlainColumnName('_iduser')->toString());
-        $this->assertSame('_id', Creator::getColumnType('_iduser'));
-        $this->assertSame('user_id', Creator::getPlainColumnName('user_id')->toString());
+        $this->assertSame('user_id', Creator::relation('user'));
+        $this->assertSame('user', Creator::getPlainColumnName('user_id')->toString());
+        $this->assertSame('', Creator::getColumnType('id_user'));
     }
 }

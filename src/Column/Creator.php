@@ -4,6 +4,7 @@ namespace JundFauz\EloquentKompact\Column;
 
 use JundFauz\EloquentKompact\Builder\Str;
 use JundFauz\EloquentKompact\Helper\Error\ErrorThrow;
+use JundFauz\EloquentKompact\Regex\Regex;
 use ReflectionClass;
 use ReflectionClassConstant;
 
@@ -62,6 +63,11 @@ final class Creator
 
     protected static ?string $matcher = null;
 
+    private static function toBeReplaced()
+    {
+        return Regex::create()->endsWith();
+    }
+
     public static function __callStatic(string $method, array $parameters): string
     {
         $constant = (string) Str::of($method)->pascal()->addAtStart(self::class, '::');
@@ -70,7 +76,7 @@ final class Creator
             self::methodNotFound($method);
         }
 
-        return preg_replace(config('eloquent-kompact.column.to_be_replaced'), constant($constant), $parameters[0]);
+        return preg_replace(self::toBeReplaced(), constant($constant), $parameters[0]);
     }
 
     public static function quantity(): array
@@ -114,7 +120,7 @@ final class Creator
                 self::tokens()
             ));
 
-            $toBeReplaceRegex = config('eloquent-kompact.column.to_be_replaced');
+            $toBeReplaceRegex = self::toBeReplaced();
 
             $anchor = trim($toBeReplaceRegex, '/');
 

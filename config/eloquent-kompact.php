@@ -14,9 +14,6 @@ return [
             Regex::create()->endsWith('_at')
         ]
     ],
-    'column' => [
-        'to_be_replaced' => Regex::create()->endsWith()
-    ],
     'ide-helper' => [
         'auto_generate' => env('KOMPACT_IDE_HELPER', false)
     ]

@@ -110,7 +110,6 @@ class StrTest extends TestCase
         $this->assertInstanceOf(Str::class, $string->removeEnd('a'));
     }
 
-    // Creator reads the config, so it needs the app and cannot run in a data provider.
     #[Test]
     public function it_appends_the_relation_token(): void
     {
