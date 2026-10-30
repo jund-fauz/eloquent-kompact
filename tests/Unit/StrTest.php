@@ -60,6 +60,8 @@ class StrTest extends TestCase
         yield 'addNamespace nothing' => [Str::of('App')->addNamespace(), 'App'];
         yield 'addNamespace trims backslashes' => [Str::of('App\\')->addNamespace('\Models\\', 'User'), 'App\Models\User'];
         yield 'addNamespace trims the value' => [Str::of('\App')->addNamespace('Models'), 'App\Models'];
+        yield 'addPath' => [Str::of('app')->addPath('Models', 'User.php'), 'app/Models/User.php'];
+        yield 'addPath nothing' => [Str::of('app')->addPath(), 'app'];
         yield 'addNamespaceAtStart' => [Str::of('User')->addNamespaceAtStart('App', 'Models'), 'App\Models\User'];
         yield 'addNamespaceAtStart trims backslashes' => [Str::of('\User')->addNamespaceAtStart('\App\\', 'Models\\'), 'App\Models\User'];
 
@@ -108,11 +110,33 @@ class StrTest extends TestCase
         $this->assertInstanceOf(Str::class, $string->addAtStart('b'));
         $this->assertInstanceOf(Str::class, $string->addNamespaceAtStart('b'));
         $this->assertInstanceOf(Str::class, $string->addNamespace('b'));
+        $this->assertInstanceOf(Str::class, $string->addPath('b'));
         $this->assertInstanceOf(Str::class, $string->emptyIfFalse(true));
         $this->assertInstanceOf(Str::class, $string->relation());
         $this->assertInstanceOf(Str::class, $string->concat('b'));
         $this->assertInstanceOf(Str::class, $string->removeStart('a'));
         $this->assertInstanceOf(Str::class, $string->removeEnd('a'));
+    }
+
+    #[Test]
+    public function it_returns_the_subclass_from_added_methods(): void
+    {
+        $subclass = new class extends Str {};
+        $string = $subclass::of('a');
+
+        $this->assertInstanceOf($subclass::class, $string);
+        $this->assertInstanceOf($subclass::class, $string->add('b'));
+        $this->assertInstanceOf($subclass::class, $string->addNamespace('b'));
+        $this->assertInstanceOf($subclass::class, $string->addPath('b'));
+        $this->assertInstanceOf($subclass::class, $string->appPath());
+    }
+
+    #[Test]
+    public function it_resolves_the_path_inside_the_app_directory(): void
+    {
+        $this->assertSame(app_path('Models'), Str::of('Models')->appPath()->toString());
+        $this->assertSame(app_path(), Str::of()->appPath()->toString());
+        $this->assertInstanceOf(Str::class, Str::of('Models')->appPath());
     }
 
     #[Test]
