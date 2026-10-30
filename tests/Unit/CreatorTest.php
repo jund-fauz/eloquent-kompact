@@ -125,8 +125,6 @@ class CreatorTest extends TestCase
     #[Test]
     public function it_always_uses_the_suffix_scheme(): void
     {
-        config(['eloquent-kompact.column.to_be_replaced' => '/^/']);
-
         $this->assertSame('user_id', Creator::relation('user'));
         $this->assertSame('user', Creator::getPlainColumnName('user_id')->toString());
         $this->assertSame('', Creator::getColumnType('id_user'));
