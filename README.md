@@ -40,7 +40,6 @@ php artisan vendor:publish --tag=eloquent-kompact-config
 | `path.model` | `App\Models` | Namespace where dynamic relations and `StaticH::getModel()` look for models |
 | `path.database_enum` | `App\Enums` | Namespace where `AutoCast` looks for enums |
 | `fillable.excluded_columns_by_regex` | `id`, columns ending in `_at` | Columns left out of the dynamic fillable list |
-| `column.to_be_replaced` | `Regex::create()->endsWith()` (`/$/`) | Where `Creator` puts the column type token, see [Column naming convention](#column-naming-convention) |
 | `ide-helper.auto_generate` | `env('KOMPACT_IDE_HELPER', false)` | Run `kompact:ide-helper` after `php artisan migrate` in the local environment |
 
 A namespace may be written with or without a trailing backslash (`App\Models` or `App\Models\`).
@@ -102,8 +101,6 @@ use JundFauz\EloquentKompact\Column\Checker;
 Checker::isRelation('author_user_id'); // true
 Checker::isEnum($table->string('status_enum')); // true
 ```
-
-To use **prefixes** instead of suffixes (`id_author_user`), set `column.to_be_replaced` to `'/^/'`. The tokens keep their value, so they are inserted as they are (`_iduser`); use your own tokens if you need another shape.
 
 ## KompactModel
 
