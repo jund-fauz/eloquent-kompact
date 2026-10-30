@@ -7,6 +7,24 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [0.38.0] - 2026-10-30
+
+### Added
+
+- `Str::addNamespace()` to append namespaces with `\`.
+
+  ```php
+  Str::of('App')->addNamespace('Models', 'User')->toString(); // App\Models\User
+  ```
+
+### Fixed
+
+- `php artisan kompact:ide-helper` printed its summary in Indonesian; it is now in English.
+
+### Tests
+
+- Added unit tests for `Str::addNamespace()`.
+
 ## [0.37.0] - 2026-10-30
 
 ### Removed
@@ -748,7 +766,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - `RawQuery` static helpers for raw SQL expressions.
 - Translations for `en` and `id`.
 
-[Unreleased]: https://github.com/jund-fauz/eloquent-kompact/compare/v0.37.0...HEAD
+[Unreleased]: https://github.com/jund-fauz/eloquent-kompact/compare/v0.38.0...HEAD
+[0.38.0]: https://github.com/jund-fauz/eloquent-kompact/compare/v0.37.0...v0.38.0
 [0.37.0]: https://github.com/jund-fauz/eloquent-kompact/compare/v0.36.0...v0.37.0
 [0.36.0]: https://github.com/jund-fauz/eloquent-kompact/compare/v0.35.0...v0.36.0
 [0.35.0]: https://github.com/jund-fauz/eloquent-kompact/compare/v0.34.0...v0.35.0
