@@ -7,6 +7,26 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [0.39.0] - 2026-10-30
+
+### Changed
+
+- **BREAKING:** `Arrange::relation()` and `Arrange::relations()` return a `string` again instead of a `Builder\Str`, as before 0.35.0. Code that chains `Str` methods on the result must wrap it first:
+
+  ```php
+  // 0.38
+  Arrange::relation('name', User::class)->upper();
+
+  // 0.39
+  Str::of(Arrange::relation('name', User::class))->upper();
+  ```
+
+  Code that only uses the result as a string is not affected.
+
+### Tests
+
+- Added unit tests for `Arrange::relation()` and `relations()`, and for `RawQuery::relations()` returning a `string`.
+
 ## [0.38.1] - 2026-10-30
 
 ### Fixed
@@ -777,7 +797,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - `RawQuery` static helpers for raw SQL expressions.
 - Translations for `en` and `id`.
 
-[Unreleased]: https://github.com/jund-fauz/eloquent-kompact/compare/v0.38.1...HEAD
+[Unreleased]: https://github.com/jund-fauz/eloquent-kompact/compare/v0.39.0...HEAD
+[0.39.0]: https://github.com/jund-fauz/eloquent-kompact/compare/v0.38.1...v0.39.0
 [0.38.1]: https://github.com/jund-fauz/eloquent-kompact/compare/v0.38.0...v0.38.1
 [0.38.0]: https://github.com/jund-fauz/eloquent-kompact/compare/v0.37.0...v0.38.0
 [0.37.0]: https://github.com/jund-fauz/eloquent-kompact/compare/v0.36.0...v0.37.0
