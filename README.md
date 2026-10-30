@@ -441,6 +441,7 @@ RawQuery::create('paid')->sum()->divide(RawQuery::create('total')->sum())->as('p
 | `join($delimiter, ...$strings)` | The value and the strings joined with `$delimiter` |
 | `add(...$strings)` / `concat(...$strings)` | The strings appended without a delimiter |
 | `addAtStart(...$strings)` | The strings prepended without a delimiter |
+| `addNamespace(...$namespaces)` | The namespaces appended with `\` |
 | `addNamespaceAtStart(...$namespaces)` | The namespaces prepended with `\` |
 | `emptyIfFalse($condition)` | The value, or `''` if `$condition` is falsy |
 | `relation()` | The value with the relation token, e.g. `user_id` |
@@ -451,6 +452,7 @@ use JundFauz\EloquentKompact\Builder\Str;
 
 Str::of('App/blog_post/')->removeByRegex('/^app\//i')->trim('/')->plural()->pascal()->toString(); // BlogPosts
 Str::of('User')->addNamespaceAtStart('App', 'Models')->toString(); // App\Models\User
+Str::of('App')->addNamespace('Models', 'User')->toString();        // App\Models\User
 Str::of('app/Models/app')->removeStart('app/')->toString();       // Models/app
 Str::of('a')->sameWith(Str::of('a'));                              // true
 ```
