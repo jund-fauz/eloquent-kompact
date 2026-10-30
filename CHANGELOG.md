@@ -7,6 +7,17 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [0.38.1] - 2026-10-30
+
+### Fixed
+
+- `Str::addNamespace()` kept the backslashes around each part, so `Str::of('App\\')->addNamespace('\\Models')` gave `App\\\Models`. It now trims them like `addNamespaceAtStart()`: `App\Models`.
+- Typo in the `php artisan kompact:ide-helper` summary (`writtent` → `written`).
+
+### Tests
+
+- Added unit tests for `Str::addNamespace()` with leading and trailing backslashes.
+
 ## [0.38.0] - 2026-10-30
 
 ### Added
@@ -766,7 +777,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - `RawQuery` static helpers for raw SQL expressions.
 - Translations for `en` and `id`.
 
-[Unreleased]: https://github.com/jund-fauz/eloquent-kompact/compare/v0.38.0...HEAD
+[Unreleased]: https://github.com/jund-fauz/eloquent-kompact/compare/v0.38.1...HEAD
+[0.38.1]: https://github.com/jund-fauz/eloquent-kompact/compare/v0.38.0...v0.38.1
 [0.38.0]: https://github.com/jund-fauz/eloquent-kompact/compare/v0.37.0...v0.38.0
 [0.37.0]: https://github.com/jund-fauz/eloquent-kompact/compare/v0.36.0...v0.37.0
 [0.36.0]: https://github.com/jund-fauz/eloquent-kompact/compare/v0.35.0...v0.36.0
