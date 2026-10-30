@@ -8,6 +8,7 @@ use function JundFauz\EloquentKompact\namespace_concat;
 use function JundFauz\EloquentKompact\not_same_with;
 use function JundFauz\EloquentKompact\same_with;
 use function JundFauz\EloquentKompact\str_concat;
+use const JundFauz\EloquentKompact\NAMESPACE_DELIMITER;
 
 class Str extends Stringable
 {
@@ -48,6 +49,11 @@ class Str extends Stringable
     public function add(string ...$otherStrings): self
     {
         return $this->join('', ...$otherStrings);
+    }
+
+    public function addNamespace(string ...$otherStrings): self
+    {
+        return $this->join(NAMESPACE_DELIMITER, ...$otherStrings);
     }
 
     public function addAtStart(string ...$otherStrings): self

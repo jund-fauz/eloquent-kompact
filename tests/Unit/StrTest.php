@@ -56,6 +56,8 @@ class StrTest extends TestCase
         yield 'add empty' => [Str::of()->add('a', '', 'b'), 'ab'];
         yield 'addAtStart' => [Str::of('c')->addAtStart('a', 'b'), 'abc'];
         yield 'addAtStart nothing' => [Str::of('a')->addAtStart(), 'a'];
+        yield 'addNamespace' => [Str::of('App')->addNamespace('Models', 'User'), 'App\Models\User'];
+        yield 'addNamespace nothing' => [Str::of('App')->addNamespace(), 'App'];
         yield 'addNamespaceAtStart' => [Str::of('User')->addNamespaceAtStart('App', 'Models'), 'App\Models\User'];
         yield 'addNamespaceAtStart trims backslashes' => [Str::of('\User')->addNamespaceAtStart('\App\\', 'Models\\'), 'App\Models\User'];
 
@@ -103,6 +105,7 @@ class StrTest extends TestCase
         $this->assertInstanceOf(Str::class, $string->add('b'));
         $this->assertInstanceOf(Str::class, $string->addAtStart('b'));
         $this->assertInstanceOf(Str::class, $string->addNamespaceAtStart('b'));
+        $this->assertInstanceOf(Str::class, $string->addNamespace('b'));
         $this->assertInstanceOf(Str::class, $string->emptyIfFalse(true));
         $this->assertInstanceOf(Str::class, $string->relation());
         $this->assertInstanceOf(Str::class, $string->concat('b'));
