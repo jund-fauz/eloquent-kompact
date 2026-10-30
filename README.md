@@ -308,7 +308,7 @@ RawQuery::create('stock')             // stock
 // CASE WHEN stock > 0 THEN 'available' ELSE 'empty' END AS status
 ```
 
-Methods with several operands (`plus`, `minus`, `multiply`, `divide`, `and`, `concat`, `isZeroOrNull`) use the subject as the first operand. When `create()` is called without an expression, the operands are used as they are:
+Methods with several operands (`plus`, `minus`, `multiply`, `divide`, `concat`, `isZeroOrNull`) use the subject as the first operand. When `create()` is called without an expression, the operands are used as they are:
 
 ```php
 RawQuery::create('price')->plus('tax', 'shipping')->build(); // price + tax + shipping
@@ -366,7 +366,7 @@ In the table, `x` is the current subject.
 | `replaceIfNull($value)` | `NULLIF(x, value)` |
 | `isNull()` | `x IS NULL` |
 | `isZeroOrNull(...$columns)` | `x = 0 OR x IS NULL OR a = 0 OR a IS NULL ...` |
-| `and(...$conditions)` | `x AND a AND b` |
+| `and($condition)` | `x AND condition`; chain it for more conditions |
 | `wrap()` | `(x)` |
 | `sum()` / `max()` / `count()` | `SUM(x)` / `MAX(x)` / `COUNT(x)` |
 | `plus(...$columns)` | `x + a + b` |
@@ -387,15 +387,20 @@ In the table, `x` is the current subject.
 
 ### Static helpers
 
-These return a plain `string`, to be used as an operand or as the starting expression of `create()`.
+`now()`, `string()` and `queryConcat()` return a plain `string`, to be used as an operand or as the starting expression of `create()`. `relations()` and `flexibleCase()` return a `RawQuery`, so the chain can go on (call `build()` for a `string`).
 
 | Helper | Result |
 | --- | --- |
 | `RawQuery::now()` | `NOW()` |
 | `RawQuery::string($value)` | Escaped string literal, e.g. `'available'`. Without an argument: `''` |
+| `RawQuery::queryConcat(...$expressions)` | Expressions joined with a space |
 | `RawQuery::relations($column, ...$models)` | Relation path, e.g. `relations('name', User::class, Post::class)` → `users.posts.name` |
 | `RawQuery::flexibleCase($conditions, $default)` | `CASE WHEN a THEN ? ... END` for a list, or `CASE WHEN a THEN value ... END` for `[$when => $then]` |
-| `RawQuery::queryConcat(...$expressions)` | Expressions joined with a space |
+
+```php
+RawQuery::flexibleCase(['paid_at IS NULL' => "'unpaid'"], "'paid'")->as('status')->build();
+// CASE WHEN paid_at IS NULL THEN 'unpaid' ELSE 'paid' END AS status (on several lines)
+```
 
 Constants: `RawQuery::CHAR` and `RawQuery::NULL`, e.g. `->cast(RawQuery::CHAR)`.
 
@@ -451,9 +456,10 @@ RawQuery::create('paid')->sum()->divide(RawQuery::create('total')->sum())->as('p
 | `appPath()` | Laravel's `app_path()` of the value, e.g. `Models` → `{app_path}/Models` |
 | `emptyIfFalse($condition)` | The value, or `''` if `$condition` is falsy |
 | `relation()` | The value with the relation token, e.g. `user_id` |
+| `asRawQuery()` | A [`RawQuery`](#rawquery) started with the value |
 | `sameWith($value)` / `notSameWith($value)` | Strict `===` / `!==`, a Laravel `Stringable` is compared by its value |
 
-`Str` can be extended: `of()` and every method above return an instance of the subclass.
+`Str` can be extended: `of()` and every method above, except `asRawQuery()`, return an instance of the subclass.
 
 ```php
 use JundFauz\EloquentKompact\Builder\Str;
