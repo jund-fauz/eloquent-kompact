@@ -532,6 +532,7 @@ use const JundFauz\EloquentKompact\NEW_LINE;
 | `comment($sentence)` | `// sentence` |
 | `full_path_on_app($path)` | Absolute path inside `app/`, e.g. `App\Models` → `{app_path}/Models` |
 | `array_flat(&$array)` | Flattens the array in place |
+| `model_compact($model, ...$columns)` | `[column => value]` for the given columns, after casting; missing attributes are `null` and loaded relations become arrays |
 | `str_before_last()`, `str_lower()`, `str_upper()` | Laravel's `Str::beforeLast()`, `lower()`, `upper()` |
 
 The joining functions accept arrays too, which are flattened: `str_concat('a', ['b', ['c']])` → `abc`.
