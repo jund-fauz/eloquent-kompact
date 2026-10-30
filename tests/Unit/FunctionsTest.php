@@ -2,6 +2,7 @@
 
 namespace JundFauz\EloquentKompact\Tests\Unit;
 
+use Illuminate\Database\Eloquent\Model;
 use JundFauz\EloquentKompact\Tests\TestCase;
 use PHPUnit\Framework\Attributes\DataProvider;
 use PHPUnit\Framework\Attributes\Test;
@@ -13,6 +14,7 @@ use function JundFauz\EloquentKompact\full_path_on_app;
 use function JundFauz\EloquentKompact\is_all_null;
 use function JundFauz\EloquentKompact\is_not_array;
 use function JundFauz\EloquentKompact\is_not_null;
+use function JundFauz\EloquentKompact\model_compact;
 use function JundFauz\EloquentKompact\namespace_concat;
 use function JundFauz\EloquentKompact\not;
 use function JundFauz\EloquentKompact\not_same_with;
@@ -119,6 +121,55 @@ class FunctionsTest extends TestCase
         $this->assertSame('App\Models', str_before_last('App\Models\User', '\\'));
         $this->assertSame('äöü', str_lower('ÄÖÜ'));
         $this->assertSame('ÄÖÜ', str_upper('äöü'));
+    }
+
+    private static function model(array $attributes): Model
+    {
+        $model = new class extends Model {
+            protected $guarded = [];
+
+            protected $casts = ['active' => 'boolean', 'tags' => 'array'];
+        };
+
+        return $model->fill($attributes);
+    }
+
+    #[Test]
+    public function it_compacts_model_attributes(): void
+    {
+        $model = self::model(['name' => 'a', 'email' => 'a@b.c', 'active' => 1, 'tags' => ['x']]);
+
+        $this->assertSame(['name' => 'a', 'active' => true], model_compact($model, 'name', 'active'));
+        $this->assertSame(['tags' => ['x']], model_compact($model, 'tags'));
+    }
+
+    #[Test]
+    public function it_keeps_the_given_column_order(): void
+    {
+        $model = self::model(['name' => 'a', 'email' => 'a@b.c']);
+
+        $this->assertSame(['email', 'name'], array_keys(model_compact($model, 'email', 'name')));
+    }
+
+    #[Test]
+    public function it_returns_null_for_missing_attributes(): void
+    {
+        $this->assertSame(['missing' => null], model_compact(self::model([]), 'missing'));
+    }
+
+    #[Test]
+    public function it_returns_an_empty_array_without_columns(): void
+    {
+        $this->assertSame([], model_compact(self::model(['name' => 'a'])));
+    }
+
+    #[Test]
+    public function it_converts_loaded_relations_to_arrays(): void
+    {
+        $model = self::model(['name' => 'a']);
+        $model->setRelation('owner', self::model(['name' => 'b']));
+
+        $this->assertSame(['owner' => ['name' => 'b']], model_compact($model, 'owner'));
     }
 
     #[Test]

@@ -2,6 +2,7 @@
 
 namespace JundFauz\EloquentKompact;
 
+use Illuminate\Database\Eloquent\Model;
 use Illuminate\Support\Arr;
 use JundFauz\EloquentKompact\Builder\Str;
 
@@ -105,4 +106,11 @@ function not_same_with(mixed $firstValue, mixed $secondValue): bool
 function not(bool $condition): bool
 {
     return ! $condition;
+}
+
+function model_compact(Model $model, string ...$columns): array
+{
+    return collect($columns)
+        ->mapWithKeys(fn (string $column) => [$column => $model->{$column}])
+        ->toArray();
 }
