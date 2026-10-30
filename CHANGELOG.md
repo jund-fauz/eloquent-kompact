@@ -7,6 +7,24 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [0.41.0] - 2026-10-30
+
+### Added
+
+- `Str::addPath()` to append paths with `/`, and `Str::appPath()` to resolve the value inside the app directory with Laravel's `app_path()`.
+
+  ```php
+  Str::of('Models')->addPath('User.php')->appPath()->toString(); // {app_path}/Models/User.php
+  ```
+
+### Changed
+
+- `Str::of()` and the `Str` methods added by the package return `static` instead of `self`, so a subclass of `Str` keeps its own class through the chain.
+
+### Tests
+
+- Added unit tests for `Str::addPath()`, `appPath()` and subclasses of `Str`.
+
 ## [0.40.0] - 2026-10-30
 
 ### Added
@@ -825,7 +843,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - `RawQuery` static helpers for raw SQL expressions.
 - Translations for `en` and `id`.
 
-[Unreleased]: https://github.com/jund-fauz/eloquent-kompact/compare/v0.40.0...HEAD
+[Unreleased]: https://github.com/jund-fauz/eloquent-kompact/compare/v0.41.0...HEAD
+[0.41.0]: https://github.com/jund-fauz/eloquent-kompact/compare/v0.40.0...v0.41.0
 [0.40.0]: https://github.com/jund-fauz/eloquent-kompact/compare/v0.39.1...v0.40.0
 [0.39.1]: https://github.com/jund-fauz/eloquent-kompact/compare/v0.39.0...v0.39.1
 [0.39.0]: https://github.com/jund-fauz/eloquent-kompact/compare/v0.38.1...v0.39.0
