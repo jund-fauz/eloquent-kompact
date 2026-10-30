@@ -7,6 +7,72 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [0.35.0] - 2026-10-30
+
+### Added
+
+- `php artisan kompact:ide-helper` to generate `_ide_helper_kompact.php` and register it in `ide.json`, so IDEs autocomplete the relations resolved by `DynamicModelRelation`. Set `KOMPACT_IDE_HELPER=true` to run it automatically after `php artisan migrate` in the local environment.
+- `column.to_be_replaced` config to choose where `Creator` puts the column type token. The default `Regex::create()->endsWith()` (`/$/`) keeps the suffix scheme (`user_id`); `/^/` switches to a prefix scheme.
+- `Builder\Str`, extending Laravel's `Stringable`, with `replaceByRegex()`, `removeByRegex()`, `join()`, `concat()`, `add()`, `addAtStart()`, `addNamespaceAtStart()`, `emptyIfFalse()`, `relation()`, `sameWith()` and `notSameWith()`. `sameWith()` and `notSameWith()` compare strictly, unwrapping any Laravel `Stringable`.
+
+  ```php
+  Str::of('App/Models')->removeByRegex('/^app\//i')->toString(); // Models
+  Str::of('user')->relation()->sameWith('user_id');             // true
+  ```
+
+- `word_concat()`, `schema_concat()`, `write_line()`, `comment()`, `namespace_concat()`, `path_concat()`, `full_path_on_app()`, `array_flat()`, `str_before_last()`, `str_lower()`, `str_upper()`, `same_with()`, `not_same_with()` and `not()` helper functions. `str_concat()` and the other joining functions also accept arrays, which are flattened.
+- `NEW_LINE`, `DISTANCE_LINE`, `NAMESPACE_DELIMITER` and `PATH_DELIMITER` constants.
+- Dependency on `illuminate/console`.
+
+### Changed
+
+- **BREAKING:** `Builder\StrB` was replaced by `Builder\Str`, which extends Laravel's `Stringable` instead of the internal `Builder`. Every Laravel `Stringable` method is available, but:
+  - `StrB::initiate()` is now `Str::of()`, and `build()` is now `toString()`, `value()` or a `(string)` cast.
+  - The third argument of `replace()` and the second argument of `remove()` now mean case sensitive, not regex, so an old call with `true` no longer fails but replaces the pattern as plain text. Use `replaceByRegex()` and `removeByRegex()` instead.
+  - `removeStart()` and `removeEnd()` were removed; use `replaceStart($search, '')` and `replaceEnd($search, '')` instead.
+
+  ```php
+  // 0.34
+  StrB::initiate('App/Models')->replace('/^app\//i', '', true)->build();
+
+  // 0.35
+  Str::of('App/Models')->replaceByRegex('/^app\//i', '')->toString();
+  ```
+
+- **BREAKING:** The helper functions are no longer global; they live in the `JundFauz\EloquentKompact` namespace, as do the new constants.
+
+  ```php
+  use function JundFauz\EloquentKompact\is_not_null;
+  use function JundFauz\EloquentKompact\str_concat;
+  ```
+
+- **BREAKING:** `Helper\Path` is marked `@internal`, and `Path::concat()`, `namespaceConcat()` and `fullPathOnApp()` were removed. A published `config/eloquent-kompact.php` that uses them must be updated:
+
+  ```php
+  // 0.34
+  use JundFauz\EloquentKompact\Helper\Path;
+  'model' => Path::namespaceConcat('App', 'Models'),
+
+  // 0.35
+  use function JundFauz\EloquentKompact\namespace_concat;
+  'model' => namespace_concat('App', 'Models'),
+  ```
+
+  `path_concat()` and `full_path_on_app()` replace `Path::concat()` and `Path::fullPathOnApp()`.
+
+- **BREAKING:** `Creator::getPlainColumnName()` returns a `Builder\Str` instead of a `string`.
+- **BREAKING:** `Arrange::relation()` and `Arrange::relations()` return a `Builder\Str` instead of a `string`.
+- `Creator` reads its token position from the `column.to_be_replaced` config instead of a constant, so it needs a booted Laravel app.
+
+### Deprecated
+
+- `Arr::arrange()`; use `str_concat()` instead.
+
+### Tests
+
+- Added unit tests for `Builder\Str`, `Creator` and the helper functions and constants.
+- Replaced the `StrB` unit tests with `Str` unit tests.
+
 ## [0.34.0] - 2026-10-29
 
 ### Added
@@ -647,7 +713,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - `RawQuery` static helpers for raw SQL expressions.
 - Translations for `en` and `id`.
 
-[Unreleased]: https://github.com/jund-fauz/eloquent-kompact/compare/v0.34.0...HEAD
+[Unreleased]: https://github.com/jund-fauz/eloquent-kompact/compare/v0.35.0...HEAD
+[0.35.0]: https://github.com/jund-fauz/eloquent-kompact/compare/v0.34.0...v0.35.0
 [0.34.0]: https://github.com/jund-fauz/eloquent-kompact/compare/v0.33.0...v0.34.0
 [0.33.0]: https://github.com/jund-fauz/eloquent-kompact/compare/v0.32.0...v0.33.0
 [0.32.0]: https://github.com/jund-fauz/eloquent-kompact/compare/v0.31.0...v0.32.0
