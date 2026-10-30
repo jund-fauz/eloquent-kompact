@@ -70,6 +70,16 @@ class Str extends Stringable
         return new self(Creator::relation($this->value));
     }
 
+    public function removeStart(string $toRemoved): self
+    {
+        return $this->replaceStart($toRemoved, '');
+    }
+
+    public function removeEnd(string $toRemoved): self
+    {
+        return $this->replaceEnd($toRemoved, '');
+    }
+
     public function sameWith(mixed $otherValue): bool
     {
         return same_with($this->value, $otherValue instanceof Stringable ? $otherValue->value : $otherValue);

@@ -40,6 +40,12 @@ class StrTest extends TestCase
         yield 'removeByRegex no match' => [Str::of('abc')->removeByRegex('/\d+/'), 'abc'];
         yield 'replaceStart' => [Str::of('app/Models/app')->replaceStart('app/', 'src/'), 'src/Models/app'];
         yield 'replaceEnd' => [Str::of('app/Models/app')->replaceEnd('/app', '/src'), 'app/Models/src'];
+        yield 'removeStart' => [Str::of('app/Models/app')->removeStart('app/'), 'Models/app'];
+        yield 'removeStart only at start' => [Str::of('Models/app')->removeStart('app'), 'Models/app'];
+        yield 'removeStart empty' => [Str::of('app')->removeStart(''), 'app'];
+        yield 'removeEnd' => [Str::of('app/Models/app')->removeEnd('/app'), 'app/Models'];
+        yield 'removeEnd only at end' => [Str::of('app/Models')->removeEnd('app'), 'app/Models'];
+        yield 'removeEnd empty' => [Str::of('app')->removeEnd(''), 'app'];
 
         yield 'join' => [Str::of('a')->join('', 'b', 'c'), 'abc'];
         yield 'join delimiter' => [Str::of('a')->join('.', 'b', 'c'), 'a.b.c'];
@@ -100,6 +106,8 @@ class StrTest extends TestCase
         $this->assertInstanceOf(Str::class, $string->emptyIfFalse(true));
         $this->assertInstanceOf(Str::class, $string->relation());
         $this->assertInstanceOf(Str::class, $string->concat('b'));
+        $this->assertInstanceOf(Str::class, $string->removeStart('a'));
+        $this->assertInstanceOf(Str::class, $string->removeEnd('a'));
     }
 
     // Creator reads the config, so it needs the app and cannot run in a data provider.
