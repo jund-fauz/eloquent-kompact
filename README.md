@@ -443,9 +443,13 @@ RawQuery::create('paid')->sum()->divide(RawQuery::create('total')->sum())->as('p
 | `addAtStart(...$strings)` | The strings prepended without a delimiter |
 | `addNamespace(...$namespaces)` | The namespaces appended with `\`, trimming the backslashes of each part |
 | `addNamespaceAtStart(...$namespaces)` | The namespaces prepended with `\`, trimming the backslashes of each part |
+| `addPath(...$paths)` | The paths appended with `/` |
+| `appPath()` | Laravel's `app_path()` of the value, e.g. `Models` → `{app_path}/Models` |
 | `emptyIfFalse($condition)` | The value, or `''` if `$condition` is falsy |
 | `relation()` | The value with the relation token, e.g. `user_id` |
 | `sameWith($value)` / `notSameWith($value)` | Strict `===` / `!==`, a Laravel `Stringable` is compared by its value |
+
+`Str` can be extended: `of()` and every method above return an instance of the subclass.
 
 ```php
 use JundFauz\EloquentKompact\Builder\Str;
@@ -453,6 +457,7 @@ use JundFauz\EloquentKompact\Builder\Str;
 Str::of('App/blog_post/')->removeByRegex('/^app\//i')->trim('/')->plural()->pascal()->toString(); // BlogPosts
 Str::of('User')->addNamespaceAtStart('App', 'Models')->toString(); // App\Models\User
 Str::of('App')->addNamespace('Models', 'User')->toString();        // App\Models\User
+Str::of('Models')->addPath('User.php')->appPath()->toString();     // {app_path}/Models/User.php
 Str::of('app/Models/app')->removeStart('app/')->toString();       // Models/app
 Str::of('a')->sameWith(Str::of('a'));                              // true
 ```
