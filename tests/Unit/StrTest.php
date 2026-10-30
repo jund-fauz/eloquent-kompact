@@ -125,6 +125,31 @@ class StrTest extends TestCase
     }
 
     #[Test]
+    public function it_compares_with_a_laravel_stringable(): void
+    {
+        $this->assertTrue(Str::of('a')->sameWith(new Stringable('a')));
+        $this->assertTrue(Str::of('a')->sameWith(\Illuminate\Support\Str::of('a')));
+        $this->assertFalse(Str::of('a')->sameWith(new Stringable('b')));
+
+        $this->assertTrue(Str::of('a')->notSameWith(new Stringable('b')));
+        $this->assertFalse(Str::of('a')->notSameWith(new Stringable('a')));
+    }
+
+    #[Test]
+    public function it_does_not_unwrap_other_stringable_objects(): void
+    {
+        $other = new class implements \Stringable {
+            public function __toString(): string
+            {
+                return 'a';
+            }
+        };
+
+        $this->assertFalse(Str::of('a')->sameWith($other));
+        $this->assertTrue(Str::of('a')->notSameWith($other));
+    }
+
+    #[Test]
     public function it_casts_to_string(): void
     {
         $string = Str::of(' a ')->trim();
