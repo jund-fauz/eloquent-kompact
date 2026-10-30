@@ -75,7 +75,7 @@ final class IdeHelperCommand extends Command
         file_put_contents(base_path(self::Filename), $this->renderFile($blocks));
         $this->writeIdeJson($mixins);
 
-        $this->info(word_concat(count($mixins), 'model ditulis ke', self::Filename, 'dan ide.json.'));
+        $this->info(word_concat(count($mixins), 'model(s) writtent to', self::Filename, 'and ide.json.'));
 
         return self::SUCCESS;
     }
