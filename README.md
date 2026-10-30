@@ -6,6 +6,21 @@ A set of automation & helper tools to improve development experience and conveni
 composer require jund-fauz/eloquent-kompact
 ```
 
+Requires PHP 8.3+ and Laravel 11, 12 or 13. The service provider is registered through package discovery.
+
+- [Versioning](#versioning)
+- [Configuration](#configuration)
+- [Column naming convention](#column-naming-convention)
+- [KompactModel](#kompactmodel)
+- [IDE helper](#ide-helper)
+- [Migration helpers](#migration-helpers)
+- [RawQuery](#rawquery)
+- [Str](#str)
+- [BoolB](#boolb)
+- [Regex](#regex)
+- [Helper functions](#helper-functions)
+- [Other helpers](#other-helpers)
+
 ## Versioning
 
 This package follows [Semantic Versioning](https://semver.org). It is still in initial development (`0.x`): a minor release (`0.x.0`) may contain breaking changes, while a patch release (`0.x.y`) never does. Composer's `^0.x` constraint only allows patch updates, so require it as e.g. `^0.20`. The API is considered stable from `1.0.0`.
@@ -25,6 +40,8 @@ php artisan vendor:publish --tag=eloquent-kompact-config
 | `path.model` | `App\Models` | Namespace where dynamic relations and `StaticH::getModel()` look for models |
 | `path.database_enum` | `App\Enums` | Namespace where `AutoCast` looks for enums |
 | `fillable.excluded_columns_by_regex` | `id`, columns ending in `_at` | Columns left out of the dynamic fillable list |
+| `column.to_be_replaced` | `Regex::create()->endsWith()` (`/$/`) | Where `Creator` puts the column type token, see [Column naming convention](#column-naming-convention) |
+| `ide-helper.auto_generate` | `env('KOMPACT_IDE_HELPER', false)` | Run `kompact:ide-helper` after `php artisan migrate` in the local environment |
 
 A namespace may be written with or without a trailing backslash (`App\Models` or `App\Models\`).
 
@@ -43,6 +60,207 @@ The cache is cleared automatically after `php artisan migrate` (including `migra
 ```
 
 Long-running processes (queue workers, Octane) keep their in-memory copy until they restart, so run `php artisan queue:restart` / `php artisan octane:reload` after migrating in production.
+
+## Column naming convention
+
+Most automation reads the **type of a column from its name**: a token at the end of the column name.
+
+| Token | Constant | Example | Auto cast |
+|---|---|---|---|
+| `_id` | `Creator::Relation` | `author_user_id` | – (used by dynamic relations) |
+| `_enum` | `Creator::Enum` | `status_enum` | Enum class, see [AutoCast](#autocast) |
+| `_array` | `Creator::Array` | `tags_array` | `array` |
+| `_is` | `Creator::Boolean` | `active_is` | `boolean` |
+| `_gram` | `Creator::Gram` | `weight_gram` | `decimal:7` |
+| `_percentage` | `Creator::Percentage` | `tax_percentage` | `decimal:2` |
+| `_pcs` | `Creator::Pcs` | `stock_pcs` | – |
+| `_at` | `Creator::Timestamp` | `paid_at` | – |
+| `_time` | `Creator::Time` | `start_time` | – |
+| `_dropdown` | `Creator::Dropdown` | `size_dropdown` | – |
+
+`JundFauz\EloquentKompact\Column\Creator` builds and reads these names, so a migration never has to spell a token by hand:
+
+```php
+use JundFauz\EloquentKompact\Column\Creator;
+
+Creator::relation('author_user');                 // author_user_id
+Creator::enum('status');                          // status_enum
+Creator::quantity();                              // ['quantity_gram', 'quantity_pcs']
+
+Creator::getPlainColumnName('author_user_id');    // Str: author_user
+Creator::getColumnType('author_user_id');         // _id
+Creator::getColumnType('author_user_id', true);   // id
+Creator::castOf(Creator::Gram);                   // decimal:7
+Creator::tokens();                                // every token, longest first
+```
+
+`Checker` tells whether a column (a name or a column definition with a `name`) contains a token:
+
+```php
+use JundFauz\EloquentKompact\Column\Checker;
+
+Checker::isRelation('author_user_id'); // true
+Checker::isEnum($table->string('status_enum')); // true
+```
+
+To use **prefixes** instead of suffixes (`id_author_user`), set `column.to_be_replaced` to `'/^/'`. The tokens keep their value, so they are inserted as they are (`_iduser`); use your own tokens if you need another shape.
+
+## KompactModel
+
+Extend `JundFauz\EloquentKompact\Model\KompactModel` instead of Eloquent's `Model` to get every trait below at once. `KompactPivot` does the same for pivot models, with `AdditionalQueries`, `DynamicModelRelation`, `RelationData`, `StaticH` and soft deletes.
+
+```php
+use JundFauz\EloquentKompact\Model\KompactModel;
+
+class Post extends KompactModel
+{
+    // Soft deletes are on by default
+    protected static bool $useSoftDelete = false;
+}
+```
+
+Every trait can also be used on its own model.
+
+### DynamicFillableColumnDefinition
+
+`getFillable()` returns every column of the table, except the ones matching `fillable.excluded_columns_by_regex`, merged with the model's own `$fillable`. No more `$fillable` arrays to keep in sync with the migrations.
+
+### AutoCast
+
+`getCasts()` adds a cast for every fillable column with a token that has one (see [the table above](#column-naming-convention)). Casts declared on the model win over the automatic ones.
+
+An `_enum` column is cast to the enum `{singular table in PascalCase}{column without token in PascalCase}` inside `path.database_enum`, or to `string` if that enum does not exist:
+
+```php
+// orders.status_enum → App\Enums\OrderStatus
+```
+
+### DynamicModelRelation
+
+Relations are resolved from the relation name and the columns, without declaring a method:
+
+| Relation | Resolved as | Requires |
+|---|---|---|
+| `$post->authorUser` | `belongsTo(User::class, 'author_user_id')` | a `User` model; the name is tried as `AuthorUser`, then `User` |
+| `$user->posts` | `hasMany(Post::class, 'user_id')` | `posts.user_id` |
+| `$user->authorPosts` | `hasMany(Post::class, 'author_user_id')` | `posts.author_user_id` |
+| `$post->comments` | `morphMany(Comment::class, 'commentable')` | no `comments.post_id`, `Comment` has a single public method returning `MorphTo` and a `commentable_type` column |
+
+A plural name without a matching column or morph throws a `BadMethodCallException`. Relations declared as methods always win. Dynamic relations respect `Model::preventLazyLoading()` and can be eager loaded (`Post::with('authorUser')`).
+
+To get autocomplete for these relations, see [IDE helper](#ide-helper).
+
+### AdditionalQueries
+
+```php
+// Copy related rows to another model, keeping only the given columns
+$order->copyRelationsTo($newOrder, ['items' => ['product_id', 'qty_pcs']]);
+
+// where() on several columns, with the values taken from another model
+Order::wheres($otherOrder, 'tenant_id', 'branch_id')->get();
+
+// The first non-null attribute
+$user->getOr('nickname', 'name');
+
+// Strict comparison of attributes, after casting
+$user->sameWith('role', 'admin');
+$user->match(['role' => ['admin', 'editor'], 'active_is' => true]);
+```
+
+`match()` returns `false` when no condition is given. An array value matches if the attribute equals one of its items, unless the attribute itself is an array.
+
+### RelationData
+
+Reads nested relations without null checks. Relations are given as model classes:
+
+```php
+$comment->getDataFromRelation('name', Post::class, User::class);
+// $comment->post?->user?->name
+
+$comment->getDatasFromRelation(['name', 'email'], Post::class, User::class);
+// [$comment->post?->user?->name, $comment->post?->user?->email]
+```
+
+`getDatasFromRelation()` is `@experimental`.
+
+### Filterable
+
+Counts the non-empty values of each column, e.g. to show which filters have data:
+
+```php
+$counts = Order::getCountForFilter('email', 'phone', 'user.name');
+$counts->email_count;          // COUNT(NULLIF(email, ''))
+$counts->{'user.name_count'}; // relational columns are always 1
+```
+
+### StaticH
+
+```php
+Post::tableName();             // posts
+
+// In a migration: the model of the table being built, or null
+Post::getModel($table);        // App\Models\Post
+```
+
+## IDE helper
+
+Dynamic relations are not methods, so IDEs cannot see them. Generate a helper file:
+
+```bash
+php artisan kompact:ide-helper
+```
+
+It writes `_ide_helper_kompact.php` (`@property-read` and `@method` for every dynamic relation of the models directly in `path.model` that use `DynamicModelRelation`) and registers it as a class mixin in `ide.json` for Laravel Idea. Other `classMixins` entries in `ide.json` are kept.
+
+Set `KOMPACT_IDE_HELPER=true` in `.env` to run it automatically after every `php artisan migrate` in the `local` environment. You will probably want to add `_ide_helper_kompact.php` to `.gitignore`.
+
+## Migration helpers
+
+`Config::apply()` applies column modifiers to many columns at once. The payload keys are, in this order:
+
+- `all`: every column;
+- a column name: that column;
+- a regex: every matching column;
+- `rest`: every column that no column name or regex matched.
+
+A payload is a modifier name, a list of them, or `[modifier => arguments]`:
+
+```php
+use JundFauz\EloquentKompact\Column\Config;
+use JundFauz\EloquentKompact\Column\Creator;
+use JundFauz\EloquentKompact\Column\Payload;
+
+Schema::create('posts', function (Blueprint $table) {
+    $table->id();
+
+    Config::apply([
+        $table->string('title'),
+        $table->string(Creator::enum('status')),
+        $table->foreignId(Creator::relation('author_user')),
+        $table->text('body'),
+    ], Payload::build(
+        ['title' => ['unique', 'comment' => 'Shown in the list']],
+        ['/_id$/' => ['index']],
+        ['rest' => 'nullable'],
+    ));
+});
+```
+
+`Payload::allNullable` is a ready-made `['all' => 'nullable']`.
+
+`Convert` turns names and values into each other:
+
+```php
+use JundFauz\EloquentKompact\Column\Convert;
+
+Convert::modelToColumn(User::class);                  // user_id
+Convert::modelToColumn(User::class, 'author');        // author_user_id
+Convert::modelToRelation(User::class);                // user
+Convert::modelToRelation(BlogPost::class, true, true); // blog_posts
+Convert::booleanToString('active_is');                // ['Not active', 'Active'], translated
+Convert::dayToSecond(1);                              // 86400
+Convert::hourToSecond(1);                             // 3600
+```
 
 ## RawQuery
 
@@ -210,5 +428,126 @@ RawQuery::create('paid')->sum()->divide(RawQuery::create('total')->sum())->as('p
 
 ### Notes
 
-- Each method changes the same instance. To reuse a base expression, call `create()` again instead of chaining twice from one variable.
 - Arguments are inserted into the SQL as they are. Never pass user input directly: use bindings (`?`) or `RawQuery::string()`.
+- `diff()` generates driver-specific SQL for MySQL, MariaDB and PostgreSQL; other drivers throw a `RuntimeException`.
+
+## Str
+
+`JundFauz\EloquentKompact\Builder\Str` extends Laravel's `Stringable`, so every [fluent string method](https://laravel.com/docs/strings#fluent-strings) is available, plus:
+
+| Method | Result |
+|---|---|
+| `Str::of($value = '')` | A new `Str` |
+| `replaceByRegex($pattern, $replace)` | `preg_replace()` on the value |
+| `removeByRegex($pattern)` | `preg_replace()` with `''` |
+| `removeStart($search)` / `removeEnd($search)` | `$search` removed only at the start / end |
+| `join($delimiter, ...$strings)` | The value and the strings joined with `$delimiter` |
+| `add(...$strings)` / `concat(...$strings)` | The strings appended without a delimiter |
+| `addAtStart(...$strings)` | The strings prepended without a delimiter |
+| `addNamespaceAtStart(...$namespaces)` | The namespaces prepended with `\` |
+| `emptyIfFalse($condition)` | The value, or `''` if `$condition` is falsy |
+| `relation()` | The value with the relation token, e.g. `user_id` |
+| `sameWith($value)` / `notSameWith($value)` | Strict `===` / `!==`, a Laravel `Stringable` is compared by its value |
+
+```php
+use JundFauz\EloquentKompact\Builder\Str;
+
+Str::of('App/blog_post/')->removeByRegex('/^app\//i')->trim('/')->plural()->pascal()->toString(); // BlogPosts
+Str::of('User')->addNamespaceAtStart('App', 'Models')->toString(); // App\Models\User
+Str::of('app/Models/app')->removeStart('app/')->toString();       // Models/app
+Str::of('a')->sameWith(Str::of('a'));                              // true
+```
+
+Unlike `Stringable::replace()`, whose third argument is about case sensitivity, regexes always go through `replaceByRegex()` / `removeByRegex()`.
+
+## BoolB
+
+`JundFauz\EloquentKompact\Builder\BoolB` is an immutable boolean builder, read with the readonly `result` property. Comparisons are strict and evaluated from left to right:
+
+```php
+use JundFauz\EloquentKompact\Builder\BoolB;
+
+BoolB::compare($user->role)->sameWith('admin')
+    ->or($user->status)->notSameWith('banned')
+    ->result;
+// ($role === 'admin') || ($status !== 'banned')
+
+BoolB::initiate($user->active_is)->and($user->role)->sameWith('admin')->result;
+```
+
+Use `andGroup()` / `orGroup()` with another `BoolB` (or a `bool`) for parentheses:
+
+```php
+// $isAdmin && ($isActive || $isVerified)
+BoolB::compare($user->role)->sameWith('admin')
+    ->andGroup(BoolB::compare($user->status)->sameWith('active')->or($user->verified_at)->notSameWith(null))
+    ->result;
+```
+
+`BoolB::initiate()` also accepts a `BoolB` and returns it as it is.
+
+## Regex
+
+`JundFauz\EloquentKompact\Regex\Regex` builds `preg_*` patterns. It is `Stringable`, so it can be passed to `preg_match()` directly:
+
+```php
+use JundFauz\EloquentKompact\Regex\Quantifier;
+use JundFauz\EloquentKompact\Regex\Regex;
+
+Regex::create('id')->exact();         // /^id$/
+Regex::create()->endsWith('_at');     // /_at$/
+Regex::create()->contain(Quantifier::oneOrMore, Regex::create()->range('a', 'z')); // /[a-z]+/
+```
+
+| Method | Adds |
+|---|---|
+| `create($pattern = '')` | Starts with `$pattern` |
+| `exact(...$parts)` | `^…$` |
+| `endsWith(...$parts)` | `…$` |
+| `exceptWord($word)` | `(?!word)` |
+| `contain($quantifier, ...$parts)` | `[…]` followed by the quantifier (`Quantifier::zeroOrMore`, `oneOrMore`, `zeroOrOne` or a string) |
+| `range($from, $until)` | `from-until` |
+| `build()` | The pattern with its `/` delimiters |
+
+## Helper functions
+
+The helpers live in the `JundFauz\EloquentKompact` namespace, so import them first:
+
+```php
+use function JundFauz\EloquentKompact\str_concat;
+use const JundFauz\EloquentKompact\NEW_LINE;
+```
+
+| Function | Result |
+|---|---|
+| `is_not_null($value)` / `is_not_array($value)` | Negated `is_null()` / `is_array()` |
+| `is_all_null(...$values)` | Whether every value, nested arrays included, is `null` |
+| `same_with($a, $b)` / `not_same_with($a, $b)` | `$a === $b` / `$a !== $b` |
+| `not($condition)` | `! $condition` |
+| `str_concat(...$values)` | Joined without a delimiter |
+| `word_concat(...$values)` | Joined with a space |
+| `schema_concat(...$values)` | Joined with `:` |
+| `path_concat(...$values)` | Joined with `/` |
+| `namespace_concat(...$values)` | Joined with `\`, trimming the backslashes of each part |
+| `write_line(...$lines)` | Joined with a new line |
+| `comment($sentence)` | `// sentence` |
+| `full_path_on_app($path)` | Absolute path inside `app/`, e.g. `App\Models` → `{app_path}/Models` |
+| `array_flat(&$array)` | Flattens the array in place |
+| `str_before_last()`, `str_lower()`, `str_upper()` | Laravel's `Str::beforeLast()`, `lower()`, `upper()` |
+
+The joining functions accept arrays too, which are flattened: `str_concat('a', ['b', ['c']])` → `abc`.
+
+Constants: `NEW_LINE` (`"\n"`), `DISTANCE_LINE` (`"\n\n"`), `NAMESPACE_DELIMITER` (`\`) and `PATH_DELIMITER` (`/`).
+
+## Other helpers
+
+- `Relation\Arrange::relation($column, ...$models)` / `relations(...)` build a relation path from model classes (singular / plural), returning a `Str`:
+
+  ```php
+  Arrange::relations('name', User::class, Post::class); // users.posts.name
+  Arrange::relation('', User::class, 'roles');          // user.roles
+  ```
+
+- `Helper\Arr` extends Laravel's `Arr` with `pullMany(&$array, ...$keys)` (pulls several keys at once) and `isKeysDontExist($array, ...$keys)`.
+- `Cast\UuidCast` casts an attribute to and from a `Ramsey\Uuid\UuidInterface`.
+- Error messages and `Convert::booleanToString()` are translated in English and Indonesian.
