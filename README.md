@@ -540,7 +540,7 @@ Constants: `NEW_LINE` (`"\n"`), `DISTANCE_LINE` (`"\n\n"`), `NAMESPACE_DELIMITER
 
 ## Other helpers
 
-- `Relation\Arrange::relation($column, ...$models)` / `relations(...)` build a relation path from model classes (singular / plural), returning a `Str`:
+- `Relation\Arrange::relation($column, ...$models)` / `relations(...)` build a relation path from model classes (singular / plural), returning a `string`:
 
   ```php
   Arrange::relations('name', User::class, Post::class); // users.posts.name
