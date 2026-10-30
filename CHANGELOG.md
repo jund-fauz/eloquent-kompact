@@ -7,6 +7,44 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [0.44.0] - 2026-10-30
+
+### Added
+
+- `Str::asRawQuery()` to start a `RawQuery` from the value.
+
+  ```php
+  Str::of('price')->asRawQuery()->sum()->build(); // SUM(price)
+  ```
+
+### Changed
+
+- **BREAKING:** `RawQuery::and()` takes a single `string` condition instead of several `string|RawQuery` conditions. Extra arguments are silently ignored by PHP, so an old call with several conditions does not fail but drops every condition after the first; chain `and()` instead. A `RawQuery` argument is still turned into a string, except in a file with `declare(strict_types=1)`, where it throws a `TypeError`. `RawQuery::create()->and('a')` now gives ` AND a` instead of `a`.
+
+  ```php
+  // 0.43
+  RawQuery::create('a = 1')->and('b = 2', 'c = 3');
+
+  // 0.44
+  RawQuery::create('a = 1')->and('b = 2')->and('c = 3');
+  ```
+
+- **BREAKING:** `RawQuery::flexibleCase()` and `RawQuery::relations()` return a `RawQuery` instead of a `string`, so the chain can go on. Code that uses the result as a string through Laravel's raw methods or string interpolation is not affected; code that needs a real `string` (comparison with `===`, a `string` parameter with `declare(strict_types=1)`) must call `build()`.
+
+  ```php
+  // 0.43
+  $sql = RawQuery::flexibleCase('a = 1');
+
+  // 0.44
+  $sql = RawQuery::flexibleCase('a = 1')->build();
+  RawQuery::relations('title', User::class)->count()->build(); // COUNT(users.title)
+  ```
+
+### Tests
+
+- Updated the `RawQuery` unit tests for the single-condition `and()`, and for `flexibleCase()` and `relations()` returning a `RawQuery`.
+- Added unit tests for `Str::asRawQuery()`.
+
 ## [0.43.0] - 2026-10-30
 
 ### Added
@@ -884,7 +922,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - `RawQuery` static helpers for raw SQL expressions.
 - Translations for `en` and `id`.
 
-[Unreleased]: https://github.com/jund-fauz/eloquent-kompact/compare/v0.43.0...HEAD
+[Unreleased]: https://github.com/jund-fauz/eloquent-kompact/compare/v0.44.0...HEAD
+[0.44.0]: https://github.com/jund-fauz/eloquent-kompact/compare/v0.43.0...v0.44.0
 [0.43.0]: https://github.com/jund-fauz/eloquent-kompact/compare/v0.42.0...v0.43.0
 [0.42.0]: https://github.com/jund-fauz/eloquent-kompact/compare/v0.41.0...v0.42.0
 [0.41.0]: https://github.com/jund-fauz/eloquent-kompact/compare/v0.40.0...v0.41.0
