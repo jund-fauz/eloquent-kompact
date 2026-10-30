@@ -7,6 +7,23 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [0.42.0] - 2026-10-30
+
+### Added
+
+- `array_pull()` helper function, a shorthand for `Arr::pullMany()`: it removes the given keys from the array and returns the value of a single key, or `[key => value]` for several keys. A missing key is `null`.
+
+  ```php
+  use function JundFauz\EloquentKompact\array_pull;
+
+  array_pull($data, 'name');          // 'Ana'
+  array_pull($data, 'name', 'email'); // ['name' => 'Ana', 'email' => 'ana@example.com']
+  ```
+
+### Tests
+
+- Added unit tests for `array_pull()`.
+
 ## [0.41.0] - 2026-10-30
 
 ### Added
@@ -843,7 +860,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - `RawQuery` static helpers for raw SQL expressions.
 - Translations for `en` and `id`.
 
-[Unreleased]: https://github.com/jund-fauz/eloquent-kompact/compare/v0.41.0...HEAD
+[Unreleased]: https://github.com/jund-fauz/eloquent-kompact/compare/v0.42.0...HEAD
+[0.42.0]: https://github.com/jund-fauz/eloquent-kompact/compare/v0.41.0...v0.42.0
 [0.41.0]: https://github.com/jund-fauz/eloquent-kompact/compare/v0.40.0...v0.41.0
 [0.40.0]: https://github.com/jund-fauz/eloquent-kompact/compare/v0.39.1...v0.40.0
 [0.39.1]: https://github.com/jund-fauz/eloquent-kompact/compare/v0.39.0...v0.39.1
