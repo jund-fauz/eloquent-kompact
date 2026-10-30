@@ -78,6 +78,11 @@ function array_flat(array &$array): void
     $array = Arr::flatten($array);
 }
 
+function array_pull(array &$array, string ...$keys): mixed
+{
+    return Helper\Arr::pullMany($array, ...$keys);
+}
+
 function str_before_last(string $subject, string $search): string
 {
     return \Illuminate\Support\Str::beforeLast($subject, $search);

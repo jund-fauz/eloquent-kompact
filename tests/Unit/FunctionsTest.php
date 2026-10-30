@@ -9,6 +9,7 @@ use PHPUnit\Framework\Attributes\Test;
 use stdClass;
 
 use function JundFauz\EloquentKompact\array_flat;
+use function JundFauz\EloquentKompact\array_pull;
 use function JundFauz\EloquentKompact\comment;
 use function JundFauz\EloquentKompact\full_path_on_app;
 use function JundFauz\EloquentKompact\is_all_null;
@@ -88,6 +89,34 @@ class FunctionsTest extends TestCase
         array_flat($array);
 
         $this->assertSame(['a', 'b', 'c'], $array);
+    }
+
+    #[Test]
+    public function it_pulls_one_key(): void
+    {
+        $array = ['name' => 'Ana', 'email' => 'ana@example.com'];
+
+        $this->assertSame('Ana', array_pull($array, 'name'));
+        $this->assertSame(['email' => 'ana@example.com'], $array);
+    }
+
+    #[Test]
+    public function it_pulls_several_keys(): void
+    {
+        $array = ['name' => 'Ana', 'email' => 'ana@example.com', 'role' => 'admin'];
+
+        $this->assertSame(['name' => 'Ana', 'role' => 'admin'], array_pull($array, 'name', 'role'));
+        $this->assertSame(['email' => 'ana@example.com'], $array);
+    }
+
+    #[Test]
+    public function it_pulls_missing_keys_as_null(): void
+    {
+        $array = ['name' => 'Ana'];
+
+        $this->assertNull(array_pull($array, 'email'));
+        $this->assertSame(['name' => 'Ana', 'email' => null], array_pull($array, 'name', 'email'));
+        $this->assertSame([], $array);
     }
 
     #[Test]
