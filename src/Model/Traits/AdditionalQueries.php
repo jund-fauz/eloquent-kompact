@@ -5,6 +5,8 @@ namespace JundFauz\EloquentKompact\Model\Traits;
 use Illuminate\Database\Eloquent\Attributes\Scope;
 use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Database\Eloquent\Model;
+use Illuminate\Database\Eloquent\Relations\Relation;
+use JundFauz\EloquentKompact\Column\Creator;
 use function JundFauz\EloquentKompact\is_not_array;
 
 trait AdditionalQueries
@@ -33,6 +35,12 @@ trait AdditionalQueries
         }
 
         return $query;
+    }
+
+    #[Scope]
+    protected function whereMorphType(Builder $query, string $morphName, string $modelClass): Builder
+    {
+        return $query->where(Creator::type($morphName), Relation::getMorphAlias($modelClass));
     }
 
     public function getOr(string ...$columnNames)

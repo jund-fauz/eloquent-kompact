@@ -23,6 +23,7 @@ class CreatorTest extends TestCase
         yield 'boolean' => ['boolean', 'status_is'];
         yield 'dropdown' => ['dropdown', 'status_dropdown'];
         yield 'relation' => ['relation', 'status_id'];
+        yield 'type' => ['type', 'status_type'];
     }
 
     #[Test]
@@ -72,6 +73,7 @@ class CreatorTest extends TestCase
         yield 'enum' => ['status_enum', 'status'];
         yield 'timestamp' => ['created_at', 'created'];
         yield 'time' => ['start_time', 'start'];
+        yield 'type' => ['commentable_type', 'commentable'];
         yield 'plain' => ['name', 'name'];
         yield 'token not at the end' => ['id_card', 'id_card'];
         yield 'only the last token' => ['user_id_enum', 'user_id'];
@@ -93,6 +95,8 @@ class CreatorTest extends TestCase
         yield 'relation clean' => ['author_user_id', true, 'id'];
         yield 'time not timestamp' => ['start_time', false, '_time'];
         yield 'percentage' => ['tax_percentage', true, 'percentage'];
+        yield 'type' => ['commentable_type', false, '_type'];
+        yield 'type clean' => ['commentable_type', true, 'type'];
         yield 'plain' => ['name', false, ''];
         yield 'plain clean' => ['name', true, ''];
     }
@@ -112,6 +116,7 @@ class CreatorTest extends TestCase
         yield 'percentage' => [Creator::Percentage, 'decimal:2'];
         yield 'enum has no cast' => [Creator::Enum, null];
         yield 'relation has no cast' => [Creator::Relation, null];
+        yield 'type has no cast' => [Creator::Type, null];
         yield 'unknown' => ['_unknown', null];
     }
 

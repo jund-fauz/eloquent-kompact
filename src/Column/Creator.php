@@ -19,29 +19,23 @@ use ReflectionClassConstant;
  * @method static string boolean(string $column)
  * @method static string dropdown(string $column)
  * @method static string relation(string $column)
+ * @method static string type(string $column)
  */
 final class Creator
 {
     use ErrorThrow;
 
     public const string Enum = '_enum';
-
     public const string Array = '_array';
-
     public const string Gram = '_gram';
-
     public const string Pcs = '_pcs';
-
     public const string Percentage = '_percentage';
-
     public const string Timestamp = '_at';
     public const string Time = '_time';
-
     public const string Boolean = '_is';
-
     public const string Dropdown = '_dropdown';
-
     public const string Relation = '_id';
+    public const string Type = '_type';
 
     /**
      * Column token => Eloquent cast type.
