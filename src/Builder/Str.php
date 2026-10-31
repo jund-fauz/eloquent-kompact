@@ -12,6 +12,7 @@ use function JundFauz\EloquentKompact\same_with;
 use function JundFauz\EloquentKompact\str_concat;
 use function JundFauz\EloquentKompact\word_concat;
 use const JundFauz\EloquentKompact\NEW_LINE;
+use const JundFauz\EloquentKompact\PATH_DELIMITER;
 
 class Str extends Stringable
 {
@@ -56,7 +57,7 @@ class Str extends Stringable
 
     public function addWord(string ...$otherWords): static
     {
-        return new static(word_concat($this->value, $otherWords));
+        return new static(self::joinWords([$this->value, ...$otherWords]));
     }
 
     public function addNamespace(string ...$otherNamespace): static
@@ -66,7 +67,7 @@ class Str extends Stringable
 
     public function addPath(string ...$otherPath): static
     {
-        return new static(path_concat($this->value, $otherPath));
+        return new static(self::joinPaths([$this->value, ...$otherPath]));
     }
 
     public function addAtStart(string ...$otherStrings): static
@@ -76,7 +77,7 @@ class Str extends Stringable
 
     public function addWordAtStart(string ...$otherWords): static
     {
-        return new static(word_concat($otherWords, $this->value));
+        return new static(self::joinWords([...$otherWords, $this->value]));
     }
 
     public function addNamespaceAtStart(string ...$otherNamespace): static
@@ -86,7 +87,7 @@ class Str extends Stringable
 
     public function addPathAtStart(string ...$otherPath): static
     {
-        return new static(path_concat($otherPath, $this->value));
+        return new static(self::joinPaths([...$otherPath, $this->value]));
     }
 
     public function addAtNewLine(string $sentence, int $lineCount = 1): static
@@ -160,5 +161,33 @@ class Str extends Stringable
     public function newLine($count = 1): static
     {
         return $this->add(str_repeat(NEW_LINE, max($count, 0)));
+    }
+
+    /**
+     * Joins the non-empty words with a space
+     */
+    private static function joinWords(array $words): string
+    {
+        return word_concat(array_filter($words, fn (string $word) => $word !== ''));
+    }
+
+    /**
+     * Joins the non-empty paths with a single `/`, keeping the slashes at the start and the end of the whole path
+     */
+    private static function joinPaths(array $paths): string
+    {
+        $paths = array_values(array_filter($paths, fn (string $path) => $path !== ''));
+        $lastIndex = count($paths) - 1;
+
+        return path_concat(array_map(
+            fn (string $path, int $index) => match (true) {
+                $index === 0 && $index === $lastIndex => $path,
+                $index === 0 => rtrim($path, PATH_DELIMITER),
+                $index === $lastIndex => ltrim($path, PATH_DELIMITER),
+                default => trim($path, PATH_DELIMITER),
+            },
+            $paths,
+            array_keys($paths)
+        ));
     }
 }

@@ -72,6 +72,17 @@ class StrTest extends TestCase
         yield 'addPathAtStart' => [Str::of('User.php')->addPathAtStart('app', 'Models'), 'app/Models/User.php'];
         yield 'addPathAtStart nothing' => [Str::of('a')->addPathAtStart(), 'a'];
 
+        yield 'addWord on empty' => [Str::of()->addWord('a'), 'a'];
+        yield 'addWord skips empty words' => [Str::of('a')->addWord('', 'b'), 'a b'];
+        yield 'addWordAtStart on empty' => [Str::of()->addWordAtStart('a'), 'a'];
+        yield 'addPath on empty' => [Str::of()->addPath('a'), 'a'];
+        yield 'addPath trims slashes between parts' => [Str::of('app/')->addPath('/Models/', '/User.php'), 'app/Models/User.php'];
+        yield 'addPath keeps the outer slashes' => [Str::of('/var/')->addPath('/www/'), '/var/www/'];
+        yield 'addPath from root' => [Str::of('/')->addPath('var'), '/var'];
+        yield 'addPath keeps a lone value' => [Str::of('app/')->addPath(), 'app/'];
+        yield 'addPathAtStart on empty' => [Str::of()->addPathAtStart('app'), 'app'];
+        yield 'addPathAtStart trims slashes between parts' => [Str::of('/User.php')->addPathAtStart('app/'), 'app/User.php'];
+
         yield 'addAtNewLine' => [Str::of('a')->addAtNewLine('b'), "a
 b"];
         yield 'addAtNewLine several lines' => [Str::of('a')->addAtNewLine('b', 2), "a
