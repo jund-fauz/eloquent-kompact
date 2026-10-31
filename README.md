@@ -551,6 +551,7 @@ use const JundFauz\EloquentKompact\NEW_LINE;
 | `namespace_concat(...$values)` | Joined with `\`, trimming the backslashes of each part |
 | `write_line(...$lines)` | Joined with a new line |
 | `comment($sentence)` | `// sentence` |
+| `add_tab($sentence, $count = 1)` | The sentence indented with `$count` tabs of 4 spaces |
 | `full_path_on_app($path)` | Absolute path inside `app/`, e.g. `App\Models` → `{app_path}/Models` |
 | `array_flat(&$array)` | Flattens the array in place |
 | `array_pull(&$array, ...$keys)` | `Arr::pullMany()`: removes the keys and returns the value of one key, or `[key => value]` for several |
@@ -559,7 +560,7 @@ use const JundFauz\EloquentKompact\NEW_LINE;
 
 The joining functions accept arrays too, which are flattened: `str_concat('a', ['b', ['c']])` → `abc`.
 
-Constants: `NEW_LINE` (`"\n"`), `DISTANCE_LINE` (`"\n\n"`), `NAMESPACE_DELIMITER` (`\`) and `PATH_DELIMITER` (`/`).
+Constants: `NEW_LINE` (`"\n"`), `DISTANCE_LINE` (`"\n\n"`), `NAMESPACE_DELIMITER` (`\`), `PATH_DELIMITER` (`/`) and `TAB` (4 spaces).
 
 ## Other helpers
 
