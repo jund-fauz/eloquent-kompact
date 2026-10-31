@@ -7,6 +7,24 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [0.54.0] - 2026-10-31
+
+### Added
+
+- `RawQuery::asStr()`, the counterpart of `Str::asRawQuery()`, to continue with `Str` methods from the SQL.
+
+  ```php
+  RawQuery::select('id', 'users')->asStr()->addAtNewLine('LIMIT 10')->toString(); // "SELECT id FROM users\nLIMIT 10"
+  ```
+
+### Fixed
+
+- The `Str` example of the 0.53.0 entry was split over two lines.
+
+### Tests
+
+- Added unit tests for `RawQuery::asStr()`.
+
 ## [0.53.0] - 2026-10-31
 
 ### Added
@@ -26,8 +44,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - `Str::addWord()`, `addIf()`, `addWordIf()`, `addAtNewLine()` and `newLineIfNotEmpty()`.
 
   ```php
-  Str::of('UNION')->addWordIf($isUnionAll, 'ALL')->addAtNewLine('SELECT 1')->toString(); // "UNION ALL
-SELECT 1"
+  Str::of('UNION')->addWordIf($isUnionAll, 'ALL')->addAtNewLine('SELECT 1')->toString(); // "UNION ALL\nSELECT 1"
   ```
 
 - `array_wrap()` helper function, a shorthand for Laravel's `Arr::wrap()`.
@@ -1107,7 +1124,8 @@ SELECT 1"
 - `RawQuery` static helpers for raw SQL expressions.
 - Translations for `en` and `id`.
 
-[Unreleased]: https://github.com/jund-fauz/eloquent-kompact/compare/v0.53.0...HEAD
+[Unreleased]: https://github.com/jund-fauz/eloquent-kompact/compare/v0.54.0...HEAD
+[0.54.0]: https://github.com/jund-fauz/eloquent-kompact/compare/v0.53.0...v0.54.0
 [0.53.0]: https://github.com/jund-fauz/eloquent-kompact/compare/v0.52.0...v0.53.0
 [0.52.0]: https://github.com/jund-fauz/eloquent-kompact/compare/v0.51.0...v0.52.0
 [0.51.0]: https://github.com/jund-fauz/eloquent-kompact/compare/v0.50.0...v0.51.0
