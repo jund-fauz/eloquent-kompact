@@ -7,6 +7,21 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [0.56.0] - 2026-10-31
+
+### Added
+
+- `Str::addWordAtStart()` and `addPathAtStart()`, the counterparts of `addWord()` and `addPath()`, to prepend words with a space and paths with `/`.
+
+  ```php
+  Str::of('FROM users')->addWordAtStart('SELECT', 'id')->toString();    // SELECT id FROM users
+  Str::of('User.php')->addPathAtStart('app', 'Models')->toString();    // app/Models/User.php
+  ```
+
+### Tests
+
+- Added unit tests for `Str::addWordAtStart()` and `addPathAtStart()`.
+
 ## [0.55.0] - 2026-10-31
 
 ### Added
@@ -1140,7 +1155,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - `RawQuery` static helpers for raw SQL expressions.
 - Translations for `en` and `id`.
 
-[Unreleased]: https://github.com/jund-fauz/eloquent-kompact/compare/v0.55.0...HEAD
+[Unreleased]: https://github.com/jund-fauz/eloquent-kompact/compare/v0.56.0...HEAD
+[0.56.0]: https://github.com/jund-fauz/eloquent-kompact/compare/v0.55.0...v0.56.0
 [0.55.0]: https://github.com/jund-fauz/eloquent-kompact/compare/v0.54.0...v0.55.0
 [0.54.0]: https://github.com/jund-fauz/eloquent-kompact/compare/v0.53.0...v0.54.0
 [0.53.0]: https://github.com/jund-fauz/eloquent-kompact/compare/v0.52.0...v0.53.0
