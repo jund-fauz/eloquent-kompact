@@ -7,6 +7,20 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [0.45.0] - 2026-10-31
+
+### Added
+
+- `AdditionalQueries::isMorphModelSame()` to check whether a model's morph type attribute points to a model class, using its morph alias if the class is in `Relation::morphMap()`. The comparison is strict, like `sameWith()`.
+
+  ```php
+  $comment->isMorphModelSame('commentable', Post::class); // true
+  ```
+
+### Tests
+
+- Added unit tests for `isMorphModelSame()`.
+
 ## [0.44.0] - 2026-10-30
 
 ### Added
@@ -922,7 +936,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - `RawQuery` static helpers for raw SQL expressions.
 - Translations for `en` and `id`.
 
-[Unreleased]: https://github.com/jund-fauz/eloquent-kompact/compare/v0.44.0...HEAD
+[Unreleased]: https://github.com/jund-fauz/eloquent-kompact/compare/v0.45.0...HEAD
+[0.45.0]: https://github.com/jund-fauz/eloquent-kompact/compare/v0.44.0...v0.45.0
 [0.44.0]: https://github.com/jund-fauz/eloquent-kompact/compare/v0.43.0...v0.44.0
 [0.43.0]: https://github.com/jund-fauz/eloquent-kompact/compare/v0.42.0...v0.43.0
 [0.42.0]: https://github.com/jund-fauz/eloquent-kompact/compare/v0.41.0...v0.42.0
