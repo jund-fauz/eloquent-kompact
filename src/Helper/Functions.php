@@ -40,6 +40,12 @@ function schema_concat(string|array ...$values): string
     return join(':', $values);
 }
 
+function relation_concat(string|array ...$values): string
+{
+    array_flat($values);
+    return join('.', $values);
+}
+
 function write_line(string|array ...$lines): string
 {
     array_flat($lines);

@@ -21,6 +21,7 @@ use function JundFauz\EloquentKompact\namespace_concat;
 use function JundFauz\EloquentKompact\not;
 use function JundFauz\EloquentKompact\not_same_with;
 use function JundFauz\EloquentKompact\path_concat;
+use function JundFauz\EloquentKompact\relation_concat;
 use function JundFauz\EloquentKompact\same_with;
 use function JundFauz\EloquentKompact\schema_concat;
 use function JundFauz\EloquentKompact\str_before_last;
@@ -63,6 +64,7 @@ class FunctionsTest extends TestCase
         $this->assertSame('a:b:c', schema_concat('a', ['b', 'c']));
         $this->assertSame("a\nb\nc", write_line('a', ['b', 'c']));
         $this->assertSame('a/b/c', path_concat('a', ['b', 'c']));
+        $this->assertSame('a.b.c', relation_concat('a', ['b', 'c']));
         $this->assertSame('// a', comment('a'));
     }
 
