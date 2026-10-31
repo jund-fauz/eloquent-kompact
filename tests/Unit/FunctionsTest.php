@@ -18,6 +18,7 @@ use function JundFauz\EloquentKompact\full_path_on_app;
 use function JundFauz\EloquentKompact\is_all_null;
 use function JundFauz\EloquentKompact\is_not_array;
 use function JundFauz\EloquentKompact\is_not_null;
+use function JundFauz\EloquentKompact\merge_as_array;
 use function JundFauz\EloquentKompact\model_compact;
 use function JundFauz\EloquentKompact\namespace_concat;
 use function JundFauz\EloquentKompact\not;
@@ -134,6 +135,14 @@ class FunctionsTest extends TestCase
         $this->assertNull(array_pull($array, 'email'));
         $this->assertSame(['name' => 'Ana', 'email' => null], array_pull($array, 'name', 'email'));
         $this->assertSame([], $array);
+    }
+
+    #[Test]
+    public function it_merges_values_as_a_flat_list(): void
+    {
+        $this->assertSame(['a', 'b', 'c', 'd', null], merge_as_array('a', ['b', ['c']], ['k' => 'd'], null, []));
+        $this->assertSame([1, 2], merge_as_array(collect([1, 2])));
+        $this->assertSame([], merge_as_array());
     }
 
     #[Test]

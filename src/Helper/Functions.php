@@ -140,3 +140,9 @@ function stringify(array $datas): array
 {
     return array_map(fn (mixed $data) => is_array($data) ? stringify($data) : (string) $data, $datas);
 }
+
+function merge_as_array(mixed ...$values): array
+{
+    array_flat($values);
+    return $values;
+}
