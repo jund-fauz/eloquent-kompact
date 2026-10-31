@@ -552,6 +552,7 @@ use const JundFauz\EloquentKompact\NEW_LINE;
 | `word_concat(...$values)` | Joined with a space |
 | `schema_concat(...$values)` | Joined with `:` |
 | `path_concat(...$values)` | Joined with `/` |
+| `relation_concat(...$values)` | Joined with `.` |
 | `namespace_concat(...$values)` | Joined with `\`, trimming the backslashes of each part |
 | `write_line(...$lines)` | Joined with a new line |
 | `comment($sentence)` | `// sentence` |
@@ -574,6 +575,17 @@ Constants: `NEW_LINE` (`"\n"`), `DISTANCE_LINE` (`"\n\n"`), `NAMESPACE_DELIMITER
   Arrange::relations('name', User::class, Post::class); // users.posts.name
   Arrange::relation('', User::class, 'roles');          // user.roles
   ```
+
+- `Builder\Relation` builds the same paths with a chain read from left to right. The column given to `arrange()` always comes last:
+
+  ```php
+  use JundFauz\EloquentKompact\Builder\Relation;
+
+  Relation::arrange('name')->relations(Post::class)->relation(User::class)->build(); // posts.user.name
+  Relation::arrange()->relations(Post::class)->relation('comments')->build();        // posts.comments
+  ```
+
+  Every method returns a new `Relation`. It is a query `Expression`, but Eloquent's `with()`, `load()` and `loadMissing()` only take strings, so call `build()` (or cast it to a `string`) for them. Its name is the same as Eloquent's `Relation`; import one of them with an alias if a file needs both.
 
 - `Helper\Arr` extends Laravel's `Arr` with `pullMany(&$array, ...$keys)` (pulls several keys at once) and `isKeysDontExist($array, ...$keys)`.
 - `Cast\UuidCast` casts an attribute to and from a `Ramsey\Uuid\UuidInterface`.
