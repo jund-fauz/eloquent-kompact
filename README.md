@@ -469,14 +469,14 @@ RawQuery::create('paid')->sum()->divide(RawQuery::create('total')->sum())->as('p
 | `join($delimiter, ...$strings)` | The value and the strings joined with `$delimiter` |
 | `add(...$strings)` / `concat(...$strings)` | The strings appended without a delimiter |
 | `addAtStart(...$strings)` | The strings prepended without a delimiter |
-| `addWord(...$words)` / `addWordAtStart(...$words)` | The words appended / prepended with a space |
+| `addWord(...$words)` / `addWordAtStart(...$words)` | The words appended / prepended with a space, skipping empty ones |
 | `addIf($condition, $string)` / `addWordIf($condition, $word)` | `add()` / `addWord()` only if `$condition` is `true` |
 | `newLine($count = 1)` | `$count` new lines (`"\n"`) appended |
 | `newLineIfNotEmpty($count = 1)` | `newLine()`, unless the value is empty |
 | `addAtNewLine($string, $lineCount = 1)` | `$string` appended after `$lineCount` new lines |
 | `addNamespace(...$namespaces)` | The namespaces appended with `\`, trimming the backslashes of each part |
 | `addNamespaceAtStart(...$namespaces)` | The namespaces prepended with `\`, trimming the backslashes of each part |
-| `addPath(...$paths)` / `addPathAtStart(...$paths)` | The paths appended / prepended with `/` |
+| `addPath(...$paths)` / `addPathAtStart(...$paths)` | The paths appended / prepended with a single `/`, skipping empty ones; the slashes at the start and end of the whole path are kept |
 | `appPath()` | Laravel's `app_path()` of the value, e.g. `Models` → `{app_path}/Models` |
 | `emptyIfFalse($condition)` | The value, or `''` if `$condition` is falsy |
 | `relation()` | The value with the relation token, e.g. `user_id` |
