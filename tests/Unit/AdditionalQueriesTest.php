@@ -37,6 +37,15 @@ class AdditionalQueriesTest extends TestCase
     }
 
     #[Test]
+    public function it_filters_by_the_columns_of_another_model(): void
+    {
+        $comment = MorphComment::find(1);
+
+        $this->assertSame([1, 2], MorphComment::whereSameWith($comment, 'commentable_type')->pluck('id')->all());
+        $this->assertSame([1], MorphComment::whereSameWith($comment, 'commentable_type', 'commentable_id')->pluck('id')->all());
+    }
+
+    #[Test]
     public function it_filters_by_the_morph_class(): void
     {
         $this->assertSame([1, 2], MorphComment::whereMorphType('commentable', MorphPost::class)->pluck('id')->all());

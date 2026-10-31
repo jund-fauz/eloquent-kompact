@@ -28,7 +28,7 @@ trait AdditionalQueries
     }
 
     #[Scope]
-    protected function wheres(Builder $query, Model $other, mixed ...$columns): Builder
+    protected function whereSameWith(Builder $query, Model $other, mixed ...$columns): Builder
     {
         foreach ($columns as $column) {
             $query->where($column, $other->{$column});
