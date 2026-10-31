@@ -25,6 +25,11 @@ class Regex extends Builder
         ));
     }
 
+    public function startsWith(string|self ...$sentenceOrWord): static
+    {
+        return $this->set(str_concat('^', $this->withResult(...$sentenceOrWord)));
+    }
+
     public function endsWith(string|self ...$sentenceOrWord): static
     {
         return $this->set(str_concat($this->withResult(...$sentenceOrWord), '$'));
