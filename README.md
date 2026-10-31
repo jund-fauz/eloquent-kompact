@@ -155,7 +155,7 @@ To get autocomplete for these relations, see [IDE helper](#ide-helper).
 $order->copyRelationsTo($newOrder, ['items' => ['product_id', 'qty_pcs']]);
 
 // where() on several columns, with the values taken from another model
-Order::wheres($otherOrder, 'tenant_id', 'branch_id')->get();
+Order::whereSameWith($otherOrder, 'tenant_id', 'branch_id')->get();
 
 // where() on a morph type column, using the morph alias of the class if there is one
 Comment::whereMorphType('commentable', Post::class)->get(); // where commentable_type = 'App\Models\Post'
@@ -513,6 +513,7 @@ use JundFauz\EloquentKompact\Regex\Quantifier;
 use JundFauz\EloquentKompact\Regex\Regex;
 
 Regex::create('id')->exact();         // /^id$/
+Regex::create()->startsWith('app');   // /^app/
 Regex::create()->endsWith('_at');     // /_at$/
 Regex::create()->contain(Quantifier::oneOrMore, Regex::create()->range('a', 'z')); // /[a-z]+/
 ```
@@ -521,6 +522,7 @@ Regex::create()->contain(Quantifier::oneOrMore, Regex::create()->range('a', 'z')
 |---|---|
 | `create($pattern = '')` | Starts with `$pattern` |
 | `exact(...$parts)` | `^…$` |
+| `startsWith(...$parts)` | `^…` |
 | `endsWith(...$parts)` | `…$` |
 | `exceptWord($word)` | `(?!word)` |
 | `contain($quantifier, ...$parts)` | `[…]` followed by the quantifier (`Quantifier::zeroOrMore`, `oneOrMore`, `zeroOrOne` or a string) |
