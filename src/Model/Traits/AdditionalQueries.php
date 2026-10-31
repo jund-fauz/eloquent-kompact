@@ -43,6 +43,12 @@ trait AdditionalQueries
         return $query->where(Creator::type($morphName), Relation::getMorphAlias($modelClass));
     }
 
+    #[Scope]
+    protected function whereMorphTypeNot(Builder $query, string $morphName, string $modelClass): Builder
+    {
+        return $query->whereNot(Creator::type($morphName), Relation::getMorphAlias($modelClass));
+    }
+
     public function getOr(string ...$columnNames)
     {
         return array_reduce($columnNames, fn ($acc, $column) => $acc ?? $this?->{$column});

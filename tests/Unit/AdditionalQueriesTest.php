@@ -60,6 +60,29 @@ class AdditionalQueriesTest extends TestCase
     }
 
     #[Test]
+    public function it_excludes_the_morph_class(): void
+    {
+        $this->assertSame([3], MorphComment::whereMorphTypeNot('commentable', MorphPost::class)->pluck('id')->all());
+    }
+
+    #[Test]
+    public function it_excludes_the_morph_alias(): void
+    {
+        Relation::morphMap(['video' => MorphVideo::class]);
+
+        $this->assertSame([1, 2], MorphComment::whereMorphTypeNot('commentable', MorphVideo::class)->pluck('id')->all());
+    }
+
+    #[Test]
+    public function it_negates_the_type_column(): void
+    {
+        $this->assertSame(
+            'select * from "comments" where not "commentable_type" = ?',
+            MorphComment::whereMorphTypeNot('commentable', MorphPost::class)->toSql()
+        );
+    }
+
+    #[Test]
     public function it_checks_the_morph_class(): void
     {
         $comment = MorphComment::find(1);
