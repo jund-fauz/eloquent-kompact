@@ -6,7 +6,7 @@ A set of automation & helper tools to improve development experience and conveni
 composer require jund-fauz/eloquent-kompact
 ```
 
-Requires PHP 8.3+ and Laravel 11, 12 or 13. The service provider is registered through package discovery.
+Requires PHP 8.3+ and Laravel 12 or 13. The service provider is registered through package discovery.
 
 - [Versioning](#versioning)
 - [Configuration](#configuration)
@@ -159,6 +159,7 @@ Order::wheres($otherOrder, 'tenant_id', 'branch_id')->get();
 
 // where() on a morph type column, using the morph alias of the class if there is one
 Comment::whereMorphType('commentable', Post::class)->get(); // where commentable_type = 'App\Models\Post'
+Comment::whereMorphTypeNot('commentable', Post::class)->get(); // where not commentable_type = 'App\Models\Post'
 
 // Whether a morph type attribute points to the class, using its morph alias if there is one
 $comment->isMorphModelSame('commentable', Post::class); // true
