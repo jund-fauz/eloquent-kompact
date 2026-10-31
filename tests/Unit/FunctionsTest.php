@@ -12,6 +12,7 @@ use stdClass;
 use function JundFauz\EloquentKompact\add_tab;
 use function JundFauz\EloquentKompact\array_flat;
 use function JundFauz\EloquentKompact\array_pull;
+use function JundFauz\EloquentKompact\array_wrap;
 use function JundFauz\EloquentKompact\comment;
 use function JundFauz\EloquentKompact\full_path_on_app;
 use function JundFauz\EloquentKompact\is_all_null;
@@ -133,6 +134,14 @@ class FunctionsTest extends TestCase
         $this->assertNull(array_pull($array, 'email'));
         $this->assertSame(['name' => 'Ana', 'email' => null], array_pull($array, 'name', 'email'));
         $this->assertSame([], $array);
+    }
+
+    #[Test]
+    public function it_wraps_values_in_arrays(): void
+    {
+        $this->assertSame(['a'], array_wrap('a'));
+        $this->assertSame(['a', 'b'], array_wrap(['a', 'b']));
+        $this->assertSame([], array_wrap(null));
     }
 
     #[Test]

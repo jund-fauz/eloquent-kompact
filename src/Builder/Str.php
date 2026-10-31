@@ -10,7 +10,8 @@ use function JundFauz\EloquentKompact\not_same_with;
 use function JundFauz\EloquentKompact\path_concat;
 use function JundFauz\EloquentKompact\same_with;
 use function JundFauz\EloquentKompact\str_concat;
-use const JundFauz\EloquentKompact\NAMESPACE_DELIMITER;
+use function JundFauz\EloquentKompact\word_concat;
+use const JundFauz\EloquentKompact\NEW_LINE;
 
 class Str extends Stringable
 {
@@ -53,6 +54,11 @@ class Str extends Stringable
         return $this->join('', ...$otherStrings);
     }
 
+    public function addWord(string ...$otherWords): static
+    {
+        return new static(word_concat($this->value, $otherWords));
+    }
+
     public function addNamespace(string ...$otherNamespace): static
     {
         return new static(namespace_concat($this->value, $otherNamespace));
@@ -71,6 +77,29 @@ class Str extends Stringable
     public function addNamespaceAtStart(string ...$otherNamespace): static
     {
         return new static(namespace_concat($otherNamespace, $this->value));
+    }
+
+    public function addAtNewLine(string $sentence, int $lineCount = 1): static
+    {
+        return (new static($this->value))->newLine($lineCount)->add($sentence);
+    }
+
+    public function addIf(bool $condition, string $addition): static
+    {
+        $result = new static($this->value);
+        if ($condition) {
+            $result = $result->add($addition);
+        }
+        return $result;
+    }
+
+    public function addWordIf(bool $condition, string $addition): static
+    {
+        $result = new static($this->value);
+        if ($condition) {
+            $result = $result->addWord($addition);
+        }
+        return $result;
     }
 
     public function emptyIfFalse(mixed $condition): static
@@ -111,5 +140,15 @@ class Str extends Stringable
     public function notSameWith(mixed $otherValue): bool
     {
         return not_same_with($this->value, $otherValue instanceof Stringable ? $otherValue->value : $otherValue);
+    }
+
+    public function newLineIfNotEmpty(int $count = 1): static
+    {
+        return $this->isNotEmpty() ? $this->newLine($count) : $this;
+    }
+
+    public function newLine($count = 1): static
+    {
+        return $this->add(str_repeat(NEW_LINE, max($count, 0)));
     }
 }

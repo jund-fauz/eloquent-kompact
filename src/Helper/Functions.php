@@ -3,8 +3,8 @@
 namespace JundFauz\EloquentKompact;
 
 use Illuminate\Database\Eloquent\Model;
-use Illuminate\Support\Arr;
 use JundFauz\EloquentKompact\Builder\Str;
+use JundFauz\EloquentKompact\Helper\Arr;
 
 function is_not_null($value): bool
 {
@@ -91,7 +91,12 @@ function array_flat(array &$array): void
 
 function array_pull(array &$array, string ...$keys): mixed
 {
-    return Helper\Arr::pullMany($array, ...$keys);
+    return Arr::pullMany($array, ...$keys);
+}
+
+function array_wrap(mixed $data): array
+{
+    return Arr::wrap($data);
 }
 
 function str_before_last(string $subject, string $search): string

@@ -62,6 +62,37 @@ class RawQueryTest extends TestCase
         yield 'compare default' => [RawQuery::create('total')->compare(), 'total = ?'];
         yield 'compare operator' => [RawQuery::create('stock')->compare('0', Operator::MoreThanOrSame), 'stock >= 0'];
 
+        yield 'cast builder' => [RawQuery::create('id')->cast(RawQuery::create(RawQuery::CHAR)), 'CAST(id AS CHAR)'];
+        yield 'as builder' => [RawQuery::create('price')->as(RawQuery::create('total')), 'price AS total'];
+        yield 'select' => [RawQuery::select('id', 'users'), 'SELECT id FROM users'];
+        yield 'select many' => [RawQuery::select(['id', 'name'], 'users'), 'SELECT id, name FROM users'];
+        yield 'where' => [RawQuery::select('id', 'users')->where('active_is'), 'SELECT id FROM users WHERE active_is = ?'];
+        yield 'where operator' => [RawQuery::select('id', 'users')->where('age', Operator::MoreThan, '17'), 'SELECT id FROM users WHERE age > 17'];
+        yield 'in' => [RawQuery::create('id')->in('1, 2'), 'id IN (1, 2)'];
+        yield 'in subquery' => [RawQuery::create('id')->in(RawQuery::select('user_id', 'posts')), 'id IN (SELECT user_id FROM posts)'];
+        yield 'recursive' => [
+            RawQuery::recursive('t', 'SELECT 1 AS n', 'SELECT n + 1 FROM t'),
+            "WITH RECURSIVE t AS (
+SELECT 1 AS n
+
+UNION
+
+SELECT n + 1 FROM t
+)
+SELECT * FROM t",
+        ];
+        yield 'recursive union all with columns' => [
+            RawQuery::recursive('t', RawQuery::create('SELECT 1 AS n'), 'SELECT n + 1 FROM t WHERE n < 5', true, 'n'),
+            "WITH RECURSIVE t AS (
+SELECT 1 AS n
+
+UNION ALL
+
+SELECT n + 1 FROM t WHERE n < 5
+)
+SELECT n FROM t",
+        ];
+
         yield 'nested builder' => [
             RawQuery::create('price')->multiply('qty')->plus(RawQuery::create('shipping')->zeroIfNull()),
             'price * qty + COALESCE(shipping, 0)',

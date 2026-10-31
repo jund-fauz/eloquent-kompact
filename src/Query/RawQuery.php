@@ -9,6 +9,7 @@ use JundFauz\EloquentKompact\Builder\Str;
 use JundFauz\EloquentKompact\Column\Convert;
 use JundFauz\EloquentKompact\Internal\Concerns\Builder;
 use JundFauz\EloquentKompact\Internal\Database\Driver;
+use function JundFauz\EloquentKompact\array_wrap;
 use function JundFauz\EloquentKompact\is_not_null;
 use function JundFauz\EloquentKompact\str_concat;
 
@@ -23,9 +24,16 @@ class RawQuery extends Builder implements Expression
 
     protected static ?string $initiationFunction = 'create';
 
+    public static function select(string|array $column, string $table): static
+    {
+        return Str::of('SELECT')
+            ->addWord(join(', ', array_wrap($column)), 'FROM', $table)
+            ->asRawQuery();
+    }
+
     public function zeroIfNull(): static
     {
-        return $this->set("COALESCE($this->result, 0)");
+        return $this->set("COALESCE($this, 0)");
     }
 
     /**
@@ -33,7 +41,7 @@ class RawQuery extends Builder implements Expression
      */
     public function replaceIfNull(string|self $replaceValue): static
     {
-        return $this->set("NULLIF($this->result, $replaceValue)");
+        return $this->set("NULLIF($this, $replaceValue)");
     }
 
     public function isZeroOrNull(string|self ...$columnNames): static
@@ -48,22 +56,22 @@ class RawQuery extends Builder implements Expression
 
     public function isNull(): static
     {
-        return $this->set("$this->result IS NULL");
+        return $this->set("$this IS NULL");
     }
 
     public function and(string $otherColumn): static
     {
-        return $this->set("$this->result AND $otherColumn");
+        return $this->set("$this AND $otherColumn");
     }
 
     public function wrap(): static
     {
-        return $this->set("($this->result)");
+        return $this->set("($this)");
     }
 
     public function sum(): static
     {
-        return $this->set("SUM($this->result)");
+        return $this->set("SUM($this)");
     }
 
     public function plus(string|self ...$columnNames): static
@@ -94,12 +102,12 @@ class RawQuery extends Builder implements Expression
 
     public function if(string|self $trueValue, string|self $falseValue): static
     {
-        return $this->set("CASE WHEN $this->result THEN $trueValue ELSE $falseValue END");
+        return $this->set("CASE WHEN $this THEN $trueValue ELSE $falseValue END");
     }
 
     public function switchCase(array $conditions, mixed $defaultValue = null): static
     {
-        $result = "\nCASE $this->result";
+        $result = "\nCASE $this";
         foreach ($conditions as $condition => $value) {
             $result .= "\n  WHEN $condition THEN $value";
         }
@@ -139,19 +147,33 @@ class RawQuery extends Builder implements Expression
         ));
     }
 
-    public function cast(string $as): static
+    public function cast(string|self $as): static
     {
-        return $this->set("CAST($this->result AS $as)");
+        return $this->set("CAST($this AS $as)");
     }
 
-    public function as(string $as): static
+    public function as(string|self $as): static
     {
-        return $this->set("$this->result AS $as");
+        return $this->set("$this AS $as");
+    }
+
+    public static function recursive(string $cteName, string|self $firstQuery, string|self $secondQuery, bool $isUnionAll = false, string ...$cteColumns): static
+    {
+        return Str::of('WITH')
+            ->addWord('RECURSIVE', $cteName, 'AS', '(')
+            ->addAtNewLine($firstQuery)
+            ->addAtNewLine('UNION', 2)
+            ->addWordIf($isUnionAll, 'ALL')
+            ->addAtNewLine($secondQuery, 2)
+            ->addAtNewLine(')')
+            ->addAtNewLine('SELECT')
+            ->addWord(count($cteColumns) ? join(', ', $cteColumns) : '*', 'FROM', $cteName)
+            ->asRawQuery();
     }
 
     public function max(): static
     {
-        return $this->set("MAX($this->result)");
+        return $this->set("MAX($this)");
     }
 
     public static function relations(string $columnName, ...$relationClasses): static
@@ -174,7 +196,7 @@ class RawQuery extends Builder implements Expression
 
     public function dateAfter(int $count, Interval $type = Interval::Day): static
     {
-        return $this->set("$this->result + INTERVAL '$count' $type->value");
+        return $this->set("$this + INTERVAL '$count' $type->value");
     }
 
     /**
@@ -184,8 +206,8 @@ class RawQuery extends Builder implements Expression
     public function diff(string|self $secondColumnName, Interval $interval = Interval::Day): static
     {
         return $this->set(Driver::matcher(
-            mysql: "TIMESTAMPDIFF($interval->value, $secondColumnName, $this->result)",
-            pgsql: "EXTRACT($interval->value FROM ($this->result - $secondColumnName))"
+            mysql: "TIMESTAMPDIFF($interval->value, $secondColumnName, $this)",
+            pgsql: "EXTRACT($interval->value FROM ($this - $secondColumnName))"
         ));
     }
 
@@ -196,17 +218,27 @@ class RawQuery extends Builder implements Expression
 
     public function compare(string|self $secondColumnName = '?', Operator $operator = Operator::SameWith): static
     {
-        return $this->set("$this->result $operator->value $secondColumnName");
+        return $this->set("$this $operator->value $secondColumnName");
+    }
+
+    public function where(string|self $firstColumnName, Operator $operator = Operator::SameWith, string|self $secondColumnName = '?'): static
+    {
+        return $this->set("$this WHERE $firstColumnName $operator->value $secondColumnName");
+    }
+
+    public function in(string|self $columnName): static
+    {
+        return $this->set("$this IN ($columnName)");
     }
 
     public function count(): static
     {
-        return $this->set("COUNT($this->result)");
+        return $this->set("COUNT($this)");
     }
 
     public static function queryConcat(string|self ...$expressions): string
     {
-        return join(' ', array_map(fn (string|self $expression) => (string) $expression, $expressions));
+        return join(' ', array_map(fn (string|self $expression) => (string)$expression, $expressions));
     }
 
     /**
@@ -214,7 +246,7 @@ class RawQuery extends Builder implements Expression
      */
     private function withResult(string|self ...$expressions): array
     {
-        $expressions = array_map(fn (string|self $expression) => (string) $expression, $expressions);
+        $expressions = array_map(fn (string|self $expression) => (string)$expression, $expressions);
         return $this->result === '' ? $expressions : [$this->result, ...$expressions];
     }
 

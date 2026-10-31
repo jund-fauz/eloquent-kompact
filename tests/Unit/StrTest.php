@@ -65,6 +65,30 @@ class StrTest extends TestCase
         yield 'addNamespaceAtStart' => [Str::of('User')->addNamespaceAtStart('App', 'Models'), 'App\Models\User'];
         yield 'addNamespaceAtStart trims backslashes' => [Str::of('\User')->addNamespaceAtStart('\App\\', 'Models\\'), 'App\Models\User'];
 
+        yield 'addWord' => [Str::of('SELECT')->addWord('id', 'FROM', 'users'), 'SELECT id FROM users'];
+        yield 'addWord nothing' => [Str::of('a')->addWord(), 'a'];
+        yield 'addAtNewLine' => [Str::of('a')->addAtNewLine('b'), "a
+b"];
+        yield 'addAtNewLine several lines' => [Str::of('a')->addAtNewLine('b', 2), "a
+
+b"];
+        yield 'addIf true' => [Str::of('a')->addIf(true, 'b'), 'ab'];
+        yield 'addIf false' => [Str::of('a')->addIf(false, 'b'), 'a'];
+        yield 'addWordIf true' => [Str::of('UNION')->addWordIf(true, 'ALL'), 'UNION ALL'];
+        yield 'addWordIf false' => [Str::of('UNION')->addWordIf(false, 'ALL'), 'UNION'];
+        yield 'newLine' => [Str::of('a')->newLine(), "a
+"];
+        yield 'newLine several' => [Str::of('a')->newLine(3), "a
+
+
+"];
+        yield 'newLine zero' => [Str::of('a')->newLine(0), 'a'];
+        yield 'newLine negative' => [Str::of('a')->newLine(-1), 'a'];
+        yield 'newLineIfNotEmpty' => [Str::of('a')->newLineIfNotEmpty(2), "a
+
+"];
+        yield 'newLineIfNotEmpty empty' => [Str::of()->newLineIfNotEmpty(), ''];
+
         yield 'emptyIfFalse true' => [Str::of('a')->emptyIfFalse(true), 'a'];
         yield 'emptyIfFalse false' => [Str::of('a')->emptyIfFalse(false), ''];
         yield 'emptyIfFalse truthy int' => [Str::of('a')->emptyIfFalse(1), 'a'];
