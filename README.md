@@ -160,6 +160,9 @@ Order::wheres($otherOrder, 'tenant_id', 'branch_id')->get();
 // where() on a morph type column, using the morph alias of the class if there is one
 Comment::whereMorphType('commentable', Post::class)->get(); // where commentable_type = 'App\Models\Post'
 
+// Whether a morph type attribute points to the class, using its morph alias if there is one
+$comment->isMorphModelSame('commentable', Post::class); // true
+
 // The first non-null attribute
 $user->getOr('nickname', 'name');
 
