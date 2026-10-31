@@ -7,6 +7,33 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [0.47.0] - 2026-10-31
+
+### Added
+
+- `Regex::startsWith()`, the counterpart of `endsWith()`, to anchor the pattern at the start of the string.
+
+  ```php
+  Regex::create()->startsWith('app'); // /^app/
+  ```
+
+### Changed
+
+- **BREAKING:** The `AdditionalQueries::wheres()` scope was renamed to `whereSameWith()`. An old call does not throw right away: Laravel reads `wheres()` as a dynamic where on a column named `s`, so the query fails when it runs.
+
+  ```php
+  // 0.46
+  Order::wheres($otherOrder, 'tenant_id', 'branch_id')->get();
+
+  // 0.47
+  Order::whereSameWith($otherOrder, 'tenant_id', 'branch_id')->get();
+  ```
+
+### Tests
+
+- Added unit tests for `Regex`, including `startsWith()`.
+- Added unit tests for `whereSameWith()`.
+
 ## [0.46.0] - 2026-10-31
 
 ### Added
@@ -956,7 +983,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - `RawQuery` static helpers for raw SQL expressions.
 - Translations for `en` and `id`.
 
-[Unreleased]: https://github.com/jund-fauz/eloquent-kompact/compare/v0.46.0...HEAD
+[Unreleased]: https://github.com/jund-fauz/eloquent-kompact/compare/v0.47.0...HEAD
+[0.47.0]: https://github.com/jund-fauz/eloquent-kompact/compare/v0.46.0...v0.47.0
 [0.46.0]: https://github.com/jund-fauz/eloquent-kompact/compare/v0.45.0...v0.46.0
 [0.45.0]: https://github.com/jund-fauz/eloquent-kompact/compare/v0.44.0...v0.45.0
 [0.44.0]: https://github.com/jund-fauz/eloquent-kompact/compare/v0.43.0...v0.44.0
