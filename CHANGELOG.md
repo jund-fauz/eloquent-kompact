@@ -7,6 +7,20 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [0.49.0] - 2026-10-31
+
+### Added
+
+- `StaticH::morphClass()`, a static shorthand for `getMorphClass()`: the morph alias of the model if it is in `Relation::morphMap()`, or its class name.
+
+  ```php
+  Post::morphClass(); // 'App\Models\Post', or 'post' with Relation::morphMap(['post' => Post::class])
+  ```
+
+### Tests
+
+- Added unit tests for `StaticH::tableName()` and `morphClass()`.
+
 ## [0.48.0] - 2026-10-31
 
 ### Added
@@ -1002,7 +1016,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - `RawQuery` static helpers for raw SQL expressions.
 - Translations for `en` and `id`.
 
-[Unreleased]: https://github.com/jund-fauz/eloquent-kompact/compare/v0.48.0...HEAD
+[Unreleased]: https://github.com/jund-fauz/eloquent-kompact/compare/v0.49.0...HEAD
+[0.49.0]: https://github.com/jund-fauz/eloquent-kompact/compare/v0.48.0...v0.49.0
 [0.48.0]: https://github.com/jund-fauz/eloquent-kompact/compare/v0.47.0...v0.48.0
 [0.47.0]: https://github.com/jund-fauz/eloquent-kompact/compare/v0.46.0...v0.47.0
 [0.46.0]: https://github.com/jund-fauz/eloquent-kompact/compare/v0.45.0...v0.46.0
