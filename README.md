@@ -202,6 +202,7 @@ $counts->{'user.name_count'}; // relational columns are always 1
 
 ```php
 Post::tableName();             // posts
+Post::morphClass();            // App\Models\Post, or its alias in Relation::morphMap()
 
 // In a migration: the model of the table being built, or null
 Post::getModel($table);        // App\Models\Post
