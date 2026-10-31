@@ -67,6 +67,11 @@ class StrTest extends TestCase
 
         yield 'addWord' => [Str::of('SELECT')->addWord('id', 'FROM', 'users'), 'SELECT id FROM users'];
         yield 'addWord nothing' => [Str::of('a')->addWord(), 'a'];
+        yield 'addWordAtStart' => [Str::of('FROM users')->addWordAtStart('SELECT', 'id'), 'SELECT id FROM users'];
+        yield 'addWordAtStart nothing' => [Str::of('a')->addWordAtStart(), 'a'];
+        yield 'addPathAtStart' => [Str::of('User.php')->addPathAtStart('app', 'Models'), 'app/Models/User.php'];
+        yield 'addPathAtStart nothing' => [Str::of('a')->addPathAtStart(), 'a'];
+
         yield 'addAtNewLine' => [Str::of('a')->addAtNewLine('b'), "a
 b"];
         yield 'addAtNewLine several lines' => [Str::of('a')->addAtNewLine('b', 2), "a

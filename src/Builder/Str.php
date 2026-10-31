@@ -74,9 +74,19 @@ class Str extends Stringable
         return new static(str_concat($otherStrings, $this->value));
     }
 
+    public function addWordAtStart(string ...$otherWords): static
+    {
+        return new static(word_concat($otherWords, $this->value));
+    }
+
     public function addNamespaceAtStart(string ...$otherNamespace): static
     {
         return new static(namespace_concat($otherNamespace, $this->value));
+    }
+
+    public function addPathAtStart(string ...$otherPath): static
+    {
+        return new static(path_concat($otherPath, $this->value));
     }
 
     public function addAtNewLine(string $sentence, int $lineCount = 1): static
