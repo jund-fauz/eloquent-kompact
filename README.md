@@ -576,6 +576,7 @@ use const JundFauz\EloquentKompact\NEW_LINE;
 | `full_path_on_app($path)` | Absolute path inside `app/`, e.g. `App\Models` → `{app_path}/Models` |
 | `array_flat(&$array)` | Flattens the array in place |
 | `array_wrap($value)` | Laravel's `Arr::wrap()`: the value as an array, `[]` for `null` |
+| `merge_as_array(...$values)` | Every value in one flat list, nested arrays and collections included; keys are dropped and `null` is kept |
 | `array_pull(&$array, ...$keys)` | `Arr::pullMany()`: removes the keys and returns the value of one key, or `[key => value]` for several |
 | `stringify($array)` | Every value cast to a `string`, nested arrays included, keeping the keys; `null` and `false` become `''` |
 | `model_compact($model, ...$columns)` | `[column => value]` for the given columns, after casting; missing attributes are `null` and loaded relations become arrays |
