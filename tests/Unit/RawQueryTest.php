@@ -2,6 +2,7 @@
 
 namespace JundFauz\EloquentKompact\Tests\Unit;
 
+use JundFauz\EloquentKompact\Builder\Str;
 use JundFauz\EloquentKompact\Internal\Database\Driver;
 use JundFauz\EloquentKompact\Query\Interval;
 use JundFauz\EloquentKompact\Query\Operator;
@@ -136,6 +137,17 @@ SELECT n FROM t",
     public function it_builds_expressions(RawQuery $query, string $expected): void
     {
         $this->assertSame($expected, $query->build());
+    }
+
+    #[Test]
+    public function it_converts_to_a_str(): void
+    {
+        $str = RawQuery::create('price')->sum()->asStr();
+
+        $this->assertInstanceOf(Str::class, $str);
+        $this->assertSame('SUM(price)', $str->toString());
+        $this->assertSame('SUM(price) AS total', $str->asRawQuery()->as('total')->build());
+        $this->assertSame('', RawQuery::create()->asStr()->toString());
     }
 
     #[Test]

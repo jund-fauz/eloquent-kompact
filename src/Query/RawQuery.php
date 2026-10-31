@@ -236,6 +236,11 @@ class RawQuery extends Builder implements Expression
         return $this->set("COUNT($this)");
     }
 
+    public function asStr(): Str
+    {
+        return Str::of($this);
+    }
+
     public static function queryConcat(string|self ...$expressions): string
     {
         return join(' ', array_map(fn (string|self $expression) => (string)$expression, $expressions));
