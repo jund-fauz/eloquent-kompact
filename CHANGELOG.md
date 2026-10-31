@@ -7,6 +7,32 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [0.51.0] - 2026-10-31
+
+### Added
+
+- `Builder\Relation`, an immutable relation path builder started with `Relation::arrange($column)`, with `relation()` and `relations()`. Unlike nested `Arrange` calls, the chain is read from left to right, and the column always comes last.
+
+  ```php
+  // Arrange
+  Arrange::relations(Arrange::relation('name', User::class), Post::class); // posts.user.name
+
+  // Relation
+  Relation::arrange('name')->relations(Post::class)->relation(User::class)->build(); // posts.user.name
+  ```
+
+  It is `Stringable` and a query `Expression`. Eloquent's `with()`, `load()` and `loadMissing()` do not accept it as it is: call `build()` or cast it to a `string`.
+
+- `relation_concat()` helper function to join strings with `.`.
+
+### Changed
+
+- `AdditionalQueries::getMany()` declares its `array` return type. A model that overrides `getMany()` must declare it too.
+
+### Tests
+
+- Added unit tests for `Builder\Relation` and `relation_concat()`.
+
 ## [0.50.0] - 2026-10-31
 
 ### Added
@@ -1030,7 +1056,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - `RawQuery` static helpers for raw SQL expressions.
 - Translations for `en` and `id`.
 
-[Unreleased]: https://github.com/jund-fauz/eloquent-kompact/compare/v0.50.0...HEAD
+[Unreleased]: https://github.com/jund-fauz/eloquent-kompact/compare/v0.51.0...HEAD
+[0.51.0]: https://github.com/jund-fauz/eloquent-kompact/compare/v0.50.0...v0.51.0
 [0.50.0]: https://github.com/jund-fauz/eloquent-kompact/compare/v0.49.0...v0.50.0
 [0.49.0]: https://github.com/jund-fauz/eloquent-kompact/compare/v0.48.0...v0.49.0
 [0.48.0]: https://github.com/jund-fauz/eloquent-kompact/compare/v0.47.0...v0.48.0
