@@ -7,6 +7,20 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [0.50.0] - 2026-10-31
+
+### Added
+
+- `AdditionalQueries::getMany()` to read several attributes of a model at once, as a list in the order of the given columns. A missing attribute is `null`.
+
+  ```php
+  $user->getMany('name', 'email'); // ['Ana', 'ana@example.com']
+  ```
+
+### Tests
+
+- Added unit tests for `getMany()`.
+
 ## [0.49.0] - 2026-10-31
 
 ### Added
@@ -1016,7 +1030,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - `RawQuery` static helpers for raw SQL expressions.
 - Translations for `en` and `id`.
 
-[Unreleased]: https://github.com/jund-fauz/eloquent-kompact/compare/v0.49.0...HEAD
+[Unreleased]: https://github.com/jund-fauz/eloquent-kompact/compare/v0.50.0...HEAD
+[0.50.0]: https://github.com/jund-fauz/eloquent-kompact/compare/v0.49.0...v0.50.0
 [0.49.0]: https://github.com/jund-fauz/eloquent-kompact/compare/v0.48.0...v0.49.0
 [0.48.0]: https://github.com/jund-fauz/eloquent-kompact/compare/v0.47.0...v0.48.0
 [0.47.0]: https://github.com/jund-fauz/eloquent-kompact/compare/v0.46.0...v0.47.0
