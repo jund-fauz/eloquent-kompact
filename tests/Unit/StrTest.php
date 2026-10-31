@@ -3,7 +3,6 @@
 namespace JundFauz\EloquentKompact\Tests\Unit;
 
 use BadMethodCallException;
-use Illuminate\Foundation\Application;
 use Illuminate\Support\Stringable;
 use JundFauz\EloquentKompact\Builder\Str;
 use JundFauz\EloquentKompact\Query\RawQuery;
@@ -227,10 +226,6 @@ class StrTest extends TestCase
     #[Test]
     public function it_pluralizes_with_the_count_prepended(): void
     {
-        if (version_compare(Application::VERSION, '12.0.0', '<')) {
-            $this->markTestSkipped('Str::plural() $prependCount requires Laravel 12+.');
-        }
-
         $this->assertSame('2 users', Str::of('user')->plural(2, true)->toString());
     }
 
