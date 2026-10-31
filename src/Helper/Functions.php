@@ -51,6 +51,11 @@ function comment(string $sentence): string
     return word_concat('//', $sentence);
 }
 
+function add_tab(string $sentence, int $count = 1): string
+{
+    return str_concat(str_repeat(TAB, max($count, 0)), $sentence);
+}
+
 function namespace_concat(string|array ...$folderOrPackages): string
 {
     array_flat($folderOrPackages);

@@ -8,6 +8,7 @@ use PHPUnit\Framework\Attributes\DataProvider;
 use PHPUnit\Framework\Attributes\Test;
 use stdClass;
 
+use function JundFauz\EloquentKompact\add_tab;
 use function JundFauz\EloquentKompact\array_flat;
 use function JundFauz\EloquentKompact\array_pull;
 use function JundFauz\EloquentKompact\comment;
@@ -33,6 +34,7 @@ use const JundFauz\EloquentKompact\DISTANCE_LINE;
 use const JundFauz\EloquentKompact\NAMESPACE_DELIMITER;
 use const JundFauz\EloquentKompact\NEW_LINE;
 use const JundFauz\EloquentKompact\PATH_DELIMITER;
+use const JundFauz\EloquentKompact\TAB;
 
 class FunctionsTest extends TestCase
 {
@@ -62,6 +64,16 @@ class FunctionsTest extends TestCase
         $this->assertSame("a\nb\nc", write_line('a', ['b', 'c']));
         $this->assertSame('a/b/c', path_concat('a', ['b', 'c']));
         $this->assertSame('// a', comment('a'));
+    }
+
+    #[Test]
+    public function it_adds_tabs(): void
+    {
+        $this->assertSame('    a', add_tab('a'));
+        $this->assertSame('        a', add_tab('a', 2));
+        $this->assertSame(TAB . TAB . TAB . 'a', add_tab('a', 3));
+        $this->assertSame('a', add_tab('a', 0));
+        $this->assertSame('a', add_tab('a', -1));
     }
 
     #[Test]
@@ -208,6 +220,7 @@ class FunctionsTest extends TestCase
         $this->assertSame("\n\n", DISTANCE_LINE);
         $this->assertSame('\\', NAMESPACE_DELIMITER);
         $this->assertSame('/', PATH_DELIMITER);
+        $this->assertSame('    ', TAB);
     }
 
     #[Test]
