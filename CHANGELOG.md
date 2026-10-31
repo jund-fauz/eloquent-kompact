@@ -7,6 +7,25 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [0.48.0] - 2026-10-31
+
+### Added
+
+- `add_tab()` helper function to indent a sentence with a number of tabs (1 by default). A count of 0 or less leaves the sentence as it is.
+
+  ```php
+  use function JundFauz\EloquentKompact\add_tab;
+
+  add_tab('return $value;');    // '    return $value;'
+  add_tab('return $value;', 2); // '        return $value;'
+  ```
+
+- `TAB` constant (4 spaces).
+
+### Tests
+
+- Added unit tests for `add_tab()` and `TAB`.
+
 ## [0.47.0] - 2026-10-31
 
 ### Added
@@ -983,7 +1002,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - `RawQuery` static helpers for raw SQL expressions.
 - Translations for `en` and `id`.
 
-[Unreleased]: https://github.com/jund-fauz/eloquent-kompact/compare/v0.47.0...HEAD
+[Unreleased]: https://github.com/jund-fauz/eloquent-kompact/compare/v0.48.0...HEAD
+[0.48.0]: https://github.com/jund-fauz/eloquent-kompact/compare/v0.47.0...v0.48.0
 [0.47.0]: https://github.com/jund-fauz/eloquent-kompact/compare/v0.46.0...v0.47.0
 [0.46.0]: https://github.com/jund-fauz/eloquent-kompact/compare/v0.45.0...v0.46.0
 [0.45.0]: https://github.com/jund-fauz/eloquent-kompact/compare/v0.44.0...v0.45.0
