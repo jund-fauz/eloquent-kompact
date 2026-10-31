@@ -108,6 +108,22 @@ class AdditionalQueriesTest extends TestCase
         $this->assertTrue(MorphComment::find(3)->isMorphModelSame('commentable', MorphVideo::class));
         $this->assertFalse(MorphComment::find(1)->isMorphModelSame('commentable', MorphVideo::class));
     }
+
+    #[Test]
+    public function it_gets_many_attributes_in_order(): void
+    {
+        $comment = MorphComment::find(3);
+
+        $this->assertSame(['video', 1], $comment->getMany('commentable_type', 'commentable_id'));
+        $this->assertSame([1, 'video'], $comment->getMany('commentable_id', 'commentable_type'));
+    }
+
+    #[Test]
+    public function it_gets_missing_attributes_as_null(): void
+    {
+        $this->assertSame([3, null], MorphComment::find(3)->getMany('id', 'missing'));
+        $this->assertSame([], MorphComment::find(3)->getMany());
+    }
 }
 
 class MorphComment extends Model

@@ -96,4 +96,9 @@ trait AdditionalQueries
     {
         return $this->sameWith(Creator::type($morphName), Relation::getMorphAlias($modelClass));
     }
+
+    public function getMany(string ...$columns)
+    {
+        return array_map(fn (string $column) => $this->{$column}, $columns);
+    }
 }
