@@ -7,6 +7,40 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [0.53.0] - 2026-10-31
+
+### Added
+
+- `RawQuery::select()` and `RawQuery::recursive()` to start a `SELECT … FROM …` query and a recursive CTE, and the `where()` and `in()` chain methods.
+
+  ```php
+  RawQuery::create('id')->in(RawQuery::select('user_id', 'posts')->where('published_is'))->build();
+  // id IN (SELECT user_id FROM posts WHERE published_is = ?)
+
+  RawQuery::recursive('n', 'SELECT 1 AS x', 'SELECT x + 1 FROM n WHERE x < 5', true, 'x')->build();
+  // WITH RECURSIVE n AS (SELECT 1 AS x UNION ALL SELECT x + 1 FROM n WHERE x < 5) SELECT x FROM n, on several lines
+  ```
+
+  `recursive()` selects `*` when no column is given. Its columns come after `$isUnionAll`, so pass `false` to give columns to a `UNION` query.
+
+- `Str::addWord()`, `addIf()`, `addWordIf()`, `addAtNewLine()` and `newLineIfNotEmpty()`.
+
+  ```php
+  Str::of('UNION')->addWordIf($isUnionAll, 'ALL')->addAtNewLine('SELECT 1')->toString(); // "UNION ALL
+SELECT 1"
+  ```
+
+- `array_wrap()` helper function, a shorthand for Laravel's `Arr::wrap()`.
+
+### Changed
+
+- `RawQuery::cast()` and `as()` also accept a `RawQuery`.
+- `Str::newLine()` appends `NEW_LINE` (`"\n"`) instead of Laravel's `PHP_EOL`, so it gives the same result on every OS (`PHP_EOL` is `"\r\n"` on Windows). A count of 0 or less appends nothing instead of throwing a `ValueError`.
+
+### Tests
+
+- Added unit tests for `RawQuery::select()`, `recursive()`, `where()`, `in()`, `cast()` and `as()` with a `RawQuery`, the new `Str` methods and `array_wrap()`.
+
 ## [0.52.0] - 2026-10-31
 
 ### Added
@@ -1073,7 +1107,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - `RawQuery` static helpers for raw SQL expressions.
 - Translations for `en` and `id`.
 
-[Unreleased]: https://github.com/jund-fauz/eloquent-kompact/compare/v0.52.0...HEAD
+[Unreleased]: https://github.com/jund-fauz/eloquent-kompact/compare/v0.53.0...HEAD
+[0.53.0]: https://github.com/jund-fauz/eloquent-kompact/compare/v0.52.0...v0.53.0
 [0.52.0]: https://github.com/jund-fauz/eloquent-kompact/compare/v0.51.0...v0.52.0
 [0.51.0]: https://github.com/jund-fauz/eloquent-kompact/compare/v0.50.0...v0.51.0
 [0.50.0]: https://github.com/jund-fauz/eloquent-kompact/compare/v0.49.0...v0.50.0
