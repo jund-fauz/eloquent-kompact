@@ -85,4 +85,9 @@ trait AdditionalQueries
     {
         return $this->{$columnName} === $value;
     }
+
+    public function isMorphModelSame(string $morphName, string $modelClass): bool
+    {
+        return $this->sameWith(Creator::type($morphName), Relation::getMorphAlias($modelClass));
+    }
 }

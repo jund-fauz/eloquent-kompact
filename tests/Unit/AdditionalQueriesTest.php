@@ -58,6 +58,24 @@ class AdditionalQueriesTest extends TestCase
             MorphComment::whereMorphType('commentable', MorphPost::class)->toSql()
         );
     }
+
+    #[Test]
+    public function it_checks_the_morph_class(): void
+    {
+        $comment = MorphComment::find(1);
+
+        $this->assertTrue($comment->isMorphModelSame('commentable', MorphPost::class));
+        $this->assertFalse($comment->isMorphModelSame('commentable', MorphVideo::class));
+    }
+
+    #[Test]
+    public function it_checks_the_morph_alias(): void
+    {
+        Relation::morphMap(['video' => MorphVideo::class]);
+
+        $this->assertTrue(MorphComment::find(3)->isMorphModelSame('commentable', MorphVideo::class));
+        $this->assertFalse(MorphComment::find(1)->isMorphModelSame('commentable', MorphVideo::class));
+    }
 }
 
 class MorphComment extends Model
