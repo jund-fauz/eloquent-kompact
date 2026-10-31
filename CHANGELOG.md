@@ -7,6 +7,22 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [0.55.0] - 2026-10-31
+
+### Added
+
+- `merge_as_array()` helper function to put every given value in one flat list. Nested arrays and collections are flattened with Laravel's `Arr::flatten()`, so their keys are dropped; `null` is kept and an empty array adds nothing.
+
+  ```php
+  use function JundFauz\EloquentKompact\merge_as_array;
+
+  merge_as_array('a', ['b', ['c']], ['k' => 'd'], null); // ['a', 'b', 'c', 'd', null]
+  ```
+
+### Tests
+
+- Added unit tests for `merge_as_array()`.
+
 ## [0.54.0] - 2026-10-31
 
 ### Added
@@ -1124,7 +1140,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - `RawQuery` static helpers for raw SQL expressions.
 - Translations for `en` and `id`.
 
-[Unreleased]: https://github.com/jund-fauz/eloquent-kompact/compare/v0.54.0...HEAD
+[Unreleased]: https://github.com/jund-fauz/eloquent-kompact/compare/v0.55.0...HEAD
+[0.55.0]: https://github.com/jund-fauz/eloquent-kompact/compare/v0.54.0...v0.55.0
 [0.54.0]: https://github.com/jund-fauz/eloquent-kompact/compare/v0.53.0...v0.54.0
 [0.53.0]: https://github.com/jund-fauz/eloquent-kompact/compare/v0.52.0...v0.53.0
 [0.52.0]: https://github.com/jund-fauz/eloquent-kompact/compare/v0.51.0...v0.52.0
