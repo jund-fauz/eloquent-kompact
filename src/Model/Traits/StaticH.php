@@ -13,6 +13,11 @@ trait StaticH
         return (new static)->getTable();
     }
 
+    public static function morphClass()
+    {
+        return (new static)->getMorphClass();
+    }
+
     public static function getModel(Blueprint $column): ?string
     {
         $tableName = $column->getTable();
