@@ -7,6 +7,26 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [0.46.0] - 2026-10-31
+
+### Added
+
+- `AdditionalQueries::whereMorphTypeNot()` scope, the opposite of `whereMorphType()`: it leaves out the rows whose morph type column points to the model class, using its morph alias if the class is in `Relation::morphMap()`. Rows whose morph type is `NULL` are left out too.
+
+  ```php
+  Comment::whereMorphTypeNot('commentable', Post::class)->get(); // where not commentable_type = 'App\Models\Post'
+  ```
+
+### Removed
+
+- **BREAKING:** Support for Laravel 11, which is out of security support. The package now requires Laravel 12 or 13 (`illuminate/support`, `illuminate/database` and `illuminate/console` `^12.0|^13.0`); Composer keeps apps on Laravel 11 at 0.45.
+- Laravel 11 from the GitHub Actions test matrix.
+
+### Tests
+
+- Added unit tests for `whereMorphTypeNot()`.
+- Removed the Laravel 11 skip from the `Str::plural()` `$prependCount` test.
+
 ## [0.45.0] - 2026-10-31
 
 ### Added
@@ -936,7 +956,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - `RawQuery` static helpers for raw SQL expressions.
 - Translations for `en` and `id`.
 
-[Unreleased]: https://github.com/jund-fauz/eloquent-kompact/compare/v0.45.0...HEAD
+[Unreleased]: https://github.com/jund-fauz/eloquent-kompact/compare/v0.46.0...HEAD
+[0.46.0]: https://github.com/jund-fauz/eloquent-kompact/compare/v0.45.0...v0.46.0
 [0.45.0]: https://github.com/jund-fauz/eloquent-kompact/compare/v0.44.0...v0.45.0
 [0.44.0]: https://github.com/jund-fauz/eloquent-kompact/compare/v0.43.0...v0.44.0
 [0.43.0]: https://github.com/jund-fauz/eloquent-kompact/compare/v0.42.0...v0.43.0
