@@ -7,6 +7,17 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [0.57.0] - 2026-10-31
+
+### Fixed
+
+- `Str::addWord()` and `addWordAtStart()` added a space next to an empty value or word: `Str::of()->addWord('a')` gave `' a'`. Empty words are now skipped: `'a'`.
+- `Str::addPath()` and `addPathAtStart()` added a `/` next to an empty value or path, and kept the slashes around each part, so `Str::of('app/')->addPath('/Models')` gave `app///Models`. Empty paths are now skipped and the parts are joined with a single `/`: `app/Models`. The slashes at the start and end of the whole path are kept, so `Str::of('/var/')->addPath('www/')` gives `/var/www/`.
+
+### Tests
+
+- Added unit tests for `Str::addWord()`, `addWordAtStart()`, `addPath()` and `addPathAtStart()` with empty values and extra slashes.
+
 ## [0.56.0] - 2026-10-31
 
 ### Added
@@ -1155,7 +1166,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - `RawQuery` static helpers for raw SQL expressions.
 - Translations for `en` and `id`.
 
-[Unreleased]: https://github.com/jund-fauz/eloquent-kompact/compare/v0.56.0...HEAD
+[Unreleased]: https://github.com/jund-fauz/eloquent-kompact/compare/v0.57.0...HEAD
+[0.57.0]: https://github.com/jund-fauz/eloquent-kompact/compare/v0.56.0...v0.57.0
 [0.56.0]: https://github.com/jund-fauz/eloquent-kompact/compare/v0.55.0...v0.56.0
 [0.55.0]: https://github.com/jund-fauz/eloquent-kompact/compare/v0.54.0...v0.55.0
 [0.54.0]: https://github.com/jund-fauz/eloquent-kompact/compare/v0.53.0...v0.54.0
