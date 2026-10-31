@@ -7,6 +7,23 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [0.52.0] - 2026-10-31
+
+### Added
+
+- `stringify()` helper function to cast every value of an array to a `string`, nested arrays included, keeping the keys. `null` and `false` become `''`; a value that cannot be cast, such as a `Closure` or an enum, throws an `Error`. It turns a list of `Builder\Relation` into the strings Eloquent's `with()`, `load()` and `loadMissing()` accept.
+
+  ```php
+  use function JundFauz\EloquentKompact\stringify;
+
+  stringify([Relation::arrange()->relations(Post::class)->relation(User::class)]); // ['posts.user']
+  $user->loadMissing(stringify([$postsUser, $comments]));
+  ```
+
+### Tests
+
+- Added unit tests for `stringify()`.
+
 ## [0.51.0] - 2026-10-31
 
 ### Added
@@ -1056,7 +1073,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - `RawQuery` static helpers for raw SQL expressions.
 - Translations for `en` and `id`.
 
-[Unreleased]: https://github.com/jund-fauz/eloquent-kompact/compare/v0.51.0...HEAD
+[Unreleased]: https://github.com/jund-fauz/eloquent-kompact/compare/v0.52.0...HEAD
+[0.52.0]: https://github.com/jund-fauz/eloquent-kompact/compare/v0.51.0...v0.52.0
 [0.51.0]: https://github.com/jund-fauz/eloquent-kompact/compare/v0.50.0...v0.51.0
 [0.50.0]: https://github.com/jund-fauz/eloquent-kompact/compare/v0.49.0...v0.50.0
 [0.49.0]: https://github.com/jund-fauz/eloquent-kompact/compare/v0.48.0...v0.49.0
