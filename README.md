@@ -389,13 +389,15 @@ In the table, `x` is the current subject.
 | `dateAfter($count, $interval = Interval::Day)` | `x + INTERVAL 'count' DAY` |
 | `diff($other, $interval = Interval::Day)` | MySQL: `TIMESTAMPDIFF(DAY, other, x)`<br>PostgreSQL: `EXTRACT(DAY FROM (x - other))` |
 | `compare($other = '?', $operator = Operator::SameWith)` | `x = other` |
+| `where($column, $operator = Operator::SameWith, $other = '?')` | `x WHERE column = other` |
+| `in($values)` | `x IN (values)`, e.g. a list or a subquery |
 | `build()` | Returns the SQL string |
 
 `divide()` multiplies by `1.0` to avoid integer division and turns zero divisors into `NULL` instead of an error. `diff()` currently only supports `Interval::Day`.
 
 ### Static helpers
 
-`now()`, `string()` and `queryConcat()` return a plain `string`, to be used as an operand or as the starting expression of `create()`. `relations()` and `flexibleCase()` return a `RawQuery`, so the chain can go on (call `build()` for a `string`).
+`now()`, `string()` and `queryConcat()` return a plain `string`, to be used as an operand or as the starting expression of `create()`. `relations()`, `flexibleCase()`, `select()` and `recursive()` return a `RawQuery`, so the chain can go on (call `build()` for a `string`).
 
 | Helper | Result |
 | --- | --- |
@@ -403,11 +405,19 @@ In the table, `x` is the current subject.
 | `RawQuery::string($value)` | Escaped string literal, e.g. `'available'`. Without an argument: `''` |
 | `RawQuery::queryConcat(...$expressions)` | Expressions joined with a space |
 | `RawQuery::relations($column, ...$models)` | Relation path, e.g. `relations('name', User::class, Post::class)` → `users.posts.name` |
+| `RawQuery::select($columns, $table)` | `SELECT a, b FROM table`; `$columns` is a string or a list |
+| `RawQuery::recursive($name, $first, $second, $isUnionAll = false, ...$columns)` | `WITH RECURSIVE name AS (first UNION [ALL] second) SELECT columns FROM name`, on several lines; `*` without columns |
 | `RawQuery::flexibleCase($conditions, $default)` | `CASE WHEN a THEN ? ... END` for a list, or `CASE WHEN a THEN value ... END` for `[$when => $then]` |
 
 ```php
 RawQuery::flexibleCase(['paid_at IS NULL' => "'unpaid'"], "'paid'")->as('status')->build();
 // CASE WHEN paid_at IS NULL THEN 'unpaid' ELSE 'paid' END AS status (on several lines)
+
+RawQuery::create('id')->in(RawQuery::select('user_id', 'posts')->where('published_is'))->build();
+// id IN (SELECT user_id FROM posts WHERE published_is = ?)
+
+RawQuery::recursive('n', 'SELECT 1 AS x', 'SELECT x + 1 FROM n WHERE x < 5', true, 'x')->build();
+// WITH RECURSIVE n AS (SELECT 1 AS x UNION ALL SELECT x + 1 FROM n WHERE x < 5) SELECT x FROM n (on several lines)
 ```
 
 Constants: `RawQuery::CHAR` and `RawQuery::NULL`, e.g. `->cast(RawQuery::CHAR)`.
@@ -458,6 +468,11 @@ RawQuery::create('paid')->sum()->divide(RawQuery::create('total')->sum())->as('p
 | `join($delimiter, ...$strings)` | The value and the strings joined with `$delimiter` |
 | `add(...$strings)` / `concat(...$strings)` | The strings appended without a delimiter |
 | `addAtStart(...$strings)` | The strings prepended without a delimiter |
+| `addWord(...$words)` | The words appended with a space |
+| `addIf($condition, $string)` / `addWordIf($condition, $word)` | `add()` / `addWord()` only if `$condition` is `true` |
+| `newLine($count = 1)` | `$count` new lines (`"\n"`) appended |
+| `newLineIfNotEmpty($count = 1)` | `newLine()`, unless the value is empty |
+| `addAtNewLine($string, $lineCount = 1)` | `$string` appended after `$lineCount` new lines |
 | `addNamespace(...$namespaces)` | The namespaces appended with `\`, trimming the backslashes of each part |
 | `addNamespaceAtStart(...$namespaces)` | The namespaces prepended with `\`, trimming the backslashes of each part |
 | `addPath(...$paths)` | The paths appended with `/` |
@@ -559,6 +574,7 @@ use const JundFauz\EloquentKompact\NEW_LINE;
 | `add_tab($sentence, $count = 1)` | The sentence indented with `$count` tabs of 4 spaces |
 | `full_path_on_app($path)` | Absolute path inside `app/`, e.g. `App\Models` → `{app_path}/Models` |
 | `array_flat(&$array)` | Flattens the array in place |
+| `array_wrap($value)` | Laravel's `Arr::wrap()`: the value as an array, `[]` for `null` |
 | `array_pull(&$array, ...$keys)` | `Arr::pullMany()`: removes the keys and returns the value of one key, or `[key => value]` for several |
 | `stringify($array)` | Every value cast to a `string`, nested arrays included, keeping the keys; `null` and `false` become `''` |
 | `model_compact($model, ...$columns)` | `[column => value]` for the given columns, after casting; missing attributes are `null` and loaded relations become arrays |
