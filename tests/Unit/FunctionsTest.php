@@ -3,6 +3,7 @@
 namespace JundFauz\EloquentKompact\Tests\Unit;
 
 use Illuminate\Database\Eloquent\Model;
+use JundFauz\EloquentKompact\Builder\Relation;
 use JundFauz\EloquentKompact\Tests\TestCase;
 use PHPUnit\Framework\Attributes\DataProvider;
 use PHPUnit\Framework\Attributes\Test;
@@ -25,6 +26,7 @@ use function JundFauz\EloquentKompact\relation_concat;
 use function JundFauz\EloquentKompact\same_with;
 use function JundFauz\EloquentKompact\schema_concat;
 use function JundFauz\EloquentKompact\str_before_last;
+use function JundFauz\EloquentKompact\stringify;
 use function JundFauz\EloquentKompact\str_concat;
 use function JundFauz\EloquentKompact\str_lower;
 use function JundFauz\EloquentKompact\str_upper;
@@ -156,6 +158,16 @@ class FunctionsTest extends TestCase
         $this->assertFalse(same_with(new stdClass, new stdClass));
         $this->assertTrue(not_same_with(1, '1'));
         $this->assertFalse(not_same_with(null, null));
+    }
+
+    #[Test]
+    public function it_stringifies_arrays(): void
+    {
+        $this->assertSame(
+            ['user.name', 'k' => ['posts', '1'], '1.5', '1', '', ''],
+            stringify([Relation::arrange('name')->relation('user'), 'k' => [Relation::arrange()->relations('posts'), 1], 1.5, true, false, null])
+        );
+        $this->assertSame([], stringify([]));
     }
 
     #[Test]

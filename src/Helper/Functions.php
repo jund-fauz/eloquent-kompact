@@ -130,3 +130,8 @@ function model_compact(Model $model, string ...$columns): array
         ->mapWithKeys(fn (string $column) => [$column => $model->{$column}])
         ->toArray();
 }
+
+function stringify(array $datas): array
+{
+    return array_map(fn (mixed $data) => is_array($data) ? stringify($data) : (string) $data, $datas);
+}
