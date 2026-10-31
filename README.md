@@ -391,6 +391,7 @@ In the table, `x` is the current subject.
 | `compare($other = '?', $operator = Operator::SameWith)` | `x = other` |
 | `where($column, $operator = Operator::SameWith, $other = '?')` | `x WHERE column = other` |
 | `in($values)` | `x IN (values)`, e.g. a list or a subquery |
+| `asStr()` | A [`Str`](#str) started with the SQL, e.g. to keep building it with `Str` methods |
 | `build()` | Returns the SQL string |
 
 `divide()` multiplies by `1.0` to avoid integer division and turns zero divisors into `NULL` instead of an error. `diff()` currently only supports `Interval::Day`.
