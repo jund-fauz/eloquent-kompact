@@ -167,6 +167,9 @@ $comment->isMorphModelSame('commentable', Post::class); // true
 // The first non-null attribute
 $user->getOr('nickname', 'name');
 
+// Several attributes, in the given order (a missing one is null)
+$user->getMany('name', 'email'); // ['Ana', 'ana@example.com']
+
 // Strict comparison of attributes, after casting
 $user->sameWith('role', 'admin');
 $user->match(['role' => ['admin', 'editor'], 'active_is' => true]);
