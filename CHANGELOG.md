@@ -7,6 +7,22 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [0.59.0] - 2026-11-01
+
+### Added
+
+- `array_filter_filled()` helper function to keep only the values that are Laravel's `filled()`. `null`, blank strings (`''`, `'  '`) and empty arrays or collections are removed; `0`, `'0'` and `false` are kept. The keys are kept, and nested arrays are not filtered.
+
+  ```php
+  use function JundFauz\EloquentKompact\array_filter_filled;
+
+  array_filter_filled(['a', '', null, 0, 'k' => ' ']); // [0 => 'a', 3 => 0]
+  ```
+
+### Tests
+
+- Added unit tests for `array_filter_filled()`.
+
 ## [0.58.0] - 2026-11-01
 
 ### Added
@@ -1183,7 +1199,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - `RawQuery` static helpers for raw SQL expressions.
 - Translations for `en` and `id`.
 
-[Unreleased]: https://github.com/jund-fauz/eloquent-kompact/compare/v0.58.0...HEAD
+[Unreleased]: https://github.com/jund-fauz/eloquent-kompact/compare/v0.59.0...HEAD
+[0.59.0]: https://github.com/jund-fauz/eloquent-kompact/compare/v0.58.0...v0.59.0
 [0.58.0]: https://github.com/jund-fauz/eloquent-kompact/compare/v0.57.0...v0.58.0
 [0.57.0]: https://github.com/jund-fauz/eloquent-kompact/compare/v0.56.0...v0.57.0
 [0.56.0]: https://github.com/jund-fauz/eloquent-kompact/compare/v0.55.0...v0.56.0
