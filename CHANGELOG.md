@@ -7,6 +7,35 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [0.60.0] - 2026-11-01
+
+### Added
+
+- `array_get_or()` helper function to take the first value that is not `null`, in the order of the given keys. Keys may use dot notation, and missing keys are skipped. Only `null` is skipped: `''`, `0` and `false` are returned.
+
+  ```php
+  use function JundFauz\EloquentKompact\array_get_or;
+
+  array_get_or(['nickname' => null, 'name' => 'Ana'], 'nickname', 'name'); // 'Ana'
+  array_get_or(['user' => ['name' => 'Ana']], 'missing', 'user.name');      // 'Ana'
+  ```
+
+- `Builder\Collection`, extending Laravel's `Collection`, with `filterFilled()`, `getOr()` and `getOrWithDefault()`, built on `array_filter_filled()` and `array_get_or()`. An array value or default is returned as a `Collection`.
+
+  ```php
+  use JundFauz\EloquentKompact\Builder\Collection;
+
+  $data = new Collection(['nickname' => null, 'name' => 'Ana', 'tags' => ['a', 'b']]);
+
+  $data->getOr('nickname', 'name');             // 'Ana'
+  $data->getOr('tags');                         // Collection ['a', 'b']
+  $data->getOrWithDefault('Guest', 'nickname'); // 'Guest'
+  ```
+
+### Tests
+
+- Added unit tests for `array_get_or()` and `Builder\Collection`.
+
 ## [0.59.0] - 2026-11-01
 
 ### Added
@@ -1199,7 +1228,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - `RawQuery` static helpers for raw SQL expressions.
 - Translations for `en` and `id`.
 
-[Unreleased]: https://github.com/jund-fauz/eloquent-kompact/compare/v0.59.0...HEAD
+[Unreleased]: https://github.com/jund-fauz/eloquent-kompact/compare/v0.60.0...HEAD
+[0.60.0]: https://github.com/jund-fauz/eloquent-kompact/compare/v0.59.0...v0.60.0
 [0.59.0]: https://github.com/jund-fauz/eloquent-kompact/compare/v0.58.0...v0.59.0
 [0.58.0]: https://github.com/jund-fauz/eloquent-kompact/compare/v0.57.0...v0.58.0
 [0.57.0]: https://github.com/jund-fauz/eloquent-kompact/compare/v0.56.0...v0.57.0
