@@ -391,6 +391,7 @@ In the table, `x` is the current subject.
 | `compare($other = '?', $operator = Operator::SameWith)` | `x = other` |
 | `where($column, $operator = Operator::SameWith, $other = '?')` | `x WHERE column = other` |
 | `in($values)` | `x IN (values)`, e.g. a list or a subquery |
+| `limit($count)` | `x LIMIT count` |
 | `asStr()` | A [`Str`](#str) started with the SQL, e.g. to keep building it with `Str` methods |
 | `build()` | Returns the SQL string |
 
@@ -398,7 +399,7 @@ In the table, `x` is the current subject.
 
 ### Static helpers
 
-`now()`, `string()` and `queryConcat()` return a plain `string`, to be used as an operand or as the starting expression of `create()`. `relations()`, `flexibleCase()`, `select()` and `recursive()` return a `RawQuery`, so the chain can go on (call `build()` for a `string`).
+`now()`, `string()` and `queryConcat()` return a plain `string`, to be used as an operand or as the starting expression of `create()`. `relations()`, `flexibleCase()`, `select()`, `recursive()` and `recursiveUnion()` return a `RawQuery`, so the chain can go on (call `build()` for a `string`).
 
 | Helper | Result |
 | --- | --- |
@@ -407,7 +408,8 @@ In the table, `x` is the current subject.
 | `RawQuery::queryConcat(...$expressions)` | Expressions joined with a space |
 | `RawQuery::relations($column, ...$models)` | Relation path, e.g. `relations('name', User::class, Post::class)` → `users.posts.name` |
 | `RawQuery::select($columns, $table)` | `SELECT a, b FROM table`; `$columns` is a string or a list |
-| `RawQuery::recursive($name, $first, $second, $isUnionAll = false, ...$columns)` | `WITH RECURSIVE name AS (first UNION [ALL] second) SELECT columns FROM name`, on several lines; `*` without columns |
+| `RawQuery::recursive($name, $table, $columns, $where, $joinOn, $select = '*', $isUnionAll = true)` | Recursive CTE over a self-referencing table: `WITH RECURSIVE name AS (SELECT columns FROM table WHERE where UNION ALL SELECT table.columns FROM table JOIN name ON joinOn) SELECT select FROM name`, on several lines |
+| `RawQuery::recursiveUnion($name, $anchor, $recursive, $select = '*', $isUnionAll = true)` | `WITH RECURSIVE name AS (anchor UNION ALL recursive) SELECT select FROM name`, on several lines, for any two queries |
 | `RawQuery::flexibleCase($conditions, $default)` | `CASE WHEN a THEN ? ... END` for a list, or `CASE WHEN a THEN value ... END` for `[$when => $then]` |
 
 ```php
@@ -417,9 +419,30 @@ RawQuery::flexibleCase(['paid_at IS NULL' => "'unpaid'"], "'paid'")->as('status'
 RawQuery::create('id')->in(RawQuery::select('user_id', 'posts')->where('published_is'))->build();
 // id IN (SELECT user_id FROM posts WHERE published_is = ?)
 
-RawQuery::recursive('n', 'SELECT 1 AS x', 'SELECT x + 1 FROM n WHERE x < 5', true, 'x')->build();
+RawQuery::recursive(
+    'tree',
+    'subs',
+    columns: 'id',
+    where: ['parent_type' => '?', RawQuery::create('parent_id')->in('?, ?')],
+    joinOn: ['parent_type' => '?', 'parent_id' => 'tree.id'],
+)->build();
+// WITH RECURSIVE tree AS (
+//   SELECT id FROM subs WHERE parent_type = ? AND parent_id IN (?, ?)
+//   UNION ALL
+//   SELECT subs.id FROM subs JOIN tree ON subs.parent_type = ? AND subs.parent_id = tree.id
+// ) SELECT * FROM tree (on several lines)
+
+RawQuery::recursive('up', 'subs', ['parent_type', 'parent_id'], ['id' => '?'], ['id' => 'up.parent_id'], 'parent_id AS root')
+    ->where('parent_type')
+    ->limit(1)
+    ->build();
+// … SELECT parent_id AS root FROM up WHERE parent_type = ? LIMIT 1
+
+RawQuery::recursiveUnion('n', 'SELECT 1 AS x', 'SELECT x + 1 FROM n WHERE x < 5', 'x')->build();
 // WITH RECURSIVE n AS (SELECT 1 AS x UNION ALL SELECT x + 1 FROM n WHERE x < 5) SELECT x FROM n (on several lines)
 ```
+
+In `$where` and `$joinOn`, a string key gives `key = value` and a list item is kept as it is; they are joined with `AND`. The values are SQL, so pass `'?'` and give the values as bindings, in the order anchor, join, outer query. `recursive()` prefixes `$columns` and the `$joinOn` keys with the table in the recursive step, unless they already have a `.`. `$columns` are used in both steps, so use `recursiveUnion()` when the steps need different columns (a depth or a path) or the CTE has no table. Each column takes its type from the anchor query, so `CAST` it there when the recursive query makes a wider value. `WITH RECURSIVE` works on MySQL 8+, MariaDB 10.2.2+, PostgreSQL and SQLite 3.8.3+.
 
 Constants: `RawQuery::CHAR` and `RawQuery::NULL`, e.g. `->cast(RawQuery::CHAR)`.
 
