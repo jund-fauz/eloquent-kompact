@@ -12,6 +12,7 @@ use stdClass;
 use function JundFauz\EloquentKompact\add_tab;
 use function JundFauz\EloquentKompact\array_flat;
 use function JundFauz\EloquentKompact\array_pull;
+use function JundFauz\EloquentKompact\array_pull_list;
 use function JundFauz\EloquentKompact\array_wrap;
 use function JundFauz\EloquentKompact\comment;
 use function JundFauz\EloquentKompact\full_path_on_app;
@@ -135,6 +136,35 @@ class FunctionsTest extends TestCase
         $this->assertNull(array_pull($array, 'email'));
         $this->assertSame(['name' => 'Ana', 'email' => null], array_pull($array, 'name', 'email'));
         $this->assertSame([], $array);
+    }
+
+    #[Test]
+    public function it_pulls_several_keys_as_a_list(): void
+    {
+        $array = ['name' => 'Ana', 'email' => 'ana@example.com', 'role' => 'admin'];
+
+        $this->assertSame(['admin', 'Ana'], array_pull_list($array, 'role', 'name'));
+        $this->assertSame(['email' => 'ana@example.com'], $array);
+    }
+
+    #[Test]
+    public function it_pulls_a_single_key_as_its_value(): void
+    {
+        $array = ['name' => 'Ana', 'tags' => ['a' => 1]];
+
+        $this->assertSame('Ana', array_pull_list($array, 'name'));
+        $this->assertSame(['a' => 1], array_pull_list($array, 'tags'));
+        $this->assertSame([], $array);
+    }
+
+    #[Test]
+    public function it_pulls_missing_keys_as_null_in_the_list(): void
+    {
+        $array = ['name' => 'Ana'];
+
+        $this->assertNull(array_pull_list($array, 'email'));
+        $this->assertSame(['Ana', null], array_pull_list($array, 'name', 'email'));
+        $this->assertSame([], array_pull_list($array));
     }
 
     #[Test]

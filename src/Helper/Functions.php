@@ -94,6 +94,12 @@ function array_pull(array &$array, string ...$keys): mixed
     return Arr::pullMany($array, ...$keys);
 }
 
+function array_pull_list(array &$array, string ...$keys): mixed
+{
+    $result = array_pull($array, ...$keys);
+    return count($keys) > 1 ? array_values($result) : $result;
+}
+
 function array_wrap(mixed $data): array
 {
     return Arr::wrap($data);
