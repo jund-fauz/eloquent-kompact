@@ -7,6 +7,22 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [0.61.0] - 2026-11-01
+
+### Added
+
+- `collect()` helper function to create a `Builder\Collection`, like Laravel's global `collect()`. It lives in the `JundFauz\EloquentKompact` namespace, so Laravel's `collect()` is still used unless it is imported. Unlike Laravel's, it needs a value: call `collect([])` for an empty collection.
+
+  ```php
+  use function JundFauz\EloquentKompact\collect;
+
+  collect(['nickname' => null, 'name' => 'Ana'])->getOr('nickname', 'name'); // 'Ana'
+  ```
+
+### Tests
+
+- Added unit tests for `collect()`.
+
 ## [0.60.0] - 2026-11-01
 
 ### Added
@@ -1228,7 +1244,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - `RawQuery` static helpers for raw SQL expressions.
 - Translations for `en` and `id`.
 
-[Unreleased]: https://github.com/jund-fauz/eloquent-kompact/compare/v0.60.0...HEAD
+[Unreleased]: https://github.com/jund-fauz/eloquent-kompact/compare/v0.61.0...HEAD
+[0.61.0]: https://github.com/jund-fauz/eloquent-kompact/compare/v0.60.0...v0.61.0
 [0.60.0]: https://github.com/jund-fauz/eloquent-kompact/compare/v0.59.0...v0.60.0
 [0.59.0]: https://github.com/jund-fauz/eloquent-kompact/compare/v0.58.0...v0.59.0
 [0.58.0]: https://github.com/jund-fauz/eloquent-kompact/compare/v0.57.0...v0.58.0
