@@ -7,6 +7,29 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [0.63.0] - 2026-11-01
+
+### Added
+
+- `RawQuery::recursiveUnion()`, the recursive CTE from any two queries that `recursive()` used to build, and the `RawQuery::limit()` chain method.
+
+### Changed
+
+- **BREAKING:** `RawQuery::recursive()` builds a recursive CTE over a self-referencing table from its parts: the columns, the anchor `WHERE` conditions and the `JOIN … ON` conditions of the recursive step. The outer `SELECT` columns come next and `UNION ALL` is the default. Pass two whole queries to `recursiveUnion()` instead, whose `$select` also comes before `$isUnionAll` and defaults to `UNION ALL`. Without `declare(strict_types=1)`, an old positional call does not fail on the `bool`, so update every call.
+
+  ```php
+  // 0.62
+  RawQuery::recursive('tree', $anchor, $recursive, true, 'id');
+
+  // 0.63
+  RawQuery::recursiveUnion('tree', $anchor, $recursive, 'id');
+  RawQuery::recursive('tree', 'subs', 'id', ['parent_id' => '?'], ['parent_id' => 'tree.id'], 'id');
+  ```
+
+### Tests
+
+- Updated the `RawQuery::recursive()` unit tests and added unit tests for `recursiveUnion()` and `limit()`.
+
 ## [0.62.0] - 2026-11-01
 
 ### Added
@@ -1271,7 +1294,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - `RawQuery` static helpers for raw SQL expressions.
 - Translations for `en` and `id`.
 
-[Unreleased]: https://github.com/jund-fauz/eloquent-kompact/compare/v0.62.0...HEAD
+[Unreleased]: https://github.com/jund-fauz/eloquent-kompact/compare/v0.63.0...HEAD
+[0.63.0]: https://github.com/jund-fauz/eloquent-kompact/compare/v0.62.0...v0.63.0
 [0.62.0]: https://github.com/jund-fauz/eloquent-kompact/compare/v0.61.0...v0.62.0
 [0.61.0]: https://github.com/jund-fauz/eloquent-kompact/compare/v0.60.0...v0.61.0
 [0.60.0]: https://github.com/jund-fauz/eloquent-kompact/compare/v0.59.0...v0.60.0
