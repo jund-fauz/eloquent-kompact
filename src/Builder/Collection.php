@@ -22,6 +22,11 @@ class Collection extends \Illuminate\Support\Collection
         return $this->getOr(...$keys) ?? $this->return($default);
     }
 
+    public function getOrWithDefaultAsCollection(mixed $default, string ...$keys): static
+    {
+        return $this->newInstance($this->getOrWithDefault($default, ...$keys));
+    }
+
     protected function newInstance($items = []): static
     {
         return new static($items);
@@ -29,6 +34,10 @@ class Collection extends \Illuminate\Support\Collection
 
     private function return(mixed $data): mixed
     {
-        return is_array($data) ? $this->newInstance($data) : $data;
+        return match (true) {
+            is_array($data) => $this->newInstance($data),
+            is_string($data) => Str::of($data),
+            default => $data
+        };
     }
 }

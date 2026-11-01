@@ -3,6 +3,7 @@
 namespace JundFauz\EloquentKompact\Tests\Unit;
 
 use JundFauz\EloquentKompact\Builder\Collection;
+use JundFauz\EloquentKompact\Builder\Str;
 use JundFauz\EloquentKompact\Tests\TestCase;
 use PHPUnit\Framework\Attributes\Test;
 
@@ -24,12 +25,23 @@ class CollectionTest extends TestCase
     #[Test]
     public function it_gets_the_first_non_null_value(): void
     {
-        $collection = new Collection(['nickname' => null, 'name' => 'Ana', 'user' => ['name' => 'Budi']]);
+        $collection = new Collection(['nickname' => null, 'name' => 'Ana', 'age' => 20, 'active' => false, 'user' => ['name' => 'Budi']]);
 
-        $this->assertSame('Ana', $collection->getOr('nickname', 'name'));
-        $this->assertSame('Ana', $collection->getOr('missing', 'name'));
-        $this->assertSame('Budi', $collection->getOr('user.name'));
+        $this->assertStr('Ana', $collection->getOr('nickname', 'name'));
+        $this->assertStr('Ana', $collection->getOr('missing', 'name'));
+        $this->assertStr('Budi', $collection->getOr('user.name'));
+        $this->assertSame(20, $collection->getOr('nickname', 'age'));
+        $this->assertFalse($collection->getOr('active'));
         $this->assertNull($collection->getOr('nickname'));
+    }
+
+    #[Test]
+    public function it_wraps_a_string_value_in_a_str(): void
+    {
+        $collection = new Collection(['name' => 'Ana', 'empty' => '']);
+
+        $this->assertSame('ANA', $collection->getOr('name')->upper()->toString());
+        $this->assertStr('', $collection->getOr('empty'));
     }
 
     #[Test]
@@ -46,10 +58,11 @@ class CollectionTest extends TestCase
     {
         $collection = new Collection(['nickname' => null, 'name' => 'Ana', 'empty' => '']);
 
-        $this->assertSame('default', $collection->getOrWithDefault('default', 'nickname', 'missing'));
-        $this->assertSame('default', $collection->getOrWithDefault('default'));
-        $this->assertSame('Ana', $collection->getOrWithDefault('default', 'nickname', 'name'));
-        $this->assertSame('', $collection->getOrWithDefault('default', 'empty'));
+        $this->assertStr('default', $collection->getOrWithDefault('default', 'nickname', 'missing'));
+        $this->assertStr('default', $collection->getOrWithDefault('default'));
+        $this->assertStr('Ana', $collection->getOrWithDefault('default', 'nickname', 'name'));
+        $this->assertStr('', $collection->getOrWithDefault('default', 'empty'));
+        $this->assertSame(0, $collection->getOrWithDefault(0, 'nickname'));
         $this->assertNull($collection->getOrWithDefault(null, 'nickname'));
     }
 
@@ -63,12 +76,26 @@ class CollectionTest extends TestCase
     }
 
     #[Test]
+    public function it_gets_the_value_or_the_default_as_a_collection(): void
+    {
+        $collection = new Collection(['nickname' => null, 'name' => 'Ana', 'age' => 20, 'tags' => ['x', 'y']]);
+
+        $this->assertInstanceOf(Collection::class, $collection->getOrWithDefaultAsCollection('Guest', 'name'));
+        $this->assertSame(['Ana'], $collection->getOrWithDefaultAsCollection('Guest', 'nickname', 'name')->all());
+        $this->assertSame(['Guest'], $collection->getOrWithDefaultAsCollection('Guest', 'nickname')->all());
+        $this->assertSame(['x', 'y'], $collection->getOrWithDefaultAsCollection([], 'tags')->all());
+        $this->assertSame(['z'], $collection->getOrWithDefaultAsCollection(['z'], 'nickname')->all());
+        $this->assertSame([20], $collection->getOrWithDefaultAsCollection(0, 'age')->all());
+        $this->assertSame([], $collection->getOrWithDefaultAsCollection(null, 'nickname')->all());
+    }
+
+    #[Test]
     public function it_is_created_by_the_collect_helper(): void
     {
         $collection = collect(['nickname' => null, 'name' => 'Ana']);
 
         $this->assertInstanceOf(Collection::class, $collection);
-        $this->assertSame('Ana', $collection->getOr('nickname', 'name'));
+        $this->assertStr('Ana', $collection->getOr('nickname', 'name'));
         $this->assertSame(['a'], collect('a')->all());
         $this->assertSame([], collect(null)->all());
         $this->assertSame([1], collect(new \Illuminate\Support\Collection([1]))->all());
@@ -78,5 +105,11 @@ class CollectionTest extends TestCase
     public function it_keeps_its_class_through_laravel_methods(): void
     {
         $this->assertInstanceOf(Collection::class, (new Collection([1, 2]))->map(fn (int $value) => $value * 2));
+    }
+
+    private function assertStr(string $expected, mixed $actual): void
+    {
+        $this->assertInstanceOf(Str::class, $actual);
+        $this->assertSame($expected, $actual->toString());
     }
 }
