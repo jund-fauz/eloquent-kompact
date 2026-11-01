@@ -7,6 +7,28 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [0.64.0] - 2026-11-01
+
+### Changed
+
+- **BREAKING:** `Builder\Collection::get()`, `before()` and `after()` return a string value or default as a `Builder\Str` and an array as a `Collection`, like `getOr()`. Code that compares the result with `===` or passes it to a `string` parameter with `declare(strict_types=1)` must call `toString()`.
+
+  ```php
+  // 0.63
+  collect(['name' => 'Ana'])->get('name');            // 'Ana'
+
+  // 0.64
+  collect(['name' => 'Ana'])->get('name')->toString(); // 'Ana'
+  ```
+
+### Removed
+
+- The unused `collect()` import in `Builder\Str`.
+
+### Tests
+
+- Added unit tests for `Builder\Collection::get()`, `before()` and `after()`.
+
 ## [0.63.0] - 2026-11-01
 
 ### Added
@@ -1294,7 +1316,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - `RawQuery` static helpers for raw SQL expressions.
 - Translations for `en` and `id`.
 
-[Unreleased]: https://github.com/jund-fauz/eloquent-kompact/compare/v0.63.0...HEAD
+[Unreleased]: https://github.com/jund-fauz/eloquent-kompact/compare/v0.64.0...HEAD
+[0.64.0]: https://github.com/jund-fauz/eloquent-kompact/compare/v0.63.0...v0.64.0
 [0.63.0]: https://github.com/jund-fauz/eloquent-kompact/compare/v0.62.0...v0.63.0
 [0.62.0]: https://github.com/jund-fauz/eloquent-kompact/compare/v0.61.0...v0.62.0
 [0.61.0]: https://github.com/jund-fauz/eloquent-kompact/compare/v0.60.0...v0.61.0
