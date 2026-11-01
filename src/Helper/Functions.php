@@ -100,6 +100,11 @@ function array_pull_list(array &$array, string ...$keys): mixed
     return count($keys) > 1 ? array_values($result) : $result;
 }
 
+function array_get_or(array $array, string ...$keys): mixed
+{
+    return array_reduce($keys, fn ($acc, $key) => $acc ?? Arr::get($array, $key));
+}
+
 function array_wrap(mixed $data): array
 {
     return Arr::wrap($data);

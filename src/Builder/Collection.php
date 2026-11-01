@@ -1,0 +1,34 @@
+<?php
+
+namespace JundFauz\EloquentKompact\Builder;
+
+use function JundFauz\EloquentKompact\array_filter_filled;
+use function JundFauz\EloquentKompact\array_get_or;
+
+class Collection extends \Illuminate\Support\Collection
+{
+    public function filterFilled(): static
+    {
+        return $this->newInstance(array_filter_filled($this->items));
+    }
+
+    public function getOr(string ...$keys): mixed
+    {
+        return $this->return(array_get_or($this->items, ...$keys));
+    }
+
+    public function getOrWithDefault(mixed $default, string ...$keys): mixed
+    {
+        return $this->getOr(...$keys) ?? $this->return($default);
+    }
+
+    protected function newInstance($items = []): static
+    {
+        return new static($items);
+    }
+
+    private function return(mixed $data): mixed
+    {
+        return is_array($data) ? $this->newInstance($data) : $data;
+    }
+}

@@ -12,6 +12,7 @@ use stdClass;
 use function JundFauz\EloquentKompact\add_tab;
 use function JundFauz\EloquentKompact\array_filter_filled;
 use function JundFauz\EloquentKompact\array_flat;
+use function JundFauz\EloquentKompact\array_get_or;
 use function JundFauz\EloquentKompact\array_pull;
 use function JundFauz\EloquentKompact\array_pull_list;
 use function JundFauz\EloquentKompact\array_wrap;
@@ -182,6 +183,20 @@ class FunctionsTest extends TestCase
         $this->assertSame(['a'], array_wrap('a'));
         $this->assertSame(['a', 'b'], array_wrap(['a', 'b']));
         $this->assertSame([], array_wrap(null));
+    }
+
+    #[Test]
+    public function it_gets_the_first_non_null_value(): void
+    {
+        $array = ['nickname' => null, 'name' => 'Ana', 'empty' => '', 'zero' => 0, 'user' => ['name' => 'Budi']];
+
+        $this->assertSame('Ana', array_get_or($array, 'nickname', 'name'));
+        $this->assertSame('', array_get_or($array, 'empty', 'name'));
+        $this->assertSame(0, array_get_or($array, 'zero', 'name'));
+        $this->assertSame('Ana', array_get_or($array, 'missing', 'name'));
+        $this->assertSame('Budi', array_get_or($array, 'user.name'));
+        $this->assertNull(array_get_or($array, 'nickname', 'missing'));
+        $this->assertNull(array_get_or($array));
     }
 
     #[Test]
