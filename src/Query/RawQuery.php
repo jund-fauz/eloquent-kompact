@@ -157,17 +157,50 @@ class RawQuery extends Builder implements Expression
         return $this->set("$this AS $as");
     }
 
-    public static function recursive(string $cteName, string|self $firstQuery, string|self $secondQuery, bool $isUnionAll = false, string ...$cteColumns): static
+    /**
+     * Recursive CTE over a self-referencing table, e.g. a parent-child tree: the anchor step filters $table with $where, the recursive step joins $table to the CTE with $joinOn
+     * NOTE: $columns are plain column names of $table, used in both steps (prefixed with the table in the recursive one). For different columns per step, e.g. a depth or a path, or a CTE without a table, use recursiveUnion()
+     * NOTE: The values of $where and $joinOn are SQL, so pass '?' and give the values as bindings, in the order anchor, join, outer query
+     */
+    public static function recursive(
+        string $cteName,
+        string $table,
+        string|array $columns,
+        string|self|array $where,
+        string|self|array $joinOn,
+        string|array $select = '*',
+        bool $isUnionAll = true,
+    ): static {
+        $columns = array_wrap($columns);
+
+        return self::recursiveUnion(
+            $cteName,
+            self::select($columns, $table)
+                ->asStr()
+                ->addWord('WHERE', self::conditions($where))
+                ->asRawQuery(),
+            self::select(array_map(fn (string $column) => self::qualify($column, $table), $columns), $table)
+                ->asStr()
+                ->addWord('JOIN', $cteName, 'ON', self::conditions($joinOn, $table))
+                ->asRawQuery(),
+            $select,
+            $isUnionAll
+        );
+    }
+
+    /**
+     * NOTE: Works on MySQL 8+, MariaDB 10.2.2+, PostgreSQL and SQLite 3.8.3+. Each column takes its type from the anchor query, so CAST it there when the recursive query makes a wider value
+     */
+    public static function recursiveUnion(string $cteName, string|self $anchorQuery, string|self $recursiveQuery, string|array $select = '*', bool $isUnionAll = true): static
     {
         return Str::of('WITH')
             ->addWord('RECURSIVE', $cteName, 'AS', '(')
-            ->addAtNewLine($firstQuery)
+            ->addAtNewLine($anchorQuery)
             ->addAtNewLine('UNION', 2)
             ->addWordIf($isUnionAll, 'ALL')
-            ->addAtNewLine($secondQuery, 2)
+            ->addAtNewLine($recursiveQuery, 2)
             ->addAtNewLine(')')
-            ->addAtNewLine('SELECT')
-            ->addWord(count($cteColumns) ? join(', ', $cteColumns) : '*', 'FROM', $cteName)
+            ->addAtNewLine(self::select($select, $cteName))
             ->asRawQuery();
     }
 
@@ -231,6 +264,11 @@ class RawQuery extends Builder implements Expression
         return $this->set("$this IN ($columnName)");
     }
 
+    public function limit(int $count): static
+    {
+        return $this->set("$this LIMIT $count");
+    }
+
     public function count(): static
     {
         return $this->set("COUNT($this)");
@@ -253,6 +291,29 @@ class RawQuery extends Builder implements Expression
     {
         $expressions = array_map(fn (string|self $expression) => (string)$expression, $expressions);
         return $this->result === '' ? $expressions : [$this->result, ...$expressions];
+    }
+
+    /**
+     * Joins the conditions with AND: a string key gives `key = value`, a list item is kept as it is
+     */
+    private static function conditions(string|self|array $conditions, string $table = ''): string
+    {
+        $result = [];
+        foreach (array_wrap($conditions) as $columnName => $value) {
+            $result[] = is_int($columnName)
+                ? (string)$value
+                : str_concat(self::qualify($columnName, $table), ' = ', (string)$value);
+        }
+
+        return join(' AND ', $result);
+    }
+
+    /**
+     * Prefixes the column with the table, unless there is no table or the column already has one
+     */
+    private static function qualify(string $columnName, string $table): string
+    {
+        return $table === '' || str_contains($columnName, '.') ? $columnName : "$table.$columnName";
     }
 
     public function getValue(Grammar $grammar): string

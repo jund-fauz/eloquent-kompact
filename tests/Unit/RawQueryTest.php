@@ -72,18 +72,48 @@ class RawQueryTest extends TestCase
         yield 'in' => [RawQuery::create('id')->in('1, 2'), 'id IN (1, 2)'];
         yield 'in subquery' => [RawQuery::create('id')->in(RawQuery::select('user_id', 'posts')), 'id IN (SELECT user_id FROM posts)'];
         yield 'recursive' => [
-            RawQuery::recursive('t', 'SELECT 1 AS n', 'SELECT n + 1 FROM t'),
-            "WITH RECURSIVE t AS (
-SELECT 1 AS n
+            RawQuery::recursive('tree', 'subs', 'id', ['parent_id' => '?'], ['parent_id' => 'tree.id']),
+            "WITH RECURSIVE tree AS (
+SELECT id FROM subs WHERE parent_id = ?
+
+UNION ALL
+
+SELECT subs.id FROM subs JOIN tree ON subs.parent_id = tree.id
+)
+SELECT * FROM tree",
+        ];
+        yield 'recursive raw and qualified conditions' => [
+            RawQuery::recursive(
+                'up',
+                'subs',
+                ['parent_type', 'parent_id'],
+                ['id' => '?', RawQuery::create('active_is')->compare('1')],
+                ['id' => 'up.parent_id', 'up.parent_type = ?'],
+                ['parent_id AS root', 'parent_type'],
+                false
+            )->where('parent_type')->limit(1),
+            "WITH RECURSIVE up AS (
+SELECT parent_type, parent_id FROM subs WHERE id = ? AND active_is = 1
 
 UNION
 
-SELECT n + 1 FROM t
+SELECT subs.parent_type, subs.parent_id FROM subs JOIN up ON subs.id = up.parent_id AND up.parent_type = ?
 )
-SELECT * FROM t",
+SELECT parent_id AS root, parent_type FROM up WHERE parent_type = ? LIMIT 1",
         ];
-        yield 'recursive union all with columns' => [
-            RawQuery::recursive('t', RawQuery::create('SELECT 1 AS n'), 'SELECT n + 1 FROM t WHERE n < 5', true, 'n'),
+        yield 'recursive string conditions' => [
+            RawQuery::recursive('tree', 'subs', 'subs.id', 'parent_id IN (?, ?)', RawQuery::create('subs.parent_id')->compare('tree.id'), 'id'),
+            "WITH RECURSIVE tree AS (
+SELECT subs.id FROM subs WHERE parent_id IN (?, ?)
+
+UNION ALL
+
+SELECT subs.id FROM subs JOIN tree ON subs.parent_id = tree.id
+)
+SELECT id FROM tree",
+        ];
+        yield 'recursiveUnion' => [
+            RawQuery::recursiveUnion('t', RawQuery::create('SELECT 1 AS n'), 'SELECT n + 1 FROM t WHERE n < 5', 'n'),
             "WITH RECURSIVE t AS (
 SELECT 1 AS n
 
@@ -93,6 +123,18 @@ SELECT n + 1 FROM t WHERE n < 5
 )
 SELECT n FROM t",
         ];
+        yield 'recursiveUnion union' => [
+            RawQuery::recursiveUnion('t', 'SELECT 1 AS n', 'SELECT n + 1 FROM t', isUnionAll: false),
+            "WITH RECURSIVE t AS (
+SELECT 1 AS n
+
+UNION
+
+SELECT n + 1 FROM t
+)
+SELECT * FROM t",
+        ];
+        yield 'limit' => [RawQuery::select('id', 'users')->limit(5), 'SELECT id FROM users LIMIT 5'];
 
         yield 'nested builder' => [
             RawQuery::create('price')->multiply('qty')->plus(RawQuery::create('shipping')->zeroIfNull()),
