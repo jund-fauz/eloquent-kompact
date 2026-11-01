@@ -3,6 +3,7 @@
 namespace JundFauz\EloquentKompact;
 
 use Illuminate\Database\Eloquent\Model;
+use JundFauz\EloquentKompact\Builder\Collection;
 use JundFauz\EloquentKompact\Builder\Str;
 use JundFauz\EloquentKompact\Helper\Arr;
 
@@ -161,4 +162,9 @@ function merge_as_array(mixed ...$values): array
 {
     array_flat($values);
     return $values;
+}
+
+function collect(mixed $data): Collection
+{
+    return new Collection($data);
 }

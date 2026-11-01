@@ -6,6 +6,8 @@ use JundFauz\EloquentKompact\Builder\Collection;
 use JundFauz\EloquentKompact\Tests\TestCase;
 use PHPUnit\Framework\Attributes\Test;
 
+use function JundFauz\EloquentKompact\collect;
+
 class CollectionTest extends TestCase
 {
     #[Test]
@@ -58,6 +60,18 @@ class CollectionTest extends TestCase
 
         $this->assertInstanceOf(Collection::class, $value);
         $this->assertSame(['x'], $value->all());
+    }
+
+    #[Test]
+    public function it_is_created_by_the_collect_helper(): void
+    {
+        $collection = collect(['nickname' => null, 'name' => 'Ana']);
+
+        $this->assertInstanceOf(Collection::class, $collection);
+        $this->assertSame('Ana', $collection->getOr('nickname', 'name'));
+        $this->assertSame(['a'], collect('a')->all());
+        $this->assertSame([], collect(null)->all());
+        $this->assertSame([1], collect(new \Illuminate\Support\Collection([1]))->all());
     }
 
     #[Test]
