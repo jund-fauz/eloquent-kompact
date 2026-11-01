@@ -10,6 +10,7 @@ use PHPUnit\Framework\Attributes\Test;
 use stdClass;
 
 use function JundFauz\EloquentKompact\add_tab;
+use function JundFauz\EloquentKompact\array_filter_filled;
 use function JundFauz\EloquentKompact\array_flat;
 use function JundFauz\EloquentKompact\array_pull;
 use function JundFauz\EloquentKompact\array_pull_list;
@@ -181,6 +182,17 @@ class FunctionsTest extends TestCase
         $this->assertSame(['a'], array_wrap('a'));
         $this->assertSame(['a', 'b'], array_wrap(['a', 'b']));
         $this->assertSame([], array_wrap(null));
+    }
+
+    #[Test]
+    public function it_filters_out_blank_values(): void
+    {
+        $this->assertSame(
+            [0 => 'a', 4 => 0, 5 => '0', 6 => false, 'k' => 'v'],
+            array_filter_filled(['a', '', '  ', null, 0, '0', false, [], 'k' => 'v', 'e' => ''])
+        );
+        $this->assertSame([[0]], array_filter_filled([[0], collect()]));
+        $this->assertSame([], array_filter_filled([]));
     }
 
     #[Test]

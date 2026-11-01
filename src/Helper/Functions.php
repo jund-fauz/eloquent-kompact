@@ -105,6 +105,11 @@ function array_wrap(mixed $data): array
     return Arr::wrap($data);
 }
 
+function array_filter_filled(array $data): array
+{
+    return array_filter($data, 'filled');
+}
+
 function str_before_last(string $subject, string $search): string
 {
     return \Illuminate\Support\Str::beforeLast($subject, $search);
