@@ -575,6 +575,7 @@ use const JundFauz\EloquentKompact\NEW_LINE;
 | `add_tab($sentence, $count = 1)` | The sentence indented with `$count` tabs of 4 spaces |
 | `full_path_on_app($path)` | Absolute path inside `app/`, e.g. `App\Models` → `{app_path}/Models` |
 | `array_flat(&$array)` | Flattens the array in place |
+| `collect($value)` | A [`Builder\Collection`](#other-helpers) of the value, like Laravel's `collect()`; import it to use it instead of Laravel's |
 | `array_wrap($value)` | Laravel's `Arr::wrap()`: the value as an array, `[]` for `null` |
 | `array_get_or($array, ...$keys)` | The first value that is not `null`, in the order of the keys; dot notation is supported and missing keys are skipped |
 | `array_filter_filled($array)` | The values that are Laravel's `filled()`, keeping the keys: `null`, blank strings and empty arrays or collections are removed; `0`, `'0'` and `false` are kept |
@@ -612,9 +613,9 @@ Constants: `NEW_LINE` (`"\n"`), `DISTANCE_LINE` (`"\n\n"`), `NAMESPACE_DELIMITER
 - `Builder\Collection` extends Laravel's `Collection` with `filterFilled()`, `getOr(...$keys)` and `getOrWithDefault($default, ...$keys)`, built on `array_filter_filled()` and `array_get_or()`. An array value or default is returned as a `Collection`, and Laravel's methods keep the class through the chain. Its name is the same as Laravel's `Collection`; import one of them with an alias if a file needs both.
 
   ```php
-  use JundFauz\EloquentKompact\Builder\Collection;
+  use function JundFauz\EloquentKompact\collect;
 
-  $data = new Collection(['nickname' => null, 'name' => 'Ana', 'tags' => ['a', 'b']]);
+  $data = collect(['nickname' => null, 'name' => 'Ana', 'tags' => ['a', 'b']]);
 
   $data->filterFilled()->keys()->all();                // ['name', 'tags']
   $data->getOr('nickname', 'name');                    // 'Ana'
