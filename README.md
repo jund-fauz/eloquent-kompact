@@ -578,6 +578,7 @@ use const JundFauz\EloquentKompact\NEW_LINE;
 | `array_wrap($value)` | Laravel's `Arr::wrap()`: the value as an array, `[]` for `null` |
 | `merge_as_array(...$values)` | Every value in one flat list, nested arrays and collections included; keys are dropped and `null` is kept |
 | `array_pull(&$array, ...$keys)` | `Arr::pullMany()`: removes the keys and returns the value of one key, or `[key => value]` for several |
+| `array_pull_list(&$array, ...$keys)` | `array_pull()`, but several keys give a list in the given order, e.g. for `[$name, $email] = array_pull_list($data, 'name', 'email')` |
 | `stringify($array)` | Every value cast to a `string`, nested arrays included, keeping the keys; `null` and `false` become `''` |
 | `model_compact($model, ...$columns)` | `[column => value]` for the given columns, after casting; missing attributes are `null` and loaded relations become arrays |
 | `str_before_last()`, `str_lower()`, `str_upper()` | Laravel's `Str::beforeLast()`, `lower()`, `upper()` |
