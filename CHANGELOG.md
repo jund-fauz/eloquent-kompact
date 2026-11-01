@@ -7,6 +7,33 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [0.62.0] - 2026-11-01
+
+### Added
+
+- `Collection::getOrWithDefaultAsCollection()`, like `getOrWithDefault()` but the result is always a `Collection`: an array gives its items, a `null` gives an empty collection and any other value is wrapped in one.
+
+  ```php
+  collect(['nickname' => null])->getOrWithDefaultAsCollection('Guest', 'nickname')->all(); // ['Guest']
+  ```
+
+### Changed
+
+- **BREAKING:** `Collection::getOr()` and `getOrWithDefault()` return a string value or default as a `Builder\Str` instead of a `string`, so the chain can go on with `Str` methods. Code that compares the result with `===` or passes it to a `string` parameter with `declare(strict_types=1)` must call `toString()`. A `Str` is an object, so an empty string is now truthy.
+
+  ```php
+  // 0.61
+  collect(['name' => 'Ana'])->getOr('name');                       // 'Ana'
+
+  // 0.62
+  collect(['name' => 'Ana'])->getOr('name')->toString();           // 'Ana'
+  collect(['name' => 'Ana'])->getOr('name')->upper()->toString();  // 'ANA'
+  ```
+
+### Tests
+
+- Updated the `Builder\Collection` unit tests for string values returned as a `Str`, and added unit tests for `getOrWithDefaultAsCollection()`.
+
 ## [0.61.0] - 2026-11-01
 
 ### Added
@@ -1244,7 +1271,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - `RawQuery` static helpers for raw SQL expressions.
 - Translations for `en` and `id`.
 
-[Unreleased]: https://github.com/jund-fauz/eloquent-kompact/compare/v0.61.0...HEAD
+[Unreleased]: https://github.com/jund-fauz/eloquent-kompact/compare/v0.62.0...HEAD
+[0.62.0]: https://github.com/jund-fauz/eloquent-kompact/compare/v0.61.0...v0.62.0
 [0.61.0]: https://github.com/jund-fauz/eloquent-kompact/compare/v0.60.0...v0.61.0
 [0.60.0]: https://github.com/jund-fauz/eloquent-kompact/compare/v0.59.0...v0.60.0
 [0.59.0]: https://github.com/jund-fauz/eloquent-kompact/compare/v0.58.0...v0.59.0
