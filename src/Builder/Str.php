@@ -5,7 +5,6 @@ namespace JundFauz\EloquentKompact\Builder;
 use Illuminate\Support\Stringable;
 use JundFauz\EloquentKompact\Column\Creator;
 use JundFauz\EloquentKompact\Query\RawQuery;
-use function JundFauz\EloquentKompact\collect;
 use function JundFauz\EloquentKompact\namespace_concat;
 use function JundFauz\EloquentKompact\not_same_with;
 use function JundFauz\EloquentKompact\path_concat;

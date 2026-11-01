@@ -54,6 +54,32 @@ class CollectionTest extends TestCase
     }
 
     #[Test]
+    public function it_wraps_the_value_from_get(): void
+    {
+        $collection = new Collection(['name' => 'Ana', 'age' => 20, 'tags' => ['x', 'y']]);
+
+        $this->assertStr('Ana', $collection->get('name'));
+        $this->assertSame(20, $collection->get('age'));
+        $this->assertInstanceOf(Collection::class, $collection->get('tags'));
+        $this->assertSame(['x', 'y'], $collection->get('tags')->all());
+        $this->assertStr('Guest', $collection->get('missing', 'Guest'));
+        $this->assertNull($collection->get('missing'));
+    }
+
+    #[Test]
+    public function it_gets_the_items_around_a_value(): void
+    {
+        $collection = new Collection(['a' => 1, 'b' => 'x', 'c' => ['y']]);
+
+        $this->assertStr('x', $collection->after(1));
+        $this->assertSame(['y'], $collection->after('x')->all());
+        $this->assertSame(1, $collection->before('x'));
+        $this->assertNull($collection->before(1));
+        $this->assertNull($collection->after(fn (mixed $value) => is_array($value)));
+        $this->assertSame(2, (new Collection([1, 2, 3]))->after(1));
+    }
+
+    #[Test]
     public function it_falls_back_to_the_default(): void
     {
         $collection = new Collection(['nickname' => null, 'name' => 'Ana', 'empty' => '']);

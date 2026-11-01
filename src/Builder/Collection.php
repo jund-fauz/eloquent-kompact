@@ -12,6 +12,21 @@ class Collection extends \Illuminate\Support\Collection
         return $this->newInstance(array_filter_filled($this->items));
     }
 
+    public function get($key, $default = null)
+    {
+        return $this->return(parent::get($key, $default));
+    }
+
+    public function before($value, $strict = false)
+    {
+        return $this->return($this->toBase()->before($value, $strict));
+    }
+
+    public function after($value, $strict = false)
+    {
+        return $this->return($this->toBase()->after($value, $strict));
+    }
+
     public function getOr(string ...$keys): mixed
     {
         return $this->return(array_get_or($this->items, ...$keys));
@@ -32,6 +47,10 @@ class Collection extends \Illuminate\Support\Collection
         return new static($items);
     }
 
+    /**
+     * @param mixed $data
+     * @return mixed|static|Str
+     */
     private function return(mixed $data): mixed
     {
         return match (true) {
