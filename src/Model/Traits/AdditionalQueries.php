@@ -92,6 +92,11 @@ trait AdditionalQueries
         return $this->{$columnName} === $value;
     }
 
+    public function notSameWith(string $columnName, mixed $value): bool
+    {
+        return $this->{$columnName} !== $value;
+    }
+
     public function sameWithOther(Model $other, string ...$columns): bool
     {
         if (empty($columns)) {

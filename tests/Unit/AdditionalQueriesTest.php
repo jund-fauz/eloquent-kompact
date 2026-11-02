@@ -126,6 +126,17 @@ class AdditionalQueriesTest extends TestCase
     }
 
     #[Test]
+    public function it_checks_that_an_attribute_is_not_the_value(): void
+    {
+        $comment = MorphComment::find(3);
+
+        $this->assertFalse($comment->notSameWith('commentable_type', 'video'));
+        $this->assertTrue($comment->notSameWith('commentable_type', MorphPost::class));
+        $this->assertTrue($comment->notSameWith('commentable_id', '1'));
+        $this->assertFalse($comment->notSameWith('missing', null));
+    }
+
+    #[Test]
     public function it_compares_the_columns_with_another_model(): void
     {
         $comment = MorphComment::find(1);
