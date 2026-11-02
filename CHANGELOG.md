@@ -7,6 +7,22 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [0.72.0] - 2026-11-02
+
+### Added
+
+- `AdditionalQueries::sameWithOtherOr()`, `notSameWithOther()` and `notSameWithOtherOr()`, the other forms of `sameWithOther()`. The comparison is strict and after casting, so objects such as the Carbon dates of `datetime` columns are never the same. They return `false` when no column is given.
+
+  ```php
+  $order->sameWithOtherOr($otherOrder, 'tenant_id', 'branch_id');    // at least one column is the same
+  $order->notSameWithOther($otherOrder, 'tenant_id', 'branch_id');   // every column is different
+  $order->notSameWithOtherOr($otherOrder, 'tenant_id', 'branch_id'); // at least one column is different
+  ```
+
+### Tests
+
+- Added unit tests for `sameWithOtherOr()`, `notSameWithOther()` and `notSameWithOtherOr()`.
+
 ## [0.71.0] - 2026-11-02
 
 ### Added
@@ -1440,7 +1456,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - `RawQuery` static helpers for raw SQL expressions.
 - Translations for `en` and `id`.
 
-[Unreleased]: https://github.com/jund-fauz/eloquent-kompact/compare/v0.71.0...HEAD
+[Unreleased]: https://github.com/jund-fauz/eloquent-kompact/compare/v0.72.0...HEAD
+[0.72.0]: https://github.com/jund-fauz/eloquent-kompact/compare/v0.71.0...v0.72.0
 [0.71.0]: https://github.com/jund-fauz/eloquent-kompact/compare/v0.70.0...v0.71.0
 [0.70.0]: https://github.com/jund-fauz/eloquent-kompact/compare/v0.69.0...v0.70.0
 [0.69.0]: https://github.com/jund-fauz/eloquent-kompact/compare/v0.68.0...v0.69.0
