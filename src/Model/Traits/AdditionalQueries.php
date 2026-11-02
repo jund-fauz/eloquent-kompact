@@ -8,6 +8,7 @@ use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\Relation;
 use JundFauz\EloquentKompact\Column\Creator;
 use function JundFauz\EloquentKompact\is_not_array;
+use function JundFauz\EloquentKompact\is_not_null;
 
 trait AdditionalQueries
 {
@@ -124,7 +125,7 @@ trait AdditionalQueries
     public function assignFrom(Model $other, string ...$columns): void
     {
         foreach ($columns as $column) {
-            $this->{$column} = $other->{$column};
+            $this->assign($column, $other->{$column});
         }
     }
 
@@ -143,17 +144,56 @@ trait AdditionalQueries
         }
     }
 
+    public function assignIfEmptyFrom(Model $other, string ...$columns): void
+    {
+        foreach ($columns as $column) {
+            if ($this->isEmpty($column)) {
+                $this->assign($column, $other->{$column});
+            }
+        }
+    }
+
+    public function assignIfNull(string|array $columns, mixed $value = null): void
+    {
+        if (is_string($columns)) {
+            if ($this->isNull($columns)) {
+                $this->assign($columns, $value);
+            }
+        } else {
+            foreach ($columns as $column => $value) {
+                if ($this->isNull($column)) {
+                    $this->assign($column, $value);
+                }
+            }
+        }
+    }
+
+    public function assignIfNullFrom(Model $other, string ...$columns): void
+    {
+        foreach ($columns as $column) {
+            if ($this->isNull($column)) {
+                $this->assign($column, $other->{$column});
+            }
+        }
+    }
+
     public function isEmpty(string $column): bool
     {
         return empty($this->{$column});
     }
 
-    public function assignIfEmptyFrom(Model $other, string ...$columns): void
+    public function isFilled(string $column): bool
     {
-        foreach ($columns as $column) {
-            if (empty($this->{$column})) {
-                $this->{$column} = $other->{$column};
-            }
-        }
+        return filled($this->{$column});
+    }
+
+    public function isNull(string $column): bool
+    {
+        return is_null($this->{$column});
+    }
+
+    public function isNotNull(string $column): bool
+    {
+        return is_not_null($this->{$column});
     }
 }

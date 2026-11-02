@@ -191,6 +191,60 @@ class AdditionalQueriesTest extends TestCase
     }
 
     #[Test]
+    public function it_assigns_attributes_only_if_null(): void
+    {
+        $comment = (new MorphComment)->forceFill(['commentable_type' => '', 'commentable_id' => 0]);
+
+        $comment->assignIfNull('commentable_type', 'post');
+        $comment->assignIfNull('commentable_id', 5);
+        $comment->assignIfNull('missing', 'x');
+
+        $this->assertSame(['', 0, 'x'], $comment->getMany('commentable_type', 'commentable_id', 'missing'));
+    }
+
+    #[Test]
+    public function it_assigns_many_attributes_only_if_null(): void
+    {
+        $comment = (new MorphComment)->forceFill(['commentable_type' => null, 'commentable_id' => 0]);
+
+        $comment->assignIfNull(['commentable_type' => 'post', 'commentable_id' => 5]);
+
+        $this->assertSame(['post', 0], $comment->getMany('commentable_type', 'commentable_id'));
+    }
+
+    #[Test]
+    public function it_assigns_attributes_from_another_model_only_if_null(): void
+    {
+        $comment = (new MorphComment)->forceFill(['commentable_type' => null, 'commentable_id' => 0]);
+
+        $comment->assignIfNullFrom(MorphComment::find(3), 'commentable_type', 'commentable_id');
+
+        $this->assertSame(['video', 0], $comment->getMany('commentable_type', 'commentable_id'));
+    }
+
+    #[Test]
+    public function it_checks_whether_an_attribute_is_filled(): void
+    {
+        $comment = (new MorphComment)->forceFill(['commentable_type' => '  ', 'commentable_id' => 0]);
+
+        $this->assertFalse($comment->isFilled('commentable_type'));
+        $this->assertTrue($comment->isFilled('commentable_id'));
+        $this->assertFalse($comment->isFilled('missing'));
+    }
+
+    #[Test]
+    public function it_checks_whether_an_attribute_is_null(): void
+    {
+        $comment = (new MorphComment)->forceFill(['commentable_type' => '', 'commentable_id' => null]);
+
+        $this->assertFalse($comment->isNull('commentable_type'));
+        $this->assertTrue($comment->isNotNull('commentable_type'));
+        $this->assertTrue($comment->isNull('commentable_id'));
+        $this->assertFalse($comment->isNotNull('commentable_id'));
+        $this->assertTrue($comment->isNull('missing'));
+    }
+
+    #[Test]
     public function it_compares_the_columns_with_another_model(): void
     {
         $comment = MorphComment::find(1);
