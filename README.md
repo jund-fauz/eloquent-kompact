@@ -172,6 +172,7 @@ $user->getMany('name', 'email'); // ['Ana', 'ana@example.com']
 
 // Strict comparison of attributes, after casting
 $user->sameWith('role', 'admin');
+$user->notSameWith('role', 'admin');
 $user->sameWithOther($otherUser, 'tenant_id', 'branch_id');
 $user->match(['role' => ['admin', 'editor'], 'active_is' => true]);
 ```
