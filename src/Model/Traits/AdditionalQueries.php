@@ -128,11 +128,24 @@ trait AdditionalQueries
         }
     }
 
-    public function assignIfEmpty(string $column, mixed $value): void
+    public function assignIfEmpty(string|array $columns, mixed $value = null): void
     {
-        if (empty($this->{$column})) {
-            $this->{$column} = $value;
+        if (is_string($columns)) {
+            if ($this->isEmpty($columns)) {
+                $this->assign($columns, $value);
+            }
+        } else {
+            foreach ($columns as $column => $value) {
+                if ($this->isEmpty($column)) {
+                    $this->assign($column, $value);
+                }
+            }
         }
+    }
+
+    public function isEmpty(string $column): bool
+    {
+        return empty($this->{$column});
     }
 
     public function assignIfEmptyFrom(Model $other, string ...$columns): void

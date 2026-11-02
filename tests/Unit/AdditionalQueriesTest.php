@@ -161,6 +161,26 @@ class AdditionalQueriesTest extends TestCase
     }
 
     #[Test]
+    public function it_assigns_many_attributes_only_if_empty(): void
+    {
+        $comment = (new MorphComment)->forceFill(['commentable_type' => 'video', 'commentable_id' => 0]);
+
+        $comment->assignIfEmpty(['commentable_type' => 'post', 'commentable_id' => 5, 'missing' => 'x']);
+
+        $this->assertSame(['video', 5, 'x'], $comment->getMany('commentable_type', 'commentable_id', 'missing'));
+    }
+
+    #[Test]
+    public function it_checks_whether_an_attribute_is_empty(): void
+    {
+        $comment = (new MorphComment)->forceFill(['commentable_type' => 'video', 'commentable_id' => 0]);
+
+        $this->assertFalse($comment->isEmpty('commentable_type'));
+        $this->assertTrue($comment->isEmpty('commentable_id'));
+        $this->assertTrue($comment->isEmpty('missing'));
+    }
+
+    #[Test]
     public function it_assigns_attributes_from_another_model_only_if_empty(): void
     {
         $comment = (new MorphComment)->forceFill(['commentable_type' => '', 'commentable_id' => 7]);
