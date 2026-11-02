@@ -170,12 +170,20 @@ $user->getOr('nickname', 'name');
 // Several attributes, in the given order (a missing one is null)
 $user->getMany('name', 'email'); // ['Ana', 'ana@example.com']
 
+// Set attributes, without saving
+$order->assign('status', 'paid');
+$order->assignFrom($otherOrder, 'tenant_id', 'branch_id');
+$order->assignIfEmpty('note', '-');
+$order->assignIfEmptyFrom($otherOrder, 'tenant_id', 'branch_id');
+
 // Strict comparison of attributes, after casting
 $user->sameWith('role', 'admin');
 $user->notSameWith('role', 'admin');
 $user->sameWithOther($otherUser, 'tenant_id', 'branch_id');
 $user->match(['role' => ['admin', 'editor'], 'active_is' => true]);
 ```
+
+`assignIfEmpty()` and `assignIfEmptyFrom()` use PHP's `empty()`, so `null`, `''`, `'0'`, `0`, `false` and `[]` are replaced.
 
 `match()` and `sameWithOther()` return `false` when no condition or column is given. Objects such as the Carbon dates of `datetime` columns are compared by identity, so two models never have the same date. An array value matches if the attribute equals one of its items, unless the attribute itself is an array.
 
