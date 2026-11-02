@@ -115,4 +115,32 @@ trait AdditionalQueries
     {
         return array_map(fn (string $column) => $this->{$column}, $columns);
     }
+
+    public function assign(string $column, mixed $value): void
+    {
+        $this->{$column} = $value;
+    }
+
+    public function assignFrom(Model $other, string ...$columns): void
+    {
+        foreach ($columns as $column) {
+            $this->{$column} = $other->{$column};
+        }
+    }
+
+    public function assignIfEmpty(string $column, mixed $value): void
+    {
+        if (empty($this->{$column})) {
+            $this->{$column} = $value;
+        }
+    }
+
+    public function assignIfEmptyFrom(Model $other, string ...$columns): void
+    {
+        foreach ($columns as $column) {
+            if (empty($this->{$column})) {
+                $this->{$column} = $other->{$column};
+            }
+        }
+    }
 }

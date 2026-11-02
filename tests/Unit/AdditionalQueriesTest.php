@@ -137,6 +137,40 @@ class AdditionalQueriesTest extends TestCase
     }
 
     #[Test]
+    public function it_assigns_attributes(): void
+    {
+        $comment = new MorphComment;
+
+        $comment->assign('commentable_type', 'video');
+        $comment->assignFrom(MorphComment::find(1), 'commentable_id');
+
+        $this->assertSame(['video', 1], $comment->getMany('commentable_type', 'commentable_id'));
+        $this->assertFalse($comment->exists);
+    }
+
+    #[Test]
+    public function it_assigns_attributes_only_if_empty(): void
+    {
+        $comment = (new MorphComment)->forceFill(['commentable_type' => 'video', 'commentable_id' => 0]);
+
+        $comment->assignIfEmpty('commentable_type', 'post');
+        $comment->assignIfEmpty('commentable_id', 5);
+        $comment->assignIfEmpty('missing', 'x');
+
+        $this->assertSame(['video', 5, 'x'], $comment->getMany('commentable_type', 'commentable_id', 'missing'));
+    }
+
+    #[Test]
+    public function it_assigns_attributes_from_another_model_only_if_empty(): void
+    {
+        $comment = (new MorphComment)->forceFill(['commentable_type' => '', 'commentable_id' => 7]);
+
+        $comment->assignIfEmptyFrom(MorphComment::find(3), 'commentable_type', 'commentable_id');
+
+        $this->assertSame(['video', 7], $comment->getMany('commentable_type', 'commentable_id'));
+    }
+
+    #[Test]
     public function it_compares_the_columns_with_another_model(): void
     {
         $comment = MorphComment::find(1);
