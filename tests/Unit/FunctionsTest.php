@@ -18,9 +18,11 @@ use function JundFauz\EloquentKompact\array_pull_list;
 use function JundFauz\EloquentKompact\array_wrap;
 use function JundFauz\EloquentKompact\comment;
 use function JundFauz\EloquentKompact\full_path_on_app;
+use function JundFauz\EloquentKompact\higher_than;
 use function JundFauz\EloquentKompact\is_all_null;
 use function JundFauz\EloquentKompact\is_not_array;
 use function JundFauz\EloquentKompact\is_not_null;
+use function JundFauz\EloquentKompact\lower_than;
 use function JundFauz\EloquentKompact\merge_as_array;
 use function JundFauz\EloquentKompact\model_compact;
 use function JundFauz\EloquentKompact\namespace_concat;
@@ -250,6 +252,24 @@ class FunctionsTest extends TestCase
         $this->assertFalse(same_with_one_of(true, 'x'));
         $this->assertFalse(same_with_one_of(new stdClass, new stdClass));
         $this->assertFalse(same_with_one_of('a'));
+    }
+
+    #[Test]
+    public function it_compares_numbers(): void
+    {
+        $this->assertTrue(higher_than(2, 1));
+        $this->assertTrue(higher_than(1.5, 1));
+        $this->assertTrue(higher_than('2.50', '2.00'));
+        $this->assertTrue(higher_than('10', '9'));
+        $this->assertFalse(higher_than(1, 1));
+        $this->assertFalse(higher_than(0.2, 0.9));
+
+        $this->assertTrue(lower_than(1, 2));
+        $this->assertTrue(lower_than(0.2, 0.9));
+        $this->assertTrue(lower_than('9', '10'));
+        $this->assertTrue(lower_than(-1, '0.5'));
+        $this->assertFalse(lower_than(1, 1));
+        $this->assertFalse(lower_than('2.50', 2));
     }
 
     #[Test]

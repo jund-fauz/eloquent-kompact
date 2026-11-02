@@ -146,6 +146,16 @@ function not_same_with(mixed $firstValue, mixed $secondValue): bool
     return $firstValue !== $secondValue;
 }
 
+function higher_than(int|float|string $firstNumber, int|float|string $secondNumber): bool
+{
+    return $firstNumber > $secondNumber;
+}
+
+function lower_than(int|float|string $firstNumber, int|float|string $secondNumber): bool
+{
+    return $firstNumber < $secondNumber;
+}
+
 function not(bool $condition): bool
 {
     return ! $condition;
