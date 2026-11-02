@@ -29,6 +29,7 @@ use function JundFauz\EloquentKompact\not_same_with;
 use function JundFauz\EloquentKompact\path_concat;
 use function JundFauz\EloquentKompact\relation_concat;
 use function JundFauz\EloquentKompact\same_with;
+use function JundFauz\EloquentKompact\same_with_one_of;
 use function JundFauz\EloquentKompact\schema_concat;
 use function JundFauz\EloquentKompact\str_before_last;
 use function JundFauz\EloquentKompact\stringify;
@@ -233,6 +234,22 @@ class FunctionsTest extends TestCase
         $this->assertFalse(same_with(new stdClass, new stdClass));
         $this->assertTrue(not_same_with(1, '1'));
         $this->assertFalse(not_same_with(null, null));
+    }
+
+    #[Test]
+    public function it_compares_with_one_of_the_values_strictly(): void
+    {
+        $object = new stdClass;
+
+        $this->assertTrue(same_with_one_of('b', 'a', 'b'));
+        $this->assertTrue(same_with_one_of($object, new stdClass, $object));
+        $this->assertTrue(same_with_one_of(null, 0, null));
+        $this->assertFalse(same_with_one_of(1, '1'));
+        $this->assertFalse(same_with_one_of(null, false, '', 0));
+        $this->assertFalse(same_with_one_of('1e1', '10'));
+        $this->assertFalse(same_with_one_of(true, 'x'));
+        $this->assertFalse(same_with_one_of(new stdClass, new stdClass));
+        $this->assertFalse(same_with_one_of('a'));
     }
 
     #[Test]

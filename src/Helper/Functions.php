@@ -136,6 +136,11 @@ function same_with(mixed $firstValue, mixed $secondValue): bool
     return $firstValue === $secondValue;
 }
 
+function same_with_one_of(mixed $toCompareValue, mixed ...$anotherValues): bool
+{
+    return in_array($toCompareValue, $anotherValues, true);
+}
+
 function not_same_with(mixed $firstValue, mixed $secondValue): bool
 {
     return $firstValue !== $secondValue;
