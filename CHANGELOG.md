@@ -7,6 +7,26 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [0.70.0] - 2026-11-02
+
+### Added
+
+- `AdditionalQueries::assignIfEmpty()` also takes an array of `[column => value]`.
+
+  ```php
+  $order->assignIfEmpty(['note' => '-', 'status' => 'new']);
+  ```
+
+- `AdditionalQueries::isEmpty()` to check whether an attribute is PHP's `empty()`. A model that declares its own `isEmpty()` must use the same signature.
+
+  ```php
+  $order->isEmpty('note'); // true
+  ```
+
+### Tests
+
+- Added unit tests for `assignIfEmpty()` with an array and for `isEmpty()`.
+
 ## [0.69.0] - 2026-11-02
 
 ### Added
@@ -1396,7 +1416,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - `RawQuery` static helpers for raw SQL expressions.
 - Translations for `en` and `id`.
 
-[Unreleased]: https://github.com/jund-fauz/eloquent-kompact/compare/v0.69.0...HEAD
+[Unreleased]: https://github.com/jund-fauz/eloquent-kompact/compare/v0.70.0...HEAD
+[0.70.0]: https://github.com/jund-fauz/eloquent-kompact/compare/v0.69.0...v0.70.0
 [0.69.0]: https://github.com/jund-fauz/eloquent-kompact/compare/v0.68.0...v0.69.0
 [0.68.0]: https://github.com/jund-fauz/eloquent-kompact/compare/v0.67.0...v0.68.0
 [0.67.0]: https://github.com/jund-fauz/eloquent-kompact/compare/v0.66.0...v0.67.0
