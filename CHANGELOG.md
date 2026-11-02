@@ -7,6 +7,20 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [0.65.0] - 2026-11-02
+
+### Added
+
+- `AdditionalQueries::sameWithOther()` to check whether the given attributes of a model are the same as those of another model, using `sameWith()`: the comparison is strict and after casting, so objects such as the Carbon dates of `datetime` columns are never the same. It returns `false` when no column is given.
+
+  ```php
+  $order->sameWithOther($otherOrder, 'tenant_id', 'branch_id'); // true
+  ```
+
+### Tests
+
+- Added unit tests for `sameWithOther()`.
+
 ## [0.64.0] - 2026-11-01
 
 ### Changed
@@ -1316,7 +1330,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - `RawQuery` static helpers for raw SQL expressions.
 - Translations for `en` and `id`.
 
-[Unreleased]: https://github.com/jund-fauz/eloquent-kompact/compare/v0.64.0...HEAD
+[Unreleased]: https://github.com/jund-fauz/eloquent-kompact/compare/v0.65.0...HEAD
+[0.65.0]: https://github.com/jund-fauz/eloquent-kompact/compare/v0.64.0...v0.65.0
 [0.64.0]: https://github.com/jund-fauz/eloquent-kompact/compare/v0.63.0...v0.64.0
 [0.63.0]: https://github.com/jund-fauz/eloquent-kompact/compare/v0.62.0...v0.63.0
 [0.62.0]: https://github.com/jund-fauz/eloquent-kompact/compare/v0.61.0...v0.62.0
