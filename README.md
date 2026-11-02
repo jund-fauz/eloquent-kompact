@@ -176,9 +176,15 @@ $order->assignFrom($otherOrder, 'tenant_id', 'branch_id');
 $order->assignIfEmpty('note', '-');
 $order->assignIfEmpty(['note' => '-', 'status' => 'new']);
 $order->assignIfEmptyFrom($otherOrder, 'tenant_id', 'branch_id');
+$order->assignIfNull('note', '-');
+$order->assignIfNull(['note' => '-', 'status' => 'new']);
+$order->assignIfNullFrom($otherOrder, 'tenant_id', 'branch_id');
 
-// Whether an attribute is empty
+// Whether an attribute is empty, filled or null
 $order->isEmpty('note');
+$order->isFilled('note');
+$order->isNull('note');
+$order->isNotNull('note');
 
 // Strict comparison of attributes, after casting
 $user->sameWith('role', 'admin');
@@ -187,7 +193,7 @@ $user->sameWithOther($otherUser, 'tenant_id', 'branch_id');
 $user->match(['role' => ['admin', 'editor'], 'active_is' => true]);
 ```
 
-`assignIfEmpty()`, `assignIfEmptyFrom()` and `isEmpty()` use PHP's `empty()`, so `null`, `''`, `'0'`, `0`, `false` and `[]` are replaced.
+`assignIfEmpty()`, `assignIfEmptyFrom()` and `isEmpty()` use PHP's `empty()`, so `null`, `''`, `'0'`, `0`, `false` and `[]` count as empty. `assignIfNull()` and `assignIfNullFrom()` only replace `null`. `isFilled()` uses Laravel's `filled()`, so `0`, `'0'` and `false` are filled, while `null`, blank strings and empty arrays are not.
 
 `match()` and `sameWithOther()` return `false` when no condition or column is given. Objects such as the Carbon dates of `datetime` columns are compared by identity, so two models never have the same date. An array value matches if the attribute equals one of its items, unless the attribute itself is an array.
 
