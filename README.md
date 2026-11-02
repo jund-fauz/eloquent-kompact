@@ -172,10 +172,11 @@ $user->getMany('name', 'email'); // ['Ana', 'ana@example.com']
 
 // Strict comparison of attributes, after casting
 $user->sameWith('role', 'admin');
+$user->sameWithOther($otherUser, 'tenant_id', 'branch_id');
 $user->match(['role' => ['admin', 'editor'], 'active_is' => true]);
 ```
 
-`match()` returns `false` when no condition is given. An array value matches if the attribute equals one of its items, unless the attribute itself is an array.
+`match()` and `sameWithOther()` return `false` when no condition or column is given. Objects such as the Carbon dates of `datetime` columns are compared by identity, so two models never have the same date. An array value matches if the attribute equals one of its items, unless the attribute itself is an array.
 
 ### RelationData
 
