@@ -7,6 +7,23 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [0.66.0] - 2026-11-02
+
+### Added
+
+- `same_with_one_of()` helper function to check whether a value is the same as one of the other values, with a strict `===` comparison like `same_with()`. It returns `false` when no other value is given.
+
+  ```php
+  use function JundFauz\EloquentKompact\same_with_one_of;
+
+  same_with_one_of($status, 'paid', 'shipped'); // true
+  same_with_one_of(1, '1');                     // false
+  ```
+
+### Tests
+
+- Added unit tests for `same_with_one_of()`.
+
 ## [0.65.0] - 2026-11-02
 
 ### Added
@@ -1330,7 +1347,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - `RawQuery` static helpers for raw SQL expressions.
 - Translations for `en` and `id`.
 
-[Unreleased]: https://github.com/jund-fauz/eloquent-kompact/compare/v0.65.0...HEAD
+[Unreleased]: https://github.com/jund-fauz/eloquent-kompact/compare/v0.66.0...HEAD
+[0.66.0]: https://github.com/jund-fauz/eloquent-kompact/compare/v0.65.0...v0.66.0
 [0.65.0]: https://github.com/jund-fauz/eloquent-kompact/compare/v0.64.0...v0.65.0
 [0.64.0]: https://github.com/jund-fauz/eloquent-kompact/compare/v0.63.0...v0.64.0
 [0.63.0]: https://github.com/jund-fauz/eloquent-kompact/compare/v0.62.0...v0.63.0
