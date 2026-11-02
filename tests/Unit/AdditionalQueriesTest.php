@@ -124,6 +124,33 @@ class AdditionalQueriesTest extends TestCase
         $this->assertSame([3, null], MorphComment::find(3)->getMany('id', 'missing'));
         $this->assertSame([], MorphComment::find(3)->getMany());
     }
+
+    #[Test]
+    public function it_compares_the_columns_with_another_model(): void
+    {
+        $comment = MorphComment::find(1);
+
+        $this->assertTrue($comment->sameWithOther(MorphComment::find(2), 'commentable_type'));
+        $this->assertFalse($comment->sameWithOther(MorphComment::find(2), 'commentable_type', 'commentable_id'));
+        $this->assertFalse($comment->sameWithOther(MorphComment::find(3), 'commentable_id', 'commentable_type'));
+        $this->assertTrue($comment->sameWithOther(MorphComment::find(3), 'commentable_id'));
+    }
+
+    #[Test]
+    public function it_compares_strictly_with_another_model(): void
+    {
+        $other = MorphComment::find(1);
+        $other->commentable_id = '1';
+
+        $this->assertFalse(MorphComment::find(1)->sameWithOther($other, 'commentable_id'));
+        $this->assertTrue(MorphComment::find(1)->sameWithOther(new MorphComment, 'missing'));
+    }
+
+    #[Test]
+    public function it_is_not_same_with_another_model_without_columns(): void
+    {
+        $this->assertFalse(MorphComment::find(1)->sameWithOther(MorphComment::find(1)));
+    }
 }
 
 class MorphComment extends Model

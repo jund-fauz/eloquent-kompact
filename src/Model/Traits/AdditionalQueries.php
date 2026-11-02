@@ -66,7 +66,7 @@ trait AdditionalQueries
      */
     public function match(array $conditions): bool
     {
-        if (! count($conditions)) {
+        if (empty($conditions)) {
             return false;
         }
 
@@ -90,6 +90,15 @@ trait AdditionalQueries
     public function sameWith(string $columnName, mixed $value): bool
     {
         return $this->{$columnName} === $value;
+    }
+
+    public function sameWithOther(Model $other, string ...$columns): bool
+    {
+        if (empty($columns)) {
+            return false;
+        }
+
+        return array_reduce($columns, fn ($acc, string $column) => $acc && $this->sameWith($column, $other->{$column}), true);
     }
 
     public function isMorphModelSame(string $morphName, string $modelClass): bool
