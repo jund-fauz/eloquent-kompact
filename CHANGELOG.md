@@ -7,6 +7,24 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [0.67.0] - 2026-11-02
+
+### Added
+
+- `higher_than()` and `lower_than()` helper functions, for `$a > $b` and `$a < $b`. They take an `int`, a `float` or a numeric string, such as the value of a `decimal` cast. A string that is not numeric is compared as text.
+
+  ```php
+  use function JundFauz\EloquentKompact\higher_than;
+  use function JundFauz\EloquentKompact\lower_than;
+
+  higher_than($order->weight_gram, '2.50'); // true for '2.75'
+  lower_than(0.2, 0.9);                     // true
+  ```
+
+### Tests
+
+- Added unit tests for `higher_than()` and `lower_than()`.
+
 ## [0.66.0] - 2026-11-02
 
 ### Added
@@ -1347,7 +1365,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - `RawQuery` static helpers for raw SQL expressions.
 - Translations for `en` and `id`.
 
-[Unreleased]: https://github.com/jund-fauz/eloquent-kompact/compare/v0.66.0...HEAD
+[Unreleased]: https://github.com/jund-fauz/eloquent-kompact/compare/v0.67.0...HEAD
+[0.67.0]: https://github.com/jund-fauz/eloquent-kompact/compare/v0.66.0...v0.67.0
 [0.66.0]: https://github.com/jund-fauz/eloquent-kompact/compare/v0.65.0...v0.66.0
 [0.65.0]: https://github.com/jund-fauz/eloquent-kompact/compare/v0.64.0...v0.65.0
 [0.64.0]: https://github.com/jund-fauz/eloquent-kompact/compare/v0.63.0...v0.64.0
