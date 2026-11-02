@@ -587,6 +587,7 @@ use const JundFauz\EloquentKompact\NEW_LINE;
 | `is_not_null($value)` / `is_not_array($value)` | Negated `is_null()` / `is_array()` |
 | `is_all_null(...$values)` | Whether every value, nested arrays included, is `null` |
 | `same_with($a, $b)` / `not_same_with($a, $b)` | `$a === $b` / `$a !== $b` |
+| `same_with_one_of($value, ...$others)` | Whether `$value` is `===` to one of the others; `false` without others |
 | `not($condition)` | `! $condition` |
 | `str_concat(...$values)` | Joined without a delimiter |
 | `word_concat(...$values)` | Joined with a space |
