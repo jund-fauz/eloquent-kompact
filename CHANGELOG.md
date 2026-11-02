@@ -7,6 +7,30 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [0.71.0] - 2026-11-02
+
+### Added
+
+- `AdditionalQueries::assignIfNull()` and `assignIfNullFrom()`, like `assignIfEmpty()` and `assignIfEmptyFrom()` but only a `null` attribute is replaced, so `''`, `0` and `false` are kept. `assignIfNull()` takes a column and a value, or an array of `[column => value]`.
+
+  ```php
+  $order->assignIfNull('note', '-');
+  $order->assignIfNull(['note' => '-', 'status' => 'new']);
+  $order->assignIfNullFrom($otherOrder, 'tenant_id', 'branch_id');
+  ```
+
+- `AdditionalQueries::isFilled()`, `isNull()` and `isNotNull()` to check an attribute. `isFilled()` uses Laravel's `filled()`, so `0`, `'0'` and `false` are filled, while `null`, blank strings and empty arrays are not. A model that declares its own method with one of these names must use the same signature.
+
+  ```php
+  $order->isFilled('note');
+  $order->isNull('note');
+  $order->isNotNull('note');
+  ```
+
+### Tests
+
+- Added unit tests for `assignIfNull()`, `assignIfNullFrom()`, `isFilled()`, `isNull()` and `isNotNull()`.
+
 ## [0.70.0] - 2026-11-02
 
 ### Added
@@ -1416,7 +1440,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - `RawQuery` static helpers for raw SQL expressions.
 - Translations for `en` and `id`.
 
-[Unreleased]: https://github.com/jund-fauz/eloquent-kompact/compare/v0.70.0...HEAD
+[Unreleased]: https://github.com/jund-fauz/eloquent-kompact/compare/v0.71.0...HEAD
+[0.71.0]: https://github.com/jund-fauz/eloquent-kompact/compare/v0.70.0...v0.71.0
 [0.70.0]: https://github.com/jund-fauz/eloquent-kompact/compare/v0.69.0...v0.70.0
 [0.69.0]: https://github.com/jund-fauz/eloquent-kompact/compare/v0.68.0...v0.69.0
 [0.68.0]: https://github.com/jund-fauz/eloquent-kompact/compare/v0.67.0...v0.68.0
