@@ -270,6 +270,51 @@ class AdditionalQueriesTest extends TestCase
     {
         $this->assertFalse(MorphComment::find(1)->sameWithOther(MorphComment::find(1)));
     }
+
+    #[Test]
+    public function it_checks_that_one_column_is_the_same_as_another_model(): void
+    {
+        $comment = MorphComment::find(1);
+
+        $this->assertTrue($comment->sameWithOtherOr(MorphComment::find(1), 'commentable_type', 'commentable_id'));
+        $this->assertTrue($comment->sameWithOtherOr(MorphComment::find(2), 'commentable_type', 'commentable_id'));
+        $this->assertTrue($comment->sameWithOtherOr(MorphComment::find(2), 'commentable_id', 'commentable_type'));
+        $this->assertFalse(MorphComment::find(2)->sameWithOtherOr(MorphComment::find(3), 'commentable_type', 'commentable_id'));
+        $this->assertFalse($comment->sameWithOtherOr(MorphComment::find(1)));
+    }
+
+    #[Test]
+    public function it_checks_that_every_column_is_not_the_same_as_another_model(): void
+    {
+        $comment = MorphComment::find(2);
+
+        $this->assertTrue($comment->notSameWithOther(MorphComment::find(3), 'commentable_type', 'commentable_id'));
+        $this->assertFalse($comment->notSameWithOther(MorphComment::find(1), 'commentable_id', 'commentable_type'));
+        $this->assertFalse($comment->notSameWithOther(MorphComment::find(2), 'commentable_type', 'commentable_id'));
+        $this->assertFalse($comment->notSameWithOther(MorphComment::find(3)));
+    }
+
+    #[Test]
+    public function it_checks_that_one_column_is_not_the_same_as_another_model(): void
+    {
+        $comment = MorphComment::find(1);
+
+        $this->assertTrue($comment->notSameWithOtherOr(MorphComment::find(2), 'commentable_id', 'commentable_type'));
+        $this->assertTrue($comment->notSameWithOtherOr(MorphComment::find(2), 'commentable_type', 'commentable_id'));
+        $this->assertFalse($comment->notSameWithOtherOr(MorphComment::find(1), 'commentable_type', 'commentable_id'));
+        $this->assertFalse($comment->notSameWithOtherOr(MorphComment::find(2)));
+    }
+
+    #[Test]
+    public function it_compares_strictly_when_it_is_not_the_same_as_another_model(): void
+    {
+        $other = MorphComment::find(1);
+        $other->commentable_id = '1';
+
+        $this->assertTrue(MorphComment::find(1)->notSameWithOther($other, 'commentable_id'));
+        $this->assertTrue(MorphComment::find(1)->notSameWithOtherOr($other, 'commentable_id'));
+        $this->assertFalse(MorphComment::find(1)->sameWithOtherOr($other, 'commentable_id'));
+    }
 }
 
 class MorphComment extends Model

@@ -107,6 +107,33 @@ trait AdditionalQueries
         return array_reduce($columns, fn ($acc, string $column) => $acc && $this->sameWith($column, $other->{$column}), true);
     }
 
+    public function sameWithOtherOr(Model $other, string ...$columns): bool
+    {
+        if (empty($columns)) {
+            return false;
+        }
+
+        return array_reduce($columns, fn ($acc, string $column) => $acc || $this->sameWith($column, $other->{$column}), false);
+    }
+
+    public function notSameWithOther(Model $other, string ...$columns): bool
+    {
+        if (empty($columns)) {
+            return false;
+        }
+
+        return array_reduce($columns, fn ($acc, string $column) => $acc && $this->notSameWith($column, $other->{$column}), true);
+    }
+
+    public function notSameWithOtherOr(Model $other, string ...$columns): bool
+    {
+        if (empty($columns)) {
+            return false;
+        }
+
+        return array_reduce($columns, fn ($acc, string $column) => $acc || $this->notSameWith($column, $other->{$column}), false);
+    }
+
     public function isMorphModelSame(string $morphName, string $modelClass): bool
     {
         return $this->sameWith(Creator::type($morphName), Relation::getMorphAlias($modelClass));
