@@ -6,7 +6,29 @@ use JundFauz\EloquentKompact\Column\Convert;
 
 trait RelationData
 {
-    public function getDataFromRelation(string $columnName = '', string ...$relationClasses)
+    /**
+     * @deprecated since 0.78.0, use getVia instead
+     * @param string $columnName
+     * @param string ...$relationClasses
+     * @return mixed
+     */
+    public function getDataFromRelation(string $columnName = '', string ...$relationClasses): mixed
+    {
+        return $this->getVia($columnName, ...$relationClasses);
+    }
+
+    /**
+     * @deprecated since 0.78.0, use getManyVia instead
+     * @param array $columnNames
+     * @param string ...$relationClasses
+     * @return array
+     */
+    public function getDatasFromRelation(array $columnNames, string ...$relationClasses): array
+    {
+        return $this->getManyVia($columnNames, ...$relationClasses);
+    }
+
+    public function getVia(string $columnName = '', string ...$relationClasses)
     {
         $result = $this;
         foreach ($relationClasses as $relationClass) {
@@ -22,11 +44,11 @@ trait RelationData
      * @param string ...$relationClasses
      * @return array
      */
-    public function getDatasFromRelation(array $columnNames, string ...$relationClasses): array
+    public function getManyVia(array $columnNames, string ...$relationClasses): array
     {
         $result = [];
         foreach ($columnNames as $columnName) {
-            $result[] = $this->getDataFromRelation($columnName, ...$relationClasses);
+            $result[] = $this->getVia($columnName, ...$relationClasses);
         }
         return $result;
     }
