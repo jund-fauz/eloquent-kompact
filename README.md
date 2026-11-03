@@ -210,14 +210,14 @@ $user->match(['role' => ['admin', 'editor'], 'active_is' => true]);
 Reads nested relations without null checks. Relations are given as model classes:
 
 ```php
-$comment->getDataFromRelation('name', Post::class, User::class);
+$comment->getVia('name', Post::class, User::class);
 // $comment->post?->user?->name
 
-$comment->getDatasFromRelation(['name', 'email'], Post::class, User::class);
+$comment->getManyVia(['name', 'email'], Post::class, User::class);
 // [$comment->post?->user?->name, $comment->post?->user?->email]
 ```
 
-`getDatasFromRelation()` is `@experimental`.
+`getManyVia()` is `@experimental`. `getDataFromRelation()` and `getDatasFromRelation()` are the deprecated names of these methods.
 
 ### Filterable
 
