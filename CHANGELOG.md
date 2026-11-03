@@ -7,6 +7,30 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [0.80.0] - 2026-11-03
+
+### Added
+
+- `StaticH::foreign($prefix = null)`: the foreign key column of the model, from `Convert::modelToColumn()`. It always ends with `_id`, even for a model with another primary key, unlike Eloquent's `getForeignKey()`.
+
+  ```php
+  BlogPost::foreign();       // blog_post_id
+  BlogPost::foreign('from'); // from_blog_post_id
+  ```
+
+### Changed
+
+- Moved `getVia()`, `getManyVia()`, `getDataFromRelation()` and `getDatasFromRelation()` to `AdditionalQueries`. `KompactModel` and `KompactPivot` keep every method, and no longer use `RelationData`.
+- `RelationData` now only uses `AdditionalQueries`, so a model using it also gets every other method of `AdditionalQueries`. A model can use both traits.
+
+### Deprecated
+
+- `RelationData` trait, use `AdditionalQueries` instead.
+
+### Tests
+
+- Added unit tests for `foreign()`, the deprecated trait and using both traits on a model.
+
 ## [0.79.0] - 2026-11-03
 
 ### Added
@@ -1577,7 +1601,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - `RawQuery` static helpers for raw SQL expressions.
 - Translations for `en` and `id`.
 
-[Unreleased]: https://github.com/jund-fauz/eloquent-kompact/compare/v0.79.0...HEAD
+[Unreleased]: https://github.com/jund-fauz/eloquent-kompact/compare/v0.80.0...HEAD
+[0.80.0]: https://github.com/jund-fauz/eloquent-kompact/compare/v0.79.0...v0.80.0
 [0.79.0]: https://github.com/jund-fauz/eloquent-kompact/compare/v0.78.0...v0.79.0
 [0.78.0]: https://github.com/jund-fauz/eloquent-kompact/compare/v0.77.0...v0.78.0
 [0.77.0]: https://github.com/jund-fauz/eloquent-kompact/compare/v0.76.0...v0.77.0
