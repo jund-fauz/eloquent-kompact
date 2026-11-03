@@ -4,12 +4,18 @@ namespace JundFauz\EloquentKompact\Builder;
 
 use function JundFauz\EloquentKompact\array_filter_filled;
 use function JundFauz\EloquentKompact\array_get_or;
+use function JundFauz\EloquentKompact\is_not_null;
 
 class Collection extends \Illuminate\Support\Collection
 {
     public function filterFilled(): static
     {
         return $this->newInstance(array_filter_filled($this->items));
+    }
+
+    public function deleteNull(): static
+    {
+        return $this->filter(fn ($value) => is_not_null($value));
     }
 
     public function get($key, $default = null)

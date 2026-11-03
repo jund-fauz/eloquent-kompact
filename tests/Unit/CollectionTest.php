@@ -23,6 +23,34 @@ class CollectionTest extends TestCase
     }
 
     #[Test]
+    public function it_deletes_only_null_values(): void
+    {
+        $collection = new Collection(['a', '', '  ', null, 0, '0', false, [], 'k' => 'v', 'n' => null]);
+
+        $this->assertSame(
+            [0 => 'a', 1 => '', 2 => '  ', 4 => 0, 5 => '0', 6 => false, 7 => [], 'k' => 'v'],
+            $collection->deleteNull()->all(),
+        );
+    }
+
+    #[Test]
+    public function it_returns_a_new_collection_when_deleting_null_values(): void
+    {
+        $collection = new Collection(['a', null]);
+        $deleted = $collection->deleteNull();
+
+        $this->assertInstanceOf(Collection::class, $deleted);
+        $this->assertNotSame($collection, $deleted);
+        $this->assertCount(2, $collection);
+    }
+
+    #[Test]
+    public function it_deletes_nothing_from_an_empty_collection(): void
+    {
+        $this->assertSame([], (new Collection)->deleteNull()->all());
+    }
+
+    #[Test]
     public function it_gets_the_first_non_null_value(): void
     {
         $collection = new Collection(['nickname' => null, 'name' => 'Ana', 'age' => 20, 'active' => false, 'user' => ['name' => 'Budi']]);
