@@ -7,6 +7,23 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [0.73.0] - 2026-11-03
+
+### Added
+
+- `array_key_change()` helper function to rename an array key in place. The key moves to the end of the array and an existing `$newKey` is replaced. A missing `$oldKey` gives PHP's `Undefined array key` warning, which Laravel turns into an `ErrorException`. The same key for both leaves the array as it is.
+
+  ```php
+  use function JundFauz\EloquentKompact\array_key_change;
+
+  $data = ['name' => 'Ana', 'age' => 20];
+  array_key_change($data, 'name', 'full_name'); // ['age' => 20, 'full_name' => 'Ana']
+  ```
+
+### Tests
+
+- Added unit tests for `array_key_change()`.
+
 ## [0.72.0] - 2026-11-02
 
 ### Added
@@ -1456,7 +1473,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - `RawQuery` static helpers for raw SQL expressions.
 - Translations for `en` and `id`.
 
-[Unreleased]: https://github.com/jund-fauz/eloquent-kompact/compare/v0.72.0...HEAD
+[Unreleased]: https://github.com/jund-fauz/eloquent-kompact/compare/v0.73.0...HEAD
+[0.73.0]: https://github.com/jund-fauz/eloquent-kompact/compare/v0.72.0...v0.73.0
 [0.72.0]: https://github.com/jund-fauz/eloquent-kompact/compare/v0.71.0...v0.72.0
 [0.71.0]: https://github.com/jund-fauz/eloquent-kompact/compare/v0.70.0...v0.71.0
 [0.70.0]: https://github.com/jund-fauz/eloquent-kompact/compare/v0.69.0...v0.70.0
