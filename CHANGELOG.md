@@ -7,6 +7,43 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [0.81.0] - 2026-11-03
+
+### Added
+
+- `KompactUser`: Laravel's `Illuminate\Foundation\Auth\User` with everything `KompactModel` has, to extend for the user model.
+- `Kompact` trait: every trait of `KompactModel`, `$useSoftDelete` and `flushKompactCache()`, shared by `KompactModel` and `KompactUser`.
+- `Model\Collection`: Eloquent's `Collection` with the methods of `Builder\Collection`, sharing them through the `Builder\Trait\Kollection` trait.
+- `AdditionalQueries::compact(...$columns)`: `[column => value]` for the given columns, from `model_compact()`.
+- `sumAndCompact(...$columns)` on `Builder\Collection` and `Model\Collection`: the sum of each column, as `[column => sum]`.
+- `Model\Collection::firstAndCompact(...$columns)`: `[column => value]` of the first model. An empty collection gives `null` for each column.
+
+  ```php
+  $user->compact('name', 'email');            // ['name' => 'Ana', 'email' => 'ana@example.com']
+  Post::all()->sumAndCompact('views');        // ['views' => 120]
+  Post::all()->firstAndCompact('id', 'name'); // ['id' => 1, 'name' => 'First']
+  ```
+
+### Changed
+
+- **Breaking:** renamed the `DynamicFillableColumnDefinition` trait to `AutoFillable`, and `DynamicModelRelation` to `AutoRelation`, without keeping the old names.
+- Results of `KompactModel`, `KompactUser` and `KompactPivot` now use `Model\Collection` instead of Eloquent's `Collection`, which it extends. As on `Builder\Collection`, `get()`, `before()` and `after()` return a string value or default as a `Str`, and an array as a collection. A model with `#[CollectedBy]` or its own `$collectionClass` keeps that class.
+- `Filterable::getCountForFilter()` returns `?static` instead of `?KompactModel`, so it also works on a model that does not extend `KompactModel`.
+- `php artisan migrate` also flushes the cache of `KompactUser`.
+
+### Removed
+
+- **Breaking:** the `RelationData` trait, deprecated in 0.80.0. Use `AdditionalQueries` instead.
+
+### Fixed
+
+- `$useSoftDelete = false` now turns soft deletes off for `delete()`. It used to fail on a table without a `deleted_at` column, and to fill that column instead of removing the row on a table with it.
+
+### Tests
+
+- Added unit tests for `KompactUser`, the `Kompact` trait, `Model\Collection`, `compact()`, `sumAndCompact()`, `firstAndCompact()` and `$useSoftDelete`.
+- Renamed `RelationDataTest` to `GetViaTest`, without the tests of the removed trait.
+
 ## [0.80.0] - 2026-11-03
 
 ### Added
@@ -1601,7 +1638,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - `RawQuery` static helpers for raw SQL expressions.
 - Translations for `en` and `id`.
 
-[Unreleased]: https://github.com/jund-fauz/eloquent-kompact/compare/v0.80.0...HEAD
+[Unreleased]: https://github.com/jund-fauz/eloquent-kompact/compare/v0.81.0...HEAD
+[0.81.0]: https://github.com/jund-fauz/eloquent-kompact/compare/v0.80.0...v0.81.0
 [0.80.0]: https://github.com/jund-fauz/eloquent-kompact/compare/v0.79.0...v0.80.0
 [0.79.0]: https://github.com/jund-fauz/eloquent-kompact/compare/v0.78.0...v0.79.0
 [0.78.0]: https://github.com/jund-fauz/eloquent-kompact/compare/v0.77.0...v0.78.0
