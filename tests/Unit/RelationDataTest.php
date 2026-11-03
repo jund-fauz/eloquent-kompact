@@ -7,6 +7,9 @@ use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use Illuminate\Database\Schema\Blueprint;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Schema;
+use JundFauz\EloquentKompact\Model\KompactModel;
+use JundFauz\EloquentKompact\Model\KompactPivot;
+use JundFauz\EloquentKompact\Model\Traits\AdditionalQueries;
 use JundFauz\EloquentKompact\Model\Traits\RelationData;
 use JundFauz\EloquentKompact\Tests\TestCase;
 use PHPUnit\Framework\Attributes\Test;
@@ -123,11 +126,84 @@ class RelationDataTest extends TestCase
             $comment->getDatasFromRelation(['name', 'email'], RelationDataPost::class, RelationDataUser::class),
         );
     }
+
+    #[Test]
+    public function it_keeps_the_methods_on_the_deprecated_trait(): void
+    {
+        $comment = RelationDataDeprecatedComment::find(1);
+
+        $this->assertSame('Ana', $comment->getVia('name', RelationDataPost::class, RelationDataUser::class));
+        $this->assertSame(['First'], $comment->getManyVia(['title'], RelationDataPost::class));
+        $this->assertSame('First', $comment->getDataFromRelation('title', RelationDataPost::class));
+        $this->assertSame(['First'], $comment->getDatasFromRelation(['title'], RelationDataPost::class));
+    }
+
+    #[Test]
+    public function it_gets_every_additional_query_from_the_deprecated_trait(): void
+    {
+        $this->assertTrue(RelationDataDeprecatedComment::find(1)->sameWith('body', 'Nice'));
+        $this->assertSame(
+            [1],
+            RelationDataDeprecatedComment::whereInRelation('relationDataPost', 'title', ['First'])->pluck('id')->all(),
+        );
+    }
+
+    #[Test]
+    public function it_allows_both_traits_on_a_model_in_any_order(): void
+    {
+        $this->assertSame('First', RelationDataBothTraitsComment::find(1)->getVia('title', RelationDataPost::class));
+        $this->assertSame('First', RelationDataBothTraitsReversedComment::find(1)->getVia('title', RelationDataPost::class));
+    }
+
+    #[Test]
+    public function it_has_the_methods_on_the_kompact_models(): void
+    {
+        foreach (['getVia', 'getManyVia', 'getDataFromRelation', 'getDatasFromRelation'] as $method) {
+            $this->assertTrue(method_exists(KompactModel::class, $method), "KompactModel::$method");
+            $this->assertTrue(method_exists(KompactPivot::class, $method), "KompactPivot::$method");
+        }
+    }
 }
 
 class RelationDataComment extends Model
 {
+    use AdditionalQueries;
+
+    protected $table = 'relation_data_comments';
+
+    public function relationDataPost(): BelongsTo
+    {
+        return $this->belongsTo(RelationDataPost::class, 'post_id');
+    }
+}
+
+class RelationDataDeprecatedComment extends Model
+{
     use RelationData;
+
+    protected $table = 'relation_data_comments';
+
+    public function relationDataPost(): BelongsTo
+    {
+        return $this->belongsTo(RelationDataPost::class, 'post_id');
+    }
+}
+
+class RelationDataBothTraitsComment extends Model
+{
+    use AdditionalQueries, RelationData;
+
+    protected $table = 'relation_data_comments';
+
+    public function relationDataPost(): BelongsTo
+    {
+        return $this->belongsTo(RelationDataPost::class, 'post_id');
+    }
+}
+
+class RelationDataBothTraitsReversedComment extends Model
+{
+    use RelationData, AdditionalQueries;
 
     protected $table = 'relation_data_comments';
 

@@ -9,12 +9,11 @@ use JundFauz\EloquentKompact\Model\Traits\AutoCast;
 use JundFauz\EloquentKompact\Model\Traits\DynamicFillableColumnDefinition;
 use JundFauz\EloquentKompact\Model\Traits\DynamicModelRelation;
 use JundFauz\EloquentKompact\Model\Traits\Filterable;
-use JundFauz\EloquentKompact\Model\Traits\RelationData;
 use JundFauz\EloquentKompact\Model\Traits\StaticH;
 
 abstract class KompactModel extends Model
 {
-    use AdditionalQueries, AutoCast, DynamicFillableColumnDefinition, DynamicModelRelation, Filterable, RelationData, StaticH, SoftDeletes {
+    use AdditionalQueries, AutoCast, DynamicFillableColumnDefinition, DynamicModelRelation, Filterable, StaticH, SoftDeletes {
         SoftDeletes::bootSoftDeletes as traitBootSoftDeletes;
         SoftDeletes::performDeleteOnModel as traitPerformDeleteOnModel;
     }

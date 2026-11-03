@@ -40,6 +40,11 @@ trait StaticH
         return Arrange::relation($columnName, static::class, ...$modelClasses);
     }
 
+    public static function foreign(?string $prefix = null): string
+    {
+        return Convert::modelToColumn(static::class, $prefix);
+    }
+
     public static function getModel(Blueprint $column): ?string
     {
         $tableName = $column->getTable();

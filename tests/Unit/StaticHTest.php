@@ -130,6 +130,39 @@ class StaticHTest extends TestCase
     {
         $this->assertSame('overridden', StaticHOverriddenPost::relationTo('roles'));
     }
+
+    #[Test]
+    public function it_returns_the_foreign_key_column(): void
+    {
+        $this->assertSame('static_h_post_id', StaticHPost::foreign());
+    }
+
+    #[Test]
+    public function it_returns_the_foreign_key_column_with_a_prefix(): void
+    {
+        $this->assertSame('from_static_h_post_id', StaticHPost::foreign('from'));
+        $this->assertSame('static_h_post_id', StaticHPost::foreign(''));
+    }
+
+    #[Test]
+    public function it_returns_the_foreign_key_column_of_a_subclass(): void
+    {
+        $this->assertSame('static_h_admin_post_id', StaticHAdminPost::foreign());
+    }
+
+    #[Test]
+    public function it_ignores_the_morph_alias_in_the_foreign_key_column(): void
+    {
+        Relation::morphMap(['post' => StaticHPost::class]);
+
+        $this->assertSame('static_h_post_id', StaticHPost::foreign());
+    }
+
+    #[Test]
+    public function it_always_ends_the_foreign_key_column_with_the_relation_token(): void
+    {
+        $this->assertSame('static_h_custom_key_post_id', StaticHCustomKeyPost::foreign());
+    }
 }
 
 class StaticHPost extends Model
@@ -138,6 +171,11 @@ class StaticHPost extends Model
 }
 
 class StaticHAdminPost extends StaticHPost {}
+
+class StaticHCustomKeyPost extends StaticHPost
+{
+    protected $primaryKey = 'uuid';
+}
 
 class StaticHOverriddenPost extends StaticHPost
 {
