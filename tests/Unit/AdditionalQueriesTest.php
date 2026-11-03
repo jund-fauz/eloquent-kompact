@@ -3,7 +3,12 @@
 namespace JundFauz\EloquentKompact\Tests\Unit;
 
 use Illuminate\Database\Eloquent\Model;
+use Illuminate\Database\Eloquent\Relations\BelongsTo;
+use Illuminate\Database\Eloquent\Relations\BelongsToMany;
+use Illuminate\Database\Eloquent\Relations\HasMany;
+use Illuminate\Database\Eloquent\Relations\MorphTo;
 use Illuminate\Database\Eloquent\Relations\Relation;
+use Illuminate\Database\QueryException;
 use Illuminate\Database\Schema\Blueprint;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Schema;
@@ -315,6 +320,126 @@ class AdditionalQueriesTest extends TestCase
         $this->assertTrue(MorphComment::find(1)->notSameWithOtherOr($other, 'commentable_id'));
         $this->assertFalse(MorphComment::find(1)->sameWithOtherOr($other, 'commentable_id'));
     }
+
+    #[Test]
+    public function it_filters_by_the_values_of_a_relation_column(): void
+    {
+        $this->createWhereInRelationTables();
+
+        $this->assertSame([1], WhereInAuthor::whereInRelation('books', 'name', ['x'])->pluck('id')->all());
+        $this->assertSame([1, 2], WhereInAuthor::whereInRelation('books', 'name', ['x', 'y'])->pluck('id')->all());
+        $this->assertSame([2], WhereInBook::whereInRelation('author', 'name', ['b'])->pluck('id')->all());
+    }
+
+    #[Test]
+    public function it_finds_nothing_for_no_relation_values(): void
+    {
+        $this->createWhereInRelationTables();
+
+        $this->assertSame([], WhereInAuthor::whereInRelation('books', 'name', [])->pluck('id')->all());
+    }
+
+    #[Test]
+    public function it_filters_by_a_nested_relation_column(): void
+    {
+        $this->createWhereInRelationTables();
+
+        $this->assertSame([1], WhereInBook::whereInRelation('author.tags', 'name', ['t1'])->pluck('id')->all());
+    }
+
+    #[Test]
+    public function it_filters_by_a_self_referencing_relation_column(): void
+    {
+        $this->createWhereInRelationTables();
+
+        $this->assertSame([2], WhereInAuthor::whereInRelation('parent', 'name', ['a'])->pluck('id')->all());
+        $this->assertSame([2], WhereInAuthor::whereInRelation('parent', 'id', [1])->pluck('id')->all());
+    }
+
+    #[Test]
+    public function it_filters_by_a_many_to_many_relation_column(): void
+    {
+        $this->createWhereInRelationTables();
+
+        $this->assertSame([1], WhereInAuthor::whereInRelation('tags', 'name', ['t1'])->pluck('id')->all());
+        $this->assertSame([3], WhereInAuthor::whereInRelation('tags', 'tags.id', [2])->pluck('id')->all());
+    }
+
+    #[Test]
+    public function it_fails_on_a_relation_column_that_is_also_on_the_pivot_table(): void
+    {
+        $this->createWhereInRelationTables();
+
+        $this->expectException(QueryException::class);
+
+        WhereInAuthor::whereInRelation('tags', 'id', [2])->get();
+    }
+
+    #[Test]
+    public function it_filters_by_a_morph_to_relation_column(): void
+    {
+        $this->createWhereInRelationTables();
+
+        Schema::create('notes', function (Blueprint $table) {
+            $table->id();
+            $table->morphs('owner');
+        });
+
+        DB::table('notes')->insert([
+            ['owner_type' => WhereInAuthor::class, 'owner_id' => 1],
+            ['owner_type' => WhereInAuthor::class, 'owner_id' => 2],
+        ]);
+
+        $this->assertSame([2], WhereInNote::whereInRelation('owner', 'name', ['b'])->pluck('id')->all());
+    }
+
+    #[Test]
+    public function it_chains_the_relation_values_filter_with_or_where(): void
+    {
+        $this->createWhereInRelationTables();
+
+        $authors = WhereInAuthor::where('id', 3)->orWhere->whereInRelation('books', 'name', ['x'])->pluck('id')->all();
+
+        $this->assertSame([1, 3], $authors);
+    }
+
+    private function createWhereInRelationTables(): void
+    {
+        Schema::create('authors', function (Blueprint $table) {
+            $table->id();
+            $table->string('name');
+            $table->foreignId('parent_id')->nullable();
+        });
+        Schema::create('books', function (Blueprint $table) {
+            $table->id();
+            $table->foreignId('author_id');
+            $table->string('name');
+        });
+        Schema::create('tags', function (Blueprint $table) {
+            $table->id();
+            $table->string('name');
+        });
+        Schema::create('author_tag', function (Blueprint $table) {
+            $table->id();
+            $table->foreignId('author_id');
+            $table->foreignId('tag_id');
+        });
+
+        DB::table('authors')->insert([
+            ['name' => 'a', 'parent_id' => null],
+            ['name' => 'b', 'parent_id' => 1],
+            ['name' => 'c', 'parent_id' => 2],
+        ]);
+        DB::table('books')->insert([
+            ['author_id' => 1, 'name' => 'x'],
+            ['author_id' => 2, 'name' => 'y'],
+        ]);
+        DB::table('tags')->insert([['name' => 't1'], ['name' => 't2']]);
+        DB::table('author_tag')->insert([
+            ['author_id' => 1, 'tag_id' => 1],
+            ['author_id' => 3, 'tag_id' => 2],
+        ]);
+    }
 }
 
 class MorphComment extends Model
@@ -327,3 +452,54 @@ class MorphComment extends Model
 class MorphPost extends Model {}
 
 class MorphVideo extends Model {}
+
+class WhereInAuthor extends Model
+{
+    use AdditionalQueries;
+
+    protected $table = 'authors';
+
+    public function books(): HasMany
+    {
+        return $this->hasMany(WhereInBook::class, 'author_id');
+    }
+
+    public function parent(): BelongsTo
+    {
+        return $this->belongsTo(self::class, 'parent_id');
+    }
+
+    public function tags(): BelongsToMany
+    {
+        return $this->belongsToMany(WhereInTag::class, 'author_tag', 'author_id', 'tag_id');
+    }
+}
+
+class WhereInBook extends Model
+{
+    use AdditionalQueries;
+
+    protected $table = 'books';
+
+    public function author(): BelongsTo
+    {
+        return $this->belongsTo(WhereInAuthor::class, 'author_id');
+    }
+}
+
+class WhereInTag extends Model
+{
+    protected $table = 'tags';
+}
+
+class WhereInNote extends Model
+{
+    use AdditionalQueries;
+
+    protected $table = 'notes';
+
+    public function owner(): MorphTo
+    {
+        return $this->morphTo();
+    }
+}

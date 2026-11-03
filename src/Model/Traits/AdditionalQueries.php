@@ -50,6 +50,12 @@ trait AdditionalQueries
         return $query->whereNot(Creator::type($morphName), Relation::getMorphAlias($modelClass));
     }
 
+    #[Scope]
+    protected function whereInRelation(Builder $query, string $relation, string $columnName, array $valuesToCompare): Builder
+    {
+        return $query->whereHas($relation, fn (Builder $query) => $query->whereIn($columnName, $valuesToCompare));
+    }
+
     public function getOr(string ...$columnNames)
     {
         return array_reduce($columnNames, fn ($acc, $column) => $acc ?? $this?->{$column});
