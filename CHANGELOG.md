@@ -7,6 +7,20 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [0.74.0] - 2026-11-03
+
+### Added
+
+- `AdditionalQueries::whereInRelation()` scope: `whereHas()` with `whereIn()` on a column of the relation. Nested relations (`author.tags`) work, and an empty list of values finds nothing. On a `belongsToMany` relation, a column that is also on the pivot table has to be written with its table (`'tags.id'`), or the query fails with an ambiguous column error.
+
+  ```php
+  Order::whereInRelation('items', 'status', ['paid', 'sent'])->get();
+  ```
+
+### Tests
+
+- Added unit tests for `whereInRelation()` on `hasMany`, `belongsTo`, `belongsToMany`, `morphTo`, self-referencing and nested relations.
+
 ## [0.73.0] - 2026-11-03
 
 ### Added
@@ -1473,7 +1487,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - `RawQuery` static helpers for raw SQL expressions.
 - Translations for `en` and `id`.
 
-[Unreleased]: https://github.com/jund-fauz/eloquent-kompact/compare/v0.73.0...HEAD
+[Unreleased]: https://github.com/jund-fauz/eloquent-kompact/compare/v0.74.0...HEAD
+[0.74.0]: https://github.com/jund-fauz/eloquent-kompact/compare/v0.73.0...v0.74.0
 [0.73.0]: https://github.com/jund-fauz/eloquent-kompact/compare/v0.72.0...v0.73.0
 [0.72.0]: https://github.com/jund-fauz/eloquent-kompact/compare/v0.71.0...v0.72.0
 [0.71.0]: https://github.com/jund-fauz/eloquent-kompact/compare/v0.70.0...v0.71.0
