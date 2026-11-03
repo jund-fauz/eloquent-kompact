@@ -161,6 +161,9 @@ Order::whereSameWith($otherOrder, 'tenant_id', 'branch_id')->get();
 Comment::whereMorphType('commentable', Post::class)->get(); // where commentable_type = 'App\Models\Post'
 Comment::whereMorphTypeNot('commentable', Post::class)->get(); // where not commentable_type = 'App\Models\Post'
 
+// whereHas() with whereIn() on a column of the relation
+Order::whereInRelation('items', 'status', ['paid', 'sent'])->get();
+
 // Whether a morph type attribute points to the class, using its morph alias if there is one
 $comment->isMorphModelSame('commentable', Post::class); // true
 
@@ -195,6 +198,8 @@ $user->notSameWithOther($otherUser, 'tenant_id', 'branch_id');   // every column
 $user->notSameWithOtherOr($otherUser, 'tenant_id', 'branch_id'); // at least one column is different
 $user->match(['role' => ['admin', 'editor'], 'active_is' => true]);
 ```
+
+`whereInRelation()` uses the column as given, so on a `belongsToMany` relation, a column that is also on the pivot table has to be written with its table (`'tags.id'`), or the query fails with an ambiguous column error. An empty list of values finds nothing.
 
 `assignIfEmpty()`, `assignIfEmptyFrom()` and `isEmpty()` use PHP's `empty()`, so `null`, `''`, `'0'`, `0`, `false` and `[]` count as empty. `assignIfNull()` and `assignIfNullFrom()` only replace `null`. `isFilled()` uses Laravel's `filled()`, so `0`, `'0'` and `false` are filled, while `null`, blank strings and empty arrays are not.
 
