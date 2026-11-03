@@ -105,7 +105,7 @@ Checker::isEnum($table->string('status_enum')); // true
 
 ## KompactModel
 
-Extend `JundFauz\EloquentKompact\Model\KompactModel` instead of Eloquent's `Model` to get every trait below at once. `KompactPivot` does the same for pivot models, with `AdditionalQueries`, `DynamicModelRelation`, `RelationData`, `StaticH` and soft deletes.
+Extend `JundFauz\EloquentKompact\Model\KompactModel` instead of Eloquent's `Model` to get every trait below at once. `KompactPivot` does the same for pivot models, with `AdditionalQueries`, `DynamicModelRelation`, `StaticH` and soft deletes.
 
 ```php
 use JundFauz\EloquentKompact\Model\KompactModel;
@@ -173,6 +173,10 @@ $user->getOr('nickname', 'name');
 // Several attributes, in the given order (a missing one is null)
 $user->getMany('name', 'email'); // ['Ana', 'ana@example.com']
 
+// Attributes of nested relations without null checks, with the relations given as model classes
+$comment->getVia('name', Post::class, User::class);                // $comment->post?->user?->name
+$comment->getManyVia(['name', 'email'], Post::class, User::class); // [$comment->post?->user?->name, $comment->post?->user?->email]
+
 // Set attributes, without saving
 $order->assign('status', 'paid');
 $order->assignFrom($otherOrder, 'tenant_id', 'branch_id');
@@ -205,19 +209,7 @@ $user->match(['role' => ['admin', 'editor'], 'active_is' => true]);
 
 `match()` and the `sameWithOther()` family return `false` when no condition or column is given. `notSameWithOther()` is not the opposite of `sameWithOther()`: that is `notSameWithOtherOr()`. Objects such as the Carbon dates of `datetime` columns are compared by identity, so two models never have the same date. An array value matches if the attribute equals one of its items, unless the attribute itself is an array.
 
-### RelationData
-
-Reads nested relations without null checks. Relations are given as model classes:
-
-```php
-$comment->getVia('name', Post::class, User::class);
-// $comment->post?->user?->name
-
-$comment->getManyVia(['name', 'email'], Post::class, User::class);
-// [$comment->post?->user?->name, $comment->post?->user?->email]
-```
-
-`getManyVia()` is `@experimental`. `getDataFromRelation()` and `getDatasFromRelation()` are the deprecated names of these methods.
+`getManyVia()` is `@experimental`. `getDataFromRelation()` and `getDatasFromRelation()` are the deprecated names of `getVia()` and `getManyVia()`. The `RelationData` trait is deprecated too: it now only uses `AdditionalQueries`, so a model using it gets every method above. Use `AdditionalQueries` instead.
 
 ### Filterable
 
@@ -239,6 +231,10 @@ Post::morphClass();            // App\Models\Post, or its alias in Relation::mor
 BlogPost::singular();          // blogPost
 BlogPost::plural();            // blogPosts
 
+// The foreign key column of the model
+BlogPost::foreign();           // blog_post_id
+BlogPost::foreign('from');     // from_blog_post_id
+
 // A path that starts with the model, for use on another model that has a relation to it
 User::relationTo('roles');                // user.roles
 User::relationTo(BlogPost::class);        // user.blogPost
@@ -251,7 +247,7 @@ Order::with(User::relationTo('roles'));   // order → user → roles
 Post::getModel($table);        // App\Models\Post
 ```
 
-`singular()`, `plural()`, `relationTo()` and `columnTo()` use the name of the class they are called on, so a subclass gives its own name, and a morph alias is not used. In a path, a class becomes a singular name and any other string is kept as it is, so write a plural relation as a string (`'roles'`).
+`singular()`, `plural()`, `foreign()`, `relationTo()` and `columnTo()` use the name of the class they are called on, so a subclass gives its own name, and a morph alias is not used. They do not create the model or read the database, so they are safe in a migration. `foreign()` always ends with `_id`, even for a model with another primary key, unlike Eloquent's `getForeignKey()`. In a path, a class becomes a singular name and any other string is kept as it is, so write a plural relation as a string (`'roles'`).
 
 ## IDE helper
 
