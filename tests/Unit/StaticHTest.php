@@ -36,9 +36,45 @@ class StaticHTest extends TestCase
 
         $this->assertSame('post', StaticHPost::morphClass());
     }
+
+    #[Test]
+    public function it_returns_the_singular_relation_name(): void
+    {
+        $this->assertSame('staticHPost', StaticHPost::singular());
+    }
+
+    #[Test]
+    public function it_returns_the_plural_relation_name(): void
+    {
+        $this->assertSame('staticHPosts', StaticHPost::plural());
+        $this->assertSame('staticHCategories', StaticHCategory::plural());
+    }
+
+    #[Test]
+    public function it_returns_the_relation_names_of_a_subclass(): void
+    {
+        $this->assertSame('staticHAdminPost', StaticHAdminPost::singular());
+        $this->assertSame('staticHAdminPosts', StaticHAdminPost::plural());
+    }
+
+    #[Test]
+    public function it_ignores_the_morph_alias_in_the_relation_names(): void
+    {
+        Relation::morphMap(['post' => StaticHPost::class]);
+
+        $this->assertSame('staticHPost', StaticHPost::singular());
+        $this->assertSame('staticHPosts', StaticHPost::plural());
+    }
 }
 
 class StaticHPost extends Model
+{
+    use StaticH;
+}
+
+class StaticHAdminPost extends StaticHPost {}
+
+class StaticHCategory extends Model
 {
     use StaticH;
 }

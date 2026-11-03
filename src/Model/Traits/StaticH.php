@@ -4,6 +4,7 @@ namespace JundFauz\EloquentKompact\Model\Traits;
 
 use Illuminate\Database\Schema\Blueprint;
 use JundFauz\EloquentKompact\Builder\Str;
+use JundFauz\EloquentKompact\Column\Convert;
 use const JundFauz\EloquentKompact\NAMESPACE_DELIMITER;
 
 trait StaticH
@@ -16,6 +17,16 @@ trait StaticH
     public static function morphClass()
     {
         return (new static)->getMorphClass();
+    }
+
+    public static function singular(): string
+    {
+        return Convert::modelToRelation(static::class);
+    }
+
+    public static function plural(): string
+    {
+        return Convert::modelToRelation(static::class, true);
     }
 
     public static function getModel(Blueprint $column): ?string
