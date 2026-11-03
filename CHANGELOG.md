@@ -7,6 +7,20 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [0.79.0] - 2026-11-03
+
+### Added
+
+- `Builder\Collection::deleteNull()`: a new collection without the `null` values, keeping the keys. Blank strings, empty arrays, `0`, `'0'` and `false` are kept, unlike `filterFilled()`, which also removes blank strings and empty arrays or collections. The original collection is left as it is.
+
+  ```php
+  collect(['a', null, '', 0])->deleteNull()->all(); // [0 => 'a', 2 => '', 3 => 0]
+  ```
+
+### Tests
+
+- Added unit tests for `deleteNull()`.
+
 ## [0.78.0] - 2026-11-03
 
 ### Added
@@ -1563,7 +1577,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - `RawQuery` static helpers for raw SQL expressions.
 - Translations for `en` and `id`.
 
-[Unreleased]: https://github.com/jund-fauz/eloquent-kompact/compare/v0.78.0...HEAD
+[Unreleased]: https://github.com/jund-fauz/eloquent-kompact/compare/v0.79.0...HEAD
+[0.79.0]: https://github.com/jund-fauz/eloquent-kompact/compare/v0.78.0...v0.79.0
 [0.78.0]: https://github.com/jund-fauz/eloquent-kompact/compare/v0.77.0...v0.78.0
 [0.77.0]: https://github.com/jund-fauz/eloquent-kompact/compare/v0.76.0...v0.77.0
 [0.76.0]: https://github.com/jund-fauz/eloquent-kompact/compare/v0.75.0...v0.76.0
