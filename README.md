@@ -678,7 +678,7 @@ Constants: `NEW_LINE` (`"\n"`), `DISTANCE_LINE` (`"\n\n"`), `NAMESPACE_DELIMITER
 
   Every method returns a new `Relation`. It is a query `Expression`, but Eloquent's `with()`, `load()` and `loadMissing()` only take strings, so call `build()`, cast it to a `string`, or pass the list through `stringify()` for them: `$user->loadMissing(stringify([$relation, $other]))`. Its name is the same as Eloquent's `Relation`; import one of them with an alias if a file needs both.
 
-- `Builder\Collection` extends Laravel's `Collection` with `filterFilled()`, `getOr(...$keys)`, `getOrWithDefault($default, ...$keys)` and `getOrWithDefaultAsCollection($default, ...$keys)`, built on `array_filter_filled()` and `array_get_or()`. These methods, and Laravel's `get()`, `before()` and `after()`, return a string value or default as a [`Str`](#str) and an array as a `Collection`; other values are returned as they are. Laravel's methods keep the class through the chain. Its name is the same as Laravel's `Collection`; import one of them with an alias if a file needs both.
+- `Builder\Collection` extends Laravel's `Collection` with `filterFilled()`, `deleteNull()`, `getOr(...$keys)`, `getOrWithDefault($default, ...$keys)` and `getOrWithDefaultAsCollection($default, ...$keys)`, built on `array_filter_filled()` and `array_get_or()`. These methods, and Laravel's `get()`, `before()` and `after()`, return a string value or default as a [`Str`](#str) and an array as a `Collection`; other values are returned as they are. Laravel's methods keep the class through the chain. Its name is the same as Laravel's `Collection`; import one of them with an alias if a file needs both.
 
   ```php
   use function JundFauz\EloquentKompact\collect;
@@ -686,12 +686,15 @@ Constants: `NEW_LINE` (`"\n"`), `DISTANCE_LINE` (`"\n\n"`), `NAMESPACE_DELIMITER
   $data = collect(['nickname' => null, 'name' => 'Ana', 'tags' => ['a', 'b']]);
 
   $data->filterFilled()->keys()->all();                      // ['name', 'tags']
+  $data->deleteNull()->keys()->all();                        // ['name', 'tags']
   $data->getOr('nickname', 'name')->upper()->toString();     // 'ANA'
   $data->getOr('tags');                                      // Collection ['a', 'b']
   $data->get('name');                                        // Str 'Ana'
   $data->getOrWithDefault('Guest', 'nickname');              // Str 'Guest'
   $data->getOrWithDefaultAsCollection('Guest', 'nickname');  // Collection ['Guest']
   ```
+
+  `deleteNull()` only removes `null`, keeping the keys, while `filterFilled()` also removes blank strings and empty arrays or collections. Both return a new collection and leave the original as it is.
 
   A `Str` is an object, so an empty string is truthy: compare with `->isEmpty()` or `->toString()` rather than `if ($value)`.
 
