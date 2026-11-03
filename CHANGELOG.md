@@ -7,6 +7,23 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [0.76.0] - 2026-11-03
+
+### Added
+
+- `StaticH::relationTo(...$modelClasses)`: a relation path that starts with the singular name of the model, from `Arrange::relation()`, for use on another model that has a relation to it. Classes become singular names, and other strings are kept as they are, so write a plural relation as a string.
+
+  ```php
+  User::relationTo(BlogPost::class); // user.blogPost
+  User::relationTo('roles');         // user.roles
+
+  Order::with(User::relationTo('roles')); // order → user → roles
+  ```
+
+### Tests
+
+- Added unit tests for `relationTo()`.
+
 ## [0.75.0] - 2026-11-03
 
 ### Added
@@ -1502,7 +1519,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - `RawQuery` static helpers for raw SQL expressions.
 - Translations for `en` and `id`.
 
-[Unreleased]: https://github.com/jund-fauz/eloquent-kompact/compare/v0.75.0...HEAD
+[Unreleased]: https://github.com/jund-fauz/eloquent-kompact/compare/v0.76.0...HEAD
+[0.76.0]: https://github.com/jund-fauz/eloquent-kompact/compare/v0.75.0...v0.76.0
 [0.75.0]: https://github.com/jund-fauz/eloquent-kompact/compare/v0.74.0...v0.75.0
 [0.74.0]: https://github.com/jund-fauz/eloquent-kompact/compare/v0.73.0...v0.74.0
 [0.73.0]: https://github.com/jund-fauz/eloquent-kompact/compare/v0.72.0...v0.73.0
