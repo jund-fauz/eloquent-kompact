@@ -7,6 +7,21 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [0.75.0] - 2026-11-03
+
+### Added
+
+- `StaticH::singular()` and `StaticH::plural()`: the relation name of the model in camelCase, from `Convert::modelToRelation()`. A subclass gives its own name, and a morph alias is not used.
+
+  ```php
+  BlogPost::singular(); // blogPost
+  BlogPost::plural();   // blogPosts
+  ```
+
+### Tests
+
+- Added unit tests for `singular()` and `plural()`.
+
 ## [0.74.0] - 2026-11-03
 
 ### Added
@@ -1487,7 +1502,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - `RawQuery` static helpers for raw SQL expressions.
 - Translations for `en` and `id`.
 
-[Unreleased]: https://github.com/jund-fauz/eloquent-kompact/compare/v0.74.0...HEAD
+[Unreleased]: https://github.com/jund-fauz/eloquent-kompact/compare/v0.75.0...HEAD
+[0.75.0]: https://github.com/jund-fauz/eloquent-kompact/compare/v0.74.0...v0.75.0
 [0.74.0]: https://github.com/jund-fauz/eloquent-kompact/compare/v0.73.0...v0.74.0
 [0.73.0]: https://github.com/jund-fauz/eloquent-kompact/compare/v0.72.0...v0.73.0
 [0.72.0]: https://github.com/jund-fauz/eloquent-kompact/compare/v0.71.0...v0.72.0
