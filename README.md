@@ -235,9 +235,23 @@ $counts->{'user.name_count'}; // relational columns are always 1
 Post::tableName();             // posts
 Post::morphClass();            // App\Models\Post, or its alias in Relation::morphMap()
 
+// The relation name of the model
+BlogPost::singular();          // blogPost
+BlogPost::plural();            // blogPosts
+
+// A path that starts with the model, for use on another model that has a relation to it
+User::relationTo('roles');                // user.roles
+User::relationTo(BlogPost::class);        // user.blogPost
+User::columnTo('name', 'roles');          // user.roles.name
+User::columnTo('title', BlogPost::class); // user.blogPost.title
+
+Order::with(User::relationTo('roles'));   // order → user → roles
+
 // In a migration: the model of the table being built, or null
 Post::getModel($table);        // App\Models\Post
 ```
+
+`singular()`, `plural()`, `relationTo()` and `columnTo()` use the name of the class they are called on, so a subclass gives its own name, and a morph alias is not used. In a path, a class becomes a singular name and any other string is kept as it is, so write a plural relation as a string (`'roles'`).
 
 ## IDE helper
 
