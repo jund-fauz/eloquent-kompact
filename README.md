@@ -627,6 +627,7 @@ use const JundFauz\EloquentKompact\NEW_LINE;
 | `array_wrap($value)` | Laravel's `Arr::wrap()`: the value as an array, `[]` for `null` |
 | `array_get_or($array, ...$keys)` | The first value that is not `null`, in the order of the keys; dot notation is supported and missing keys are skipped |
 | `array_filter_filled($array)` | The values that are Laravel's `filled()`, keeping the keys: `null`, blank strings and empty arrays or collections are removed; `0`, `'0'` and `false` are kept |
+| `array_key_change(&$array, $oldKey, $newKey)` | Renames a key in place. The key moves to the end of the array, an existing `$newKey` is replaced, and a missing `$oldKey` gives PHP's `Undefined array key` warning |
 | `merge_as_array(...$values)` | Every value in one flat list, nested arrays and collections included; keys are dropped and `null` is kept |
 | `array_pull(&$array, ...$keys)` | `Arr::pullMany()`: removes the keys and returns the value of one key, or `[key => value]` for several |
 | `array_pull_list(&$array, ...$keys)` | `array_pull()`, but several keys give a list in the given order, e.g. for `[$name, $email] = array_pull_list($data, 'name', 'email')` |
