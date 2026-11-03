@@ -7,6 +7,30 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [0.77.0] - 2026-11-03
+
+### Added
+
+- `StaticH::columnTo($columnName, ...$modelClasses)`: like `relationTo()`, with a column at the end of the path, from `Arrange::relation()`. An empty column gives the same path as `relationTo()`.
+
+  ```php
+  User::columnTo('name');                   // user.name
+  User::columnTo('name', 'roles');          // user.roles.name
+  User::columnTo('title', BlogPost::class); // user.blogPost.title
+  ```
+
+### Changed
+
+- `StaticH::relationTo()` now goes through `columnTo()`, so a model that overrides `columnTo()` changes `relationTo()` as well. Its results are otherwise the same.
+
+### Documentation
+
+- Documented `singular()`, `plural()`, `relationTo()` and `columnTo()` in the README.
+
+### Tests
+
+- Added unit tests for `columnTo()`.
+
 ## [0.76.0] - 2026-11-03
 
 ### Added
@@ -1519,7 +1543,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - `RawQuery` static helpers for raw SQL expressions.
 - Translations for `en` and `id`.
 
-[Unreleased]: https://github.com/jund-fauz/eloquent-kompact/compare/v0.76.0...HEAD
+[Unreleased]: https://github.com/jund-fauz/eloquent-kompact/compare/v0.77.0...HEAD
+[0.77.0]: https://github.com/jund-fauz/eloquent-kompact/compare/v0.76.0...v0.77.0
 [0.76.0]: https://github.com/jund-fauz/eloquent-kompact/compare/v0.75.0...v0.76.0
 [0.75.0]: https://github.com/jund-fauz/eloquent-kompact/compare/v0.74.0...v0.75.0
 [0.74.0]: https://github.com/jund-fauz/eloquent-kompact/compare/v0.73.0...v0.74.0
