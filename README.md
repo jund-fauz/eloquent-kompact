@@ -56,6 +56,7 @@ The cache is cleared automatically after `php artisan migrate` (including `migra
 \JundFauz\EloquentKompact\Column\ColumnListing::flush();
 \JundFauz\EloquentKompact\Model\KompactModel::flushKompactCache();
 \JundFauz\EloquentKompact\Model\KompactPivot::flushKompactCache();
+\JundFauz\EloquentKompact\Model\KompactUser::flushKompactCache();
 ```
 
 Long-running processes (queue workers, Octane) keep their in-memory copy until they restart, so run `php artisan queue:restart` / `php artisan octane:reload` after migrating in production.
@@ -105,7 +106,7 @@ Checker::isEnum($table->string('status_enum')); // true
 
 ## KompactModel
 
-Extend `JundFauz\EloquentKompact\Model\KompactModel` instead of Eloquent's `Model` to get every trait below at once. `KompactPivot` does the same for pivot models, with `AdditionalQueries`, `DynamicModelRelation`, `StaticH` and soft deletes.
+Extend `JundFauz\EloquentKompact\Model\KompactModel` instead of Eloquent's `Model` to get every trait below at once. `KompactUser` does the same for the user model, on top of Laravel's `Illuminate\Foundation\Auth\User`. Both only use the `Kompact` trait, which a model with another parent class can use too. `KompactPivot` does the same for pivot models, with `AdditionalQueries`, `AutoRelation`, `StaticH` and soft deletes.
 
 ```php
 use JundFauz\EloquentKompact\Model\KompactModel;
@@ -115,13 +116,24 @@ class Post extends KompactModel
     // Soft deletes are on by default
     protected static bool $useSoftDelete = false;
 }
+
+class User extends KompactUser
+{
+    //
+}
 ```
+
+With `$useSoftDelete = false`, `delete()` removes the row, so the table does not need a `deleted_at` column.
 
 Every trait can also be used on its own model.
 
-### DynamicFillableColumnDefinition
+Model results use [`Model\Collection`](#other-helpers), unless the model has `#[CollectedBy]` or its own `$collectionClass`.
+
+### AutoFillable
 
 `getFillable()` returns every column of the table, except the ones matching `fillable.excluded_columns_by_regex`, merged with the model's own `$fillable`. No more `$fillable` arrays to keep in sync with the migrations.
+
+> **Note:** this includes columns such as `password` and `remember_token` on a `KompactUser`. Add the columns that should not be mass assigned to `fillable.excluded_columns_by_regex`, e.g. `'/^remember_token$/'`, and never pass unfiltered input to `create()` or `fill()`.
 
 ### AutoCast
 
@@ -133,7 +145,7 @@ An `_enum` column is cast to the enum `{singular table in PascalCase}{column wit
 // orders.status_enum → App\Enums\OrderStatus
 ```
 
-### DynamicModelRelation
+### AutoRelation
 
 Relations are resolved from the relation name and the columns, without declaring a method:
 
@@ -177,6 +189,9 @@ $user->getMany('name', 'email'); // ['Ana', 'ana@example.com']
 $comment->getVia('name', Post::class, User::class);                // $comment->post?->user?->name
 $comment->getManyVia(['name', 'email'], Post::class, User::class); // [$comment->post?->user?->name, $comment->post?->user?->email]
 
+// [column => value] for the given columns, after casting (a missing one is null)
+$user->compact('name', 'email'); // ['name' => 'Ana', 'email' => 'ana@example.com']
+
 // Set attributes, without saving
 $order->assign('status', 'paid');
 $order->assignFrom($otherOrder, 'tenant_id', 'branch_id');
@@ -209,7 +224,7 @@ $user->match(['role' => ['admin', 'editor'], 'active_is' => true]);
 
 `match()` and the `sameWithOther()` family return `false` when no condition or column is given. `notSameWithOther()` is not the opposite of `sameWithOther()`: that is `notSameWithOtherOr()`. Objects such as the Carbon dates of `datetime` columns are compared by identity, so two models never have the same date. An array value matches if the attribute equals one of its items, unless the attribute itself is an array.
 
-`getManyVia()` is `@experimental`. `getDataFromRelation()` and `getDatasFromRelation()` are the deprecated names of `getVia()` and `getManyVia()`. The `RelationData` trait is deprecated too: it now only uses `AdditionalQueries`, so a model using it gets every method above. Use `AdditionalQueries` instead.
+`getManyVia()` is `@experimental`. `getDataFromRelation()` and `getDatasFromRelation()` are the deprecated names of `getVia()` and `getManyVia()`.
 
 ### Filterable
 
@@ -257,7 +272,7 @@ Dynamic relations are not methods, so IDEs cannot see them. Generate a helper fi
 php artisan kompact:ide-helper
 ```
 
-It writes `_ide_helper_kompact.php` (`@property-read` and `@method` for every dynamic relation of the models directly in `path.model` that use `DynamicModelRelation`) and registers it as a class mixin in `ide.json` for Laravel Idea. Each mixin is a `_EK_`-prefixed class inside `EloquentKompact\IdeHelper`, e.g. `EloquentKompact\IdeHelper\App\Models\_EK_User` for `App\Models\User`, so it never shows up as a second `User` class. Other `classMixins` entries in `ide.json` are kept.
+It writes `_ide_helper_kompact.php` (`@property-read` and `@method` for every dynamic relation of the models directly in `path.model` that use `AutoRelation`) and registers it as a class mixin in `ide.json` for Laravel Idea. Each mixin is a `_EK_`-prefixed class inside `EloquentKompact\IdeHelper`, e.g. `EloquentKompact\IdeHelper\App\Models\_EK_User` for `App\Models\User`, so it never shows up as a second `User` class. Other `classMixins` entries in `ide.json` are kept.
 
 Set `KOMPACT_IDE_HELPER=true` in `.env` to run it automatically after every `php artisan migrate` in the `local` environment. You will probably want to add `_ide_helper_kompact.php` to `.gitignore`.
 
@@ -674,7 +689,7 @@ Constants: `NEW_LINE` (`"\n"`), `DISTANCE_LINE` (`"\n\n"`), `NAMESPACE_DELIMITER
 
   Every method returns a new `Relation`. It is a query `Expression`, but Eloquent's `with()`, `load()` and `loadMissing()` only take strings, so call `build()`, cast it to a `string`, or pass the list through `stringify()` for them: `$user->loadMissing(stringify([$relation, $other]))`. Its name is the same as Eloquent's `Relation`; import one of them with an alias if a file needs both.
 
-- `Builder\Collection` extends Laravel's `Collection` with `filterFilled()`, `deleteNull()`, `getOr(...$keys)`, `getOrWithDefault($default, ...$keys)` and `getOrWithDefaultAsCollection($default, ...$keys)`, built on `array_filter_filled()` and `array_get_or()`. These methods, and Laravel's `get()`, `before()` and `after()`, return a string value or default as a [`Str`](#str) and an array as a `Collection`; other values are returned as they are. Laravel's methods keep the class through the chain. Its name is the same as Laravel's `Collection`; import one of them with an alias if a file needs both.
+- `Builder\Collection` extends Laravel's `Collection` with `filterFilled()`, `deleteNull()`, `sumAndCompact(...$columns)`, `getOr(...$keys)`, `getOrWithDefault($default, ...$keys)` and `getOrWithDefaultAsCollection($default, ...$keys)`, built on `array_filter_filled()` and `array_get_or()`. These methods, and Laravel's `get()`, `before()` and `after()`, return a string value or default as a [`Str`](#str) and an array as a `Collection`; other values are returned as they are. Laravel's methods keep the class through the chain. Its name is the same as Laravel's `Collection`; import one of them with an alias if a file needs both.
 
   ```php
   use function JundFauz\EloquentKompact\collect;
@@ -683,6 +698,7 @@ Constants: `NEW_LINE` (`"\n"`), `DISTANCE_LINE` (`"\n\n"`), `NAMESPACE_DELIMITER
 
   $data->filterFilled()->keys()->all();                      // ['name', 'tags']
   $data->deleteNull()->keys()->all();                        // ['name', 'tags']
+  collect([['qty' => 2], ['qty' => 3]])->sumAndCompact('qty'); // ['qty' => 5]
   $data->getOr('nickname', 'name')->upper()->toString();     // 'ANA'
   $data->getOr('tags');                                      // Collection ['a', 'b']
   $data->get('name');                                        // Str 'Ana'
@@ -693,6 +709,17 @@ Constants: `NEW_LINE` (`"\n"`), `DISTANCE_LINE` (`"\n\n"`), `NAMESPACE_DELIMITER
   `deleteNull()` only removes `null`, keeping the keys, while `filterFilled()` also removes blank strings and empty arrays or collections. Both return a new collection and leave the original as it is.
 
   A `Str` is an object, so an empty string is truthy: compare with `->isEmpty()` or `->toString()` rather than `if ($value)`.
+
+- `Model\Collection` extends Eloquent's `Collection` with the same methods and `firstAndCompact(...$columns)`, and is what `KompactModel`, `KompactUser` and `KompactPivot` results use (`all()`, `get()`, relations, `with()`, `load()`):
+
+  ```php
+  Post::all()->sumAndCompact('views');        // ['views' => 120]
+  Post::all()->firstAndCompact('id', 'name'); // ['id' => 1, 'name' => 'First'] of the first model, or null values if there is none
+  Post::all()->find(1);                       // Eloquent's methods are still there
+  Post::all()->get(99, 'none');               // Str 'none'
+  ```
+
+  Like Eloquent's own collection, results that are not models become Laravel's base `Collection`, without these methods: `pluck()`, `keys()`, `map()` to other values, and `Post::query()->pluck()`. For data that is not models, use `Builder\Collection`, since many methods of Eloquent's collection expect models.
 
 - `Helper\Arr` extends Laravel's `Arr` with `pullMany(&$array, ...$keys)` (pulls several keys at once) and `isKeysDontExist($array, ...$keys)`.
 - `Cast\UuidCast` casts an attribute to and from a `Ramsey\Uuid\UuidInterface`.
