@@ -116,6 +116,15 @@ function array_filter_filled(array $data): array
     return array_filter($data, 'filled');
 }
 
+function array_key_change(array &$array, string $oldKey, string $newKey): void
+{
+    if ($oldKey === $newKey) {
+        return;
+    }
+    $array[$newKey] = $array[$oldKey];
+    unset($array[$oldKey]);
+}
+
 function str_before_last(string $subject, string $search): string
 {
     return \Illuminate\Support\Str::beforeLast($subject, $search);

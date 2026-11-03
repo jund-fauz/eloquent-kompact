@@ -11,6 +11,7 @@ use stdClass;
 
 use function JundFauz\EloquentKompact\add_tab;
 use function JundFauz\EloquentKompact\array_filter_filled;
+use function JundFauz\EloquentKompact\array_key_change;
 use function JundFauz\EloquentKompact\array_flat;
 use function JundFauz\EloquentKompact\array_get_or;
 use function JundFauz\EloquentKompact\array_pull;
@@ -211,6 +212,47 @@ class FunctionsTest extends TestCase
         );
         $this->assertSame([[0]], array_filter_filled([[0], collect()]));
         $this->assertSame([], array_filter_filled([]));
+    }
+
+    #[Test]
+    public function it_changes_an_array_key(): void
+    {
+        $data = ['a' => 1, 'b' => null];
+
+        array_key_change($data, 'a', 'c');
+        array_key_change($data, 'b', 'd');
+
+        $this->assertSame(['c' => 1, 'd' => null], $data);
+    }
+
+    #[Test]
+    public function it_keeps_the_array_when_the_key_does_not_change(): void
+    {
+        $data = ['a' => 1, 'b' => 2];
+
+        array_key_change($data, 'a', 'a');
+
+        $this->assertSame(['a' => 1, 'b' => 2], $data);
+    }
+
+    #[Test]
+    public function it_replaces_the_value_of_an_existing_key(): void
+    {
+        $data = ['a' => 1, 'b' => 2];
+
+        array_key_change($data, 'a', 'b');
+
+        $this->assertSame(['b' => 1], $data);
+    }
+
+    #[Test]
+    public function it_fails_when_the_old_key_is_missing(): void
+    {
+        $data = ['a' => 1];
+
+        $this->expectException(\ErrorException::class);
+
+        array_key_change($data, 'missing', 'b');
     }
 
     #[Test]
