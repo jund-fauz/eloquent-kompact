@@ -7,7 +7,7 @@ use JundFauz\EloquentKompact\Query\RawQuery;
 
 trait Filterable
 {
-    public static function getCountForFilter(string ...$columns): ?KompactModel
+    public static function getCountForFilter(string ...$columns): ?static
     {
         $selects = [];
         $relationalColumns = [];

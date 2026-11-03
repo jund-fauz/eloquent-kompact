@@ -16,7 +16,7 @@ use JsonException;
 use JundFauz\EloquentKompact\Builder\Str;
 use JundFauz\EloquentKompact\Column\ColumnListing;
 use JundFauz\EloquentKompact\Column\Creator;
-use JundFauz\EloquentKompact\Model\Traits\DynamicModelRelation;
+use JundFauz\EloquentKompact\Model\Traits\AutoRelation;
 use ReflectionClass;
 use ReflectionException;
 use function JundFauz\EloquentKompact\comment;
@@ -35,7 +35,7 @@ use const JundFauz\EloquentKompact\NEW_LINE;
 final class IdeHelperCommand extends Command
 {
     protected $signature = 'kompact:ide-helper';
-    protected $description = "Generate IDE autocomplete for DynamicModelRelation's relation";
+    protected $description = "Generate IDE autocomplete for AutoRelation's relation";
 
     public const string Filename = '_ide_helper_kompact.php';
     protected const string MixinNamespace = 'EloquentKompact\IdeHelper';
@@ -60,7 +60,7 @@ final class IdeHelperCommand extends Command
         $mixins = [];
 
         foreach ($models as $parent) {
-            if (! in_array(DynamicModelRelation::class, class_uses_recursive($parent))) {
+            if (! in_array(AutoRelation::class, class_uses_recursive($parent))) {
                 continue;
             }
 

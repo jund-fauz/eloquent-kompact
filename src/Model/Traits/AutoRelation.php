@@ -17,7 +17,7 @@ use function count;
 use function JundFauz\EloquentKompact\namespace_concat;
 use function sprintf;
 
-trait DynamicModelRelation
+trait AutoRelation
 {
     protected static array $dynamicRelationCache = [];
 

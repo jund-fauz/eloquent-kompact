@@ -51,6 +51,16 @@ class CollectionTest extends TestCase
     }
 
     #[Test]
+    public function it_sums_each_column_by_its_name(): void
+    {
+        $collection = new Collection([['qty' => 2, 'price' => 10], ['qty' => 3, 'price' => 20]]);
+
+        $this->assertSame(['qty' => 5, 'price' => 30], $collection->sumAndCompact('qty', 'price'));
+        $this->assertSame(['missing' => 0], $collection->sumAndCompact('missing'));
+        $this->assertSame([], $collection->sumAndCompact());
+    }
+
+    #[Test]
     public function it_gets_the_first_non_null_value(): void
     {
         $collection = new Collection(['nickname' => null, 'name' => 'Ana', 'age' => 20, 'active' => false, 'user' => ['name' => 'Budi']]);

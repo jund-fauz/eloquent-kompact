@@ -11,6 +11,7 @@ use JundFauz\EloquentKompact\Console\IdeHelperCommand;
 use JundFauz\EloquentKompact\Helper\Path;
 use JundFauz\EloquentKompact\Model\KompactModel;
 use JundFauz\EloquentKompact\Model\KompactPivot;
+use JundFauz\EloquentKompact\Model\KompactUser;
 
 class EloquentKompactServiceProvider extends ServiceProvider
 {
@@ -40,6 +41,7 @@ class EloquentKompactServiceProvider extends ServiceProvider
             ColumnListing::flush();
             KompactModel::flushKompactCache();
             KompactPivot::flushKompactCache();
+            KompactUser::flushKompactCache();
 
             if ($this->app->isLocal() && config('eloquent-kompact.ide-helper.auto_generate')) {
                 Artisan::call(IdeHelperCommand::class);

@@ -403,6 +403,27 @@ class AdditionalQueriesTest extends TestCase
         $this->assertSame([1, 3], $authors);
     }
 
+    #[Test]
+    public function it_compacts_the_given_columns(): void
+    {
+        $comment = MorphComment::find(1);
+
+        $this->assertSame(['id' => 1, 'commentable_id' => 1], $comment->compact('id', 'commentable_id'));
+        $this->assertSame(['commentable_id' => 1, 'id' => 1], $comment->compact('commentable_id', 'id'));
+    }
+
+    #[Test]
+    public function it_compacts_a_missing_column_as_null(): void
+    {
+        $this->assertSame(['missing' => null], MorphComment::find(1)->compact('missing'));
+    }
+
+    #[Test]
+    public function it_compacts_nothing_without_columns(): void
+    {
+        $this->assertSame([], MorphComment::find(1)->compact());
+    }
+
     private function createWhereInRelationTables(): void
     {
         Schema::create('authors', function (Blueprint $table) {

@@ -4,14 +4,14 @@ namespace JundFauz\EloquentKompact\Model\Traits;
 
 use JundFauz\EloquentKompact\Column\ColumnListing;
 
-trait DynamicFillableColumnDefinition
+trait AutoFillable
 {
-    // INFO: DF is a short form of 'DynamicFillable'
-    protected static ?array $DFCache = null;
+    // INFO: AF is a short form of 'AutoFillable'
+    protected static ?array $AFCache = null;
 
     public function getFillable(): array
     {
-        return static::$DFCache[static::class] ??= array_values(array_unique(array_merge(
+        return static::$AFCache[static::class] ??= array_values(array_unique(array_merge(
             collect(ColumnListing::of($this->getTable()))
                 ->reject(function ($column) {
                     foreach (config('eloquent-kompact.fillable.excluded_columns_by_regex') as $exclude) {

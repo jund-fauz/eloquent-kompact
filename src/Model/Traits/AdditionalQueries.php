@@ -10,6 +10,7 @@ use JundFauz\EloquentKompact\Column\Convert;
 use JundFauz\EloquentKompact\Column\Creator;
 use function JundFauz\EloquentKompact\is_not_array;
 use function JundFauz\EloquentKompact\is_not_null;
+use function JundFauz\EloquentKompact\model_compact;
 
 trait AdditionalQueries
 {
@@ -107,6 +108,11 @@ trait AdditionalQueries
             $result[] = $this->getVia($columnName, ...$relationClasses);
         }
         return $result;
+    }
+
+    public function compact(string ...$columns): array
+    {
+        return model_compact($this, ...$columns);
     }
 
     /**
