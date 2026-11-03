@@ -65,6 +65,35 @@ class StaticHTest extends TestCase
         $this->assertSame('staticHPost', StaticHPost::singular());
         $this->assertSame('staticHPosts', StaticHPost::plural());
     }
+
+    #[Test]
+    public function it_builds_a_relation_path_starting_from_the_model(): void
+    {
+        $this->assertSame('staticHPost.staticHCategory', StaticHPost::relationTo(StaticHCategory::class));
+        $this->assertSame(
+            'staticHPost.staticHCategory.staticHAdminPost',
+            StaticHPost::relationTo(StaticHCategory::class, StaticHAdminPost::class),
+        );
+    }
+
+    #[Test]
+    public function it_returns_the_singular_name_for_a_relation_path_without_models(): void
+    {
+        $this->assertSame('staticHPost', StaticHPost::relationTo());
+    }
+
+    #[Test]
+    public function it_keeps_relation_names_in_a_relation_path(): void
+    {
+        $this->assertSame('staticHPost.roles', StaticHPost::relationTo('roles'));
+        $this->assertSame('staticHPost.roles.staticHCategory', StaticHPost::relationTo('roles', StaticHCategory::class));
+    }
+
+    #[Test]
+    public function it_starts_the_relation_path_from_a_subclass(): void
+    {
+        $this->assertSame('staticHAdminPost.staticHCategory', StaticHAdminPost::relationTo(StaticHCategory::class));
+    }
 }
 
 class StaticHPost extends Model

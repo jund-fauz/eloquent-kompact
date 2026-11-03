@@ -5,6 +5,7 @@ namespace JundFauz\EloquentKompact\Model\Traits;
 use Illuminate\Database\Schema\Blueprint;
 use JundFauz\EloquentKompact\Builder\Str;
 use JundFauz\EloquentKompact\Column\Convert;
+use JundFauz\EloquentKompact\Relation\Arrange;
 use const JundFauz\EloquentKompact\NAMESPACE_DELIMITER;
 
 trait StaticH
@@ -27,6 +28,11 @@ trait StaticH
     public static function plural(): string
     {
         return Convert::modelToRelation(static::class, true);
+    }
+
+    public static function relationTo(string ...$modelClasses): string
+    {
+        return Arrange::relation('', static::class, ...$modelClasses);
     }
 
     public static function getModel(Blueprint $column): ?string
