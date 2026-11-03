@@ -32,7 +32,12 @@ trait StaticH
 
     public static function relationTo(string ...$modelClasses): string
     {
-        return Arrange::relation('', static::class, ...$modelClasses);
+        return static::columnTo('', ...$modelClasses);
+    }
+
+    public static function columnTo(string $columnName, string ...$modelClasses): string
+    {
+        return Arrange::relation($columnName, static::class, ...$modelClasses);
     }
 
     public static function getModel(Blueprint $column): ?string

@@ -94,6 +94,42 @@ class StaticHTest extends TestCase
     {
         $this->assertSame('staticHAdminPost.staticHCategory', StaticHAdminPost::relationTo(StaticHCategory::class));
     }
+
+    #[Test]
+    public function it_builds_a_column_path_starting_from_the_model(): void
+    {
+        $this->assertSame('staticHPost.name', StaticHPost::columnTo('name'));
+        $this->assertSame('staticHPost.staticHCategory.name', StaticHPost::columnTo('name', StaticHCategory::class));
+        $this->assertSame(
+            'staticHPost.staticHCategory.staticHAdminPost.name',
+            StaticHPost::columnTo('name', StaticHCategory::class, StaticHAdminPost::class),
+        );
+    }
+
+    #[Test]
+    public function it_keeps_relation_names_in_a_column_path(): void
+    {
+        $this->assertSame('staticHPost.roles.name', StaticHPost::columnTo('name', 'roles'));
+    }
+
+    #[Test]
+    public function it_builds_a_relation_path_for_an_empty_column(): void
+    {
+        $this->assertSame('staticHPost.roles', StaticHPost::columnTo('', 'roles'));
+        $this->assertSame('staticHPost', StaticHPost::columnTo(''));
+    }
+
+    #[Test]
+    public function it_starts_the_column_path_from_a_subclass(): void
+    {
+        $this->assertSame('staticHAdminPost.name', StaticHAdminPost::columnTo('name'));
+    }
+
+    #[Test]
+    public function it_uses_an_overridden_column_path_for_the_relation_path(): void
+    {
+        $this->assertSame('overridden', StaticHOverriddenPost::relationTo('roles'));
+    }
 }
 
 class StaticHPost extends Model
@@ -102,6 +138,14 @@ class StaticHPost extends Model
 }
 
 class StaticHAdminPost extends StaticHPost {}
+
+class StaticHOverriddenPost extends StaticHPost
+{
+    public static function columnTo(string $columnName, string ...$modelClasses): string
+    {
+        return 'overridden';
+    }
+}
 
 class StaticHCategory extends Model
 {
