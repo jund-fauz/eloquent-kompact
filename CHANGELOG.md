@@ -7,6 +7,26 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [0.78.0] - 2026-11-03
+
+### Added
+
+- `RelationData::getVia()` and `RelationData::getManyVia()`: shorter names for `getDataFromRelation()` and `getDatasFromRelation()`, with the same parameters and results. `getManyVia()` is `@experimental`.
+
+  ```php
+  $comment->getVia('name', Post::class, User::class);                // $comment->post?->user?->name
+  $comment->getManyVia(['name', 'email'], Post::class, User::class); // ['Ana', 'ana@example.com']
+  ```
+
+### Deprecated
+
+- `RelationData::getDataFromRelation()`, use `getVia()` instead.
+- `RelationData::getDatasFromRelation()`, use `getManyVia()` instead.
+
+### Tests
+
+- Added unit tests for `getVia()`, `getManyVia()` and the deprecated names.
+
 ## [0.77.0] - 2026-11-03
 
 ### Added
@@ -1543,7 +1563,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - `RawQuery` static helpers for raw SQL expressions.
 - Translations for `en` and `id`.
 
-[Unreleased]: https://github.com/jund-fauz/eloquent-kompact/compare/v0.77.0...HEAD
+[Unreleased]: https://github.com/jund-fauz/eloquent-kompact/compare/v0.78.0...HEAD
+[0.78.0]: https://github.com/jund-fauz/eloquent-kompact/compare/v0.77.0...v0.78.0
 [0.77.0]: https://github.com/jund-fauz/eloquent-kompact/compare/v0.76.0...v0.77.0
 [0.76.0]: https://github.com/jund-fauz/eloquent-kompact/compare/v0.75.0...v0.76.0
 [0.75.0]: https://github.com/jund-fauz/eloquent-kompact/compare/v0.74.0...v0.75.0
