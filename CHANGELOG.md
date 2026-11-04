@@ -7,6 +7,22 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [0.82.0] - 2026-11-04
+
+### Changed
+
+- **Breaking:** `KompactUser` is now abstract, so it can only be extended.
+- **Breaking:** `laravel/framework` (`^12.0|^13.0`) moved from `require-dev` to `require`, because `KompactUser` extends `Illuminate\Foundation\Auth\User`, which only that package has.
+- `$collectionClass` moved from the `Kompact` trait to `KompactModel` and `KompactUser`. Another model that uses the `Kompact` trait has to set it itself to get `Model\Collection`.
+
+### Fixed
+
+- Fatal error on PHP 8.3 and 8.4 when loading `KompactModel` or `KompactUser` in 0.81.0: `Model and Kompact define the same property ($collectionClass)`. PHP before 8.5 binds a trait after the parent class, so the different default value of the trait's property was incompatible with `Model`.
+
+### Tests
+
+- Added unit tests for the abstract `KompactUser`, the collection of `KompactUser`, and a check that the `Kompact` trait declares no property of `Model`, since a run on PHP 8.5 alone does not show that fatal error.
+
 ## [0.81.0] - 2026-11-03
 
 ### Added
@@ -1638,7 +1654,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - `RawQuery` static helpers for raw SQL expressions.
 - Translations for `en` and `id`.
 
-[Unreleased]: https://github.com/jund-fauz/eloquent-kompact/compare/v0.81.0...HEAD
+[Unreleased]: https://github.com/jund-fauz/eloquent-kompact/compare/v0.82.0...HEAD
+[0.82.0]: https://github.com/jund-fauz/eloquent-kompact/compare/v0.81.0...v0.82.0
 [0.81.0]: https://github.com/jund-fauz/eloquent-kompact/compare/v0.80.0...v0.81.0
 [0.80.0]: https://github.com/jund-fauz/eloquent-kompact/compare/v0.79.0...v0.80.0
 [0.79.0]: https://github.com/jund-fauz/eloquent-kompact/compare/v0.78.0...v0.79.0
