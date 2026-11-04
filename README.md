@@ -106,7 +106,7 @@ Checker::isEnum($table->string('status_enum')); // true
 
 ## KompactModel
 
-Extend `JundFauz\EloquentKompact\Model\KompactModel` instead of Eloquent's `Model` to get every trait below at once. `KompactUser` does the same for the user model, on top of Laravel's `Illuminate\Foundation\Auth\User`. Both only use the `Kompact` trait, which a model with another parent class can use too. `KompactPivot` does the same for pivot models, with `AdditionalQueries`, `AutoRelation`, `StaticH` and soft deletes.
+Extend `JundFauz\EloquentKompact\Model\KompactModel` instead of Eloquent's `Model` to get every trait below at once. `KompactUser` does the same for the user model, on top of Laravel's `Illuminate\Foundation\Auth\User`. Both only use the `Kompact` trait, which a model with another parent class can use too; such a model has to set `protected static string $collectionClass = Collection::class;` itself to get [`Model\Collection`](#other-helpers). `KompactUser` is abstract. `KompactPivot` does the same for pivot models, with `AdditionalQueries`, `AutoRelation`, `StaticH` and soft deletes.
 
 ```php
 use JundFauz\EloquentKompact\Model\KompactModel;
