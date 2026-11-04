@@ -141,6 +141,15 @@ function array_normalize(array $data): mixed
     return count($data) === 1 ? $data[0] : $data;
 }
 
+function assign_as(mixed $data, string ...$keys): array
+{
+    $result = [];
+    foreach ($keys as $key) {
+        $result[$key] = $data;
+    }
+    return $result;
+}
+
 function str_before_last(string $subject, string $search): string
 {
     return \Illuminate\Support\Str::beforeLast($subject, $search);

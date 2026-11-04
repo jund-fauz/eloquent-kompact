@@ -14,6 +14,7 @@ use function JundFauz\EloquentKompact\array_filter_filled;
 use function JundFauz\EloquentKompact\array_key_change;
 use function JundFauz\EloquentKompact\array_key_values;
 use function JundFauz\EloquentKompact\array_normalize;
+use function JundFauz\EloquentKompact\assign_as;
 use function JundFauz\EloquentKompact\array_flat;
 use function JundFauz\EloquentKompact\array_get_or;
 use function JundFauz\EloquentKompact\array_pull;
@@ -52,6 +53,20 @@ use const JundFauz\EloquentKompact\TAB;
 
 class FunctionsTest extends TestCase
 {
+    #[Test]
+    public function it_assigns_one_value_to_several_keys(): void
+    {
+        $this->assertSame(['created_by' => 1, 'updated_by' => 1], assign_as(1, 'created_by', 'updated_by'));
+        $this->assertSame(['a' => null], assign_as(null, 'a'));
+        $this->assertSame(['a' => ['x'], 'b' => ['x']], assign_as(['x'], 'a', 'b'));
+    }
+
+    #[Test]
+    public function it_gives_an_empty_array_without_keys_to_assign(): void
+    {
+        $this->assertSame([], assign_as(1));
+    }
+
     #[Test]
     public function it_gets_the_key_and_the_value_of_a_single_item_array(): void
     {
