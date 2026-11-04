@@ -43,12 +43,11 @@ trait AdditionalQueries
         return $columnName ? $result?->{$columnName} : $result;
     }
 
-    /**
-     * @experimental This method may change in a minor release.
-     * @param array $columnNames
-     * @param string|array ...$relationClasses
-     * @return array
-     */
+    public function getRelVia(string|array ...$relationClasses)
+    {
+        return $this->getVia('', ...$relationClasses);
+    }
+
     public function getManyVia(array $columnNames, string|array ...$relationClasses): array
     {
         $result = [];

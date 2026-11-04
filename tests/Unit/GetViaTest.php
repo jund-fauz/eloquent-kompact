@@ -80,6 +80,40 @@ class GetViaTest extends TestCase
     }
 
     #[Test]
+    public function it_gets_the_related_model_with_get_rel_via(): void
+    {
+        $comment = GetViaComment::find(1);
+
+        $this->assertInstanceOf(GetViaPost::class, $comment->getRelVia(GetViaPost::class));
+
+        $user = $comment->getRelVia(GetViaPost::class, GetViaUser::class);
+
+        $this->assertInstanceOf(GetViaUser::class, $user);
+        $this->assertSame(1, $user->id);
+    }
+
+    #[Test]
+    public function it_gets_the_related_model_through_a_prefixed_relation_with_get_rel_via(): void
+    {
+        $this->assertInstanceOf(GetViaPost::class, GetViaComment::find(1)->getRelVia(['latest' => GetViaPost::class]));
+    }
+
+    #[Test]
+    public function it_gets_null_with_get_rel_via_when_a_relation_is_missing(): void
+    {
+        $this->assertNull(GetViaComment::find(2)->getRelVia(GetViaPost::class, GetViaUser::class));
+        $this->assertNull(GetViaComment::find(3)->getRelVia(GetViaPost::class));
+    }
+
+    #[Test]
+    public function it_gets_the_model_itself_with_get_rel_via_without_arguments(): void
+    {
+        $comment = GetViaComment::find(1);
+
+        $this->assertSame($comment, $comment->getRelVia());
+    }
+
+    #[Test]
     public function it_gets_null_when_a_relation_is_missing(): void
     {
         $this->assertNull(GetViaComment::find(2)->getVia('name', GetViaPost::class, GetViaUser::class));
@@ -127,7 +161,7 @@ class GetViaTest extends TestCase
     #[Test]
     public function it_has_the_methods_on_the_kompact_models(): void
     {
-        foreach (['getVia', 'getManyVia'] as $method) {
+        foreach (['getVia', 'getRelVia', 'getManyVia'] as $method) {
             $this->assertTrue(method_exists(KompactModel::class, $method), "KompactModel::$method");
             $this->assertTrue(method_exists(KompactPivot::class, $method), "KompactPivot::$method");
         }
