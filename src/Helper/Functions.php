@@ -125,6 +125,22 @@ function array_key_change(array &$array, string $oldKey, string $newKey): void
     unset($array[$oldKey]);
 }
 
+function array_key_values($array): array
+{
+    $keys = array_keys($array);
+    $values = array_values($array);
+
+    return merge_as_array(
+        array_normalize($keys),
+        array_normalize($values)
+    );
+}
+
+function array_normalize(array $data): mixed
+{
+    return count($data) === 1 ? $data[0] : $data;
+}
+
 function str_before_last(string $subject, string $search): string
 {
     return \Illuminate\Support\Str::beforeLast($subject, $search);

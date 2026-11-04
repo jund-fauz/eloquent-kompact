@@ -25,22 +25,22 @@ trait StaticH
         return class_basename(static::class);
     }
 
-    public static function singular(): string
+    public static function singular(?string $prefix = null): string
     {
-        return Convert::modelToRelation(static::class);
+        return Convert::modelToRelation($prefix ? [$prefix => static::class] : static::class);
     }
 
-    public static function plural(): string
+    public static function plural(?string $prefix = null): string
     {
-        return Convert::modelToRelation(static::class, true);
+        return Convert::modelToRelation($prefix ? [$prefix => static::class] : static::class, true);
     }
 
-    public static function relationTo(string ...$modelClasses): string
+    public static function relationTo(string|array ...$modelClasses): string
     {
         return static::columnTo('', ...$modelClasses);
     }
 
-    public static function columnTo(string $columnName, string ...$modelClasses): string
+    public static function columnTo(string $columnName, string|array ...$modelClasses): string
     {
         return Arrange::relation($columnName, static::class, ...$modelClasses);
     }

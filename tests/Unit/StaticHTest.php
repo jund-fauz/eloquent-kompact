@@ -24,6 +24,21 @@ class StaticHTest extends TestCase
     }
 
     #[Test]
+    public function it_returns_the_relation_name_with_a_prefix(): void
+    {
+        $this->assertSame('latestStaticHPost', StaticHPost::singular('latest'));
+        $this->assertSame('latestStaticHPosts', StaticHPost::plural('latest'));
+        $this->assertSame('latestStaticHAdminPost', StaticHAdminPost::singular('latest'));
+    }
+
+    #[Test]
+    public function it_returns_a_path_with_a_prefixed_relation(): void
+    {
+        $this->assertSame('staticHPost.latestStaticHCategory', StaticHPost::relationTo(['latest' => StaticHCategory::class]));
+        $this->assertSame('staticHPost.latestStaticHCategory.roles.name', StaticHPost::columnTo('name', ['latest' => StaticHCategory::class], 'roles'));
+    }
+
+    #[Test]
     public function it_returns_the_base_name_of_the_class(): void
     {
         $this->assertSame('StaticHPost', StaticHPost::baseName());
@@ -186,7 +201,7 @@ class StaticHCustomKeyPost extends StaticHPost
 
 class StaticHOverriddenPost extends StaticHPost
 {
-    public static function columnTo(string $columnName, string ...$modelClasses): string
+    public static function columnTo(string $columnName, string|array ...$modelClasses): string
     {
         return 'overridden';
     }

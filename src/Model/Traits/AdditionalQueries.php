@@ -33,7 +33,7 @@ trait AdditionalQueries
         return array_reduce($columnNames, fn ($acc, $column) => $acc ?? $this?->{$column});
     }
 
-    public function getVia(string $columnName = '', string ...$relationClasses)
+    public function getVia(string $columnName = '', string|array ...$relationClasses)
     {
         $result = $this;
         foreach ($relationClasses as $relationClass) {
@@ -46,10 +46,10 @@ trait AdditionalQueries
     /**
      * @experimental This method may change in a minor release.
      * @param array $columnNames
-     * @param string ...$relationClasses
+     * @param string|array ...$relationClasses
      * @return array
      */
-    public function getManyVia(array $columnNames, string ...$relationClasses): array
+    public function getManyVia(array $columnNames, string|array ...$relationClasses): array
     {
         $result = [];
         foreach ($columnNames as $columnName) {

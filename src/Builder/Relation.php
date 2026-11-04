@@ -22,19 +22,19 @@ class Relation extends Builder implements Expression
     }
 
     /**
-     * @param class-string<Model> ...$modelClasses
+     * @param class-string<Model>|array<string, class-string<Model>> ...$modelClasses
      * @return static
      */
-    public function relation(string ...$modelClasses): static
+    public function relation(string|array ...$modelClasses): static
     {
         return $this->append(Arrange::relation('', ...$modelClasses));
     }
 
     /**
-     * @param class-string<Model> ...$modelClasses
+     * @param class-string<Model>|array<string, class-string<Model>> ...$modelClasses
      * @return static
      */
-    public function relations(string ...$modelClasses): static
+    public function relations(string|array ...$modelClasses): static
     {
         return $this->append(Arrange::relations('', ...$modelClasses));
     }

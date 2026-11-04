@@ -12,6 +12,13 @@ use PHPUnit\Framework\Attributes\Test;
 class RelationTest extends TestCase
 {
     #[Test]
+    public function it_builds_a_path_with_a_prefixed_relation(): void
+    {
+        $this->assertSame('latestRelationPost.name', Relation::arrange('name')->relation(['latest' => RelationPost::class])->build());
+        $this->assertSame('latestRelationPosts.relationUser', Relation::arrange()->relations(['latest' => RelationPost::class])->relation(RelationUser::class)->build());
+    }
+
+    #[Test]
     public function it_builds_the_path_in_chain_order(): void
     {
         $this->assertSame('relationPosts.relationUser.name', Relation::arrange('name')->relations(RelationPost::class)->relation(RelationUser::class)->build());

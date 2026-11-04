@@ -12,6 +12,8 @@ use stdClass;
 use function JundFauz\EloquentKompact\add_tab;
 use function JundFauz\EloquentKompact\array_filter_filled;
 use function JundFauz\EloquentKompact\array_key_change;
+use function JundFauz\EloquentKompact\array_key_values;
+use function JundFauz\EloquentKompact\array_normalize;
 use function JundFauz\EloquentKompact\array_flat;
 use function JundFauz\EloquentKompact\array_get_or;
 use function JundFauz\EloquentKompact\array_pull;
@@ -50,6 +52,33 @@ use const JundFauz\EloquentKompact\TAB;
 
 class FunctionsTest extends TestCase
 {
+    #[Test]
+    public function it_gets_the_key_and_the_value_of_a_single_item_array(): void
+    {
+        $this->assertSame(['latest', 'a'], array_key_values(['latest' => 'a']));
+        $this->assertSame([0, 'a'], array_key_values(['a']));
+    }
+
+    #[Test]
+    public function it_gets_every_key_then_every_value_of_several_items(): void
+    {
+        $this->assertSame(['a', 'b', 1, 2], array_key_values(['a' => 1, 'b' => 2]));
+        $this->assertSame([], array_key_values([]));
+    }
+
+    #[Test]
+    public function it_normalizes_a_single_item_list_to_its_item(): void
+    {
+        $this->assertSame('a', array_normalize(['a']));
+    }
+
+    #[Test]
+    public function it_keeps_a_list_with_another_count_when_normalizing(): void
+    {
+        $this->assertSame(['a', 'b'], array_normalize(['a', 'b']));
+        $this->assertSame([], array_normalize([]));
+    }
+
     public static function strConcatProvider(): iterable
     {
         yield 'nothing' => [[], ''];

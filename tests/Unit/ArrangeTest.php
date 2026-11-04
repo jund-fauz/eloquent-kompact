@@ -3,6 +3,7 @@
 namespace JundFauz\EloquentKompact\Tests\Unit;
 
 use BadMethodCallException;
+use InvalidArgumentException;
 use JundFauz\EloquentKompact\Relation\Arrange;
 use JundFauz\EloquentKompact\Tests\TestCase;
 use PHPUnit\Framework\Attributes\Test;
@@ -40,6 +41,34 @@ class ArrangeTest extends TestCase
     {
         $this->assertIsString(Arrange::relation('name', 'author'));
         $this->assertIsString(Arrange::relations('', 'author'));
+    }
+
+    #[Test]
+    public function it_keeps_the_prefix_of_a_relation(): void
+    {
+        $this->assertSame('latestBlogPost.name', Arrange::relation('name', ['latest' => BlogPost::class]));
+        $this->assertSame('latestBlogPost', Arrange::relation('', ['latest' => BlogPost::class]));
+        $this->assertSame('latestBlogPosts.name', Arrange::relations('name', ['latest' => BlogPost::class]));
+    }
+
+    #[Test]
+    public function it_mixes_prefixed_relations_with_the_others(): void
+    {
+        $this->assertSame('blogPost.latestBlogPost.roles.name', Arrange::relation('name', BlogPost::class, ['latest' => BlogPost::class], 'roles'));
+    }
+
+    #[Test]
+    public function it_keeps_the_prefix_inside_a_list(): void
+    {
+        $this->assertSame('latestBlogPost.roles.name', Arrange::relation('name', [['latest' => BlogPost::class], ['roles']]));
+    }
+
+    #[Test]
+    public function it_throws_on_several_prefixes_in_one_array(): void
+    {
+        $this->expectException(InvalidArgumentException::class);
+
+        Arrange::relation('name', ['latest' => BlogPost::class, 'oldest' => BlogPost::class]);
     }
 
     #[Test]

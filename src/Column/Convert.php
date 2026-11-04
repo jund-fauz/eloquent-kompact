@@ -2,7 +2,9 @@
 
 namespace JundFauz\EloquentKompact\Column;
 
+use InvalidArgumentException;
 use JundFauz\EloquentKompact\Builder\Str;
+use function JundFauz\EloquentKompact\array_key_values;
 
 final class Convert
 {
@@ -34,9 +36,19 @@ final class Convert
         return (string) $result;
     }
 
-    public static function modelToRelation(string $model, bool $isPlural = false, bool $isSnakeCase = false): string
+    public static function modelToRelation(string|array $model, bool $isPlural = false, bool $isSnakeCase = false): string
     {
+        $prefix = null;
+        if (is_array($model)) {
+            if (count($model) !== 1 || array_is_list($model)) {
+                throw new InvalidArgumentException('A prefixed model has to be [prefix => model class].');
+            }
+            [$prefix, $model] = array_key_values($model);
+        }
         $baseName = Str::of($model)->classBasename();
+        if ($prefix) {
+            $baseName = $baseName->addAtStart($prefix);
+        }
         if ($isPlural) {
             $baseName = $baseName->plural();
         }

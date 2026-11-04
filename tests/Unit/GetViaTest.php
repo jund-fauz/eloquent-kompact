@@ -114,6 +114,17 @@ class GetViaTest extends TestCase
     }
 
     #[Test]
+    public function it_gets_the_data_through_a_prefixed_relation(): void
+    {
+        $comment = GetViaComment::find(1);
+
+        $this->assertSame('First', $comment->getVia('title', ['latest' => GetViaPost::class]));
+        $this->assertSame('Ana', $comment->getVia('name', ['latest' => GetViaPost::class], GetViaUser::class));
+        $this->assertInstanceOf(GetViaPost::class, $comment->getVia('', ['latest' => GetViaPost::class]));
+        $this->assertSame(['First'], $comment->getManyVia(['title'], ['latest' => GetViaPost::class]));
+    }
+
+    #[Test]
     public function it_has_the_methods_on_the_kompact_models(): void
     {
         foreach (['getVia', 'getManyVia'] as $method) {
@@ -128,6 +139,11 @@ class GetViaComment extends Model
     use AdditionalQueries;
 
     protected $table = 'get_via_comments';
+
+    public function latestGetViaPost(): BelongsTo
+    {
+        return $this->belongsTo(GetViaPost::class, 'post_id');
+    }
 
     public function getViaPost(): BelongsTo
     {
