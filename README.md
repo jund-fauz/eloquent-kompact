@@ -292,6 +292,12 @@ BlogPost::plural('latest');    // latestBlogPosts
 BlogPost::foreign();           // blog_post_id
 BlogPost::foreign('from');     // from_blog_post_id
 
+// A column on another table, for use in a join
+User::foreignFrom(BlogPost::class);      // blog_posts.user_id
+User::snakeTo('title', BlogPost::class); // blog_posts.title
+
+User::leftJoin('blog_posts', 'users.id', '=', User::foreignFrom(BlogPost::class));
+
 // A path that starts with the model, for use on another model that has a relation to it
 User::relationTo('roles');                // user.roles
 User::relationTo(BlogPost::class);        // user.blogPost
@@ -306,6 +312,8 @@ Post::getModel($table);        // App\Models\Post
 ```
 
 `singular()`, `plural()`, `foreign()`, `relationTo()` and `columnTo()` use the name of the class they are called on, so a subclass gives its own name, and a morph alias is not used. They do not create the model or read the database, so they are safe in a migration. `foreign()` always ends with `_id`, even for a model with another primary key, unlike Eloquent's `getForeignKey()`. In a path, a class becomes a singular name and any other string is kept as it is, so write a plural relation as a string (`'roles'`). A prefixed relation is written as `[prefix => model class]`, see [`Convert`](#migration-helpers).
+
+`foreignFrom()` and `snakeTo()` return a `string`, so the query quotes it and adds the table prefix of the connection. The table comes from the name of the given class, not from the `$table` of the model, so write the column by hand for a model with another table. `snakeTo()` does not use the class it is called on. Every class given is one more part of the path, so give one class for a column of a join.
 
 ## IDE helper
 
