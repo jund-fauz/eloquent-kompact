@@ -85,6 +85,17 @@ trait AdditionalQueries
     }
 
     /**
+     * match(), with every column of the conditions being dirty
+     *
+     * @param array<string, array|mixed> $conditions Column name => expected value, or a list of allowed values
+     * @return bool False if no condition is given
+     */
+    public function matchAndDirty(array $conditions): bool
+    {
+        return array_all(array_keys($conditions), fn ($column) => $this->isDirty($column)) && $this->match($conditions);
+    }
+
+    /**
      * Shorthand for: $this->{$columnName} === $value
      *
      * The attribute is compared after casting, so the value must have the cast type,
@@ -100,9 +111,19 @@ trait AdditionalQueries
         return $this->{$columnName} === $value;
     }
 
+    public function sameWithAndDirty(string $columnName, mixed $value): bool
+    {
+        return $this->isDirty($columnName) && $this->sameWith($columnName, $value);
+    }
+
     public function notSameWith(string $columnName, mixed $value): bool
     {
         return $this->{$columnName} !== $value;
+    }
+
+    public function notSameWithAndDirty(string $columnName, mixed $value): bool
+    {
+        return $this->isDirty($columnName) && $this->notSameWith($columnName, $value);
     }
 
     public function sameWithOther(Model $other, string ...$columns): bool
@@ -114,6 +135,15 @@ trait AdditionalQueries
         return array_reduce($columns, fn ($acc, string $column) => $acc && $this->sameWith($column, $other->{$column}), true);
     }
 
+    public function sameWithOtherAndDirty(Model $other, string ...$columns): bool
+    {
+        if (empty($columns)) {
+            return false;
+        }
+
+        return array_reduce($columns, fn ($acc, string $column) => $acc && $this->sameWithAndDirty($column, $other->{$column}), true);
+    }
+
     public function sameWithOtherOr(Model $other, string ...$columns): bool
     {
         if (empty($columns)) {
@@ -121,6 +151,15 @@ trait AdditionalQueries
         }
 
         return array_reduce($columns, fn ($acc, string $column) => $acc || $this->sameWith($column, $other->{$column}), false);
+    }
+
+    public function sameWithOtherOrAndDirty(Model $other, string ...$columns): bool
+    {
+        if (empty($columns)) {
+            return false;
+        }
+
+        return array_reduce($columns, fn ($acc, string $column) => $acc || $this->sameWithAndDirty($column, $other->{$column}), false);
     }
 
     public function notSameWithOther(Model $other, string ...$columns): bool
@@ -132,6 +171,15 @@ trait AdditionalQueries
         return array_reduce($columns, fn ($acc, string $column) => $acc && $this->notSameWith($column, $other->{$column}), true);
     }
 
+    public function notSameWithOtherAndDirty(Model $other, string ...$columns): bool
+    {
+        if (empty($columns)) {
+            return false;
+        }
+
+        return array_reduce($columns, fn ($acc, string $column) => $acc && $this->notSameWithAndDirty($column, $other->{$column}), true);
+    }
+
     public function notSameWithOtherOr(Model $other, string ...$columns): bool
     {
         if (empty($columns)) {
@@ -141,9 +189,23 @@ trait AdditionalQueries
         return array_reduce($columns, fn ($acc, string $column) => $acc || $this->notSameWith($column, $other->{$column}), false);
     }
 
+    public function notSameWithOtherOrAndDirty(Model $other, string ...$columns): bool
+    {
+        if (empty($columns)) {
+            return false;
+        }
+
+        return array_reduce($columns, fn ($acc, string $column) => $acc || $this->notSameWithAndDirty($column, $other->{$column}), false);
+    }
+
     public function isMorphModelSame(string $morphName, string $modelClass): bool
     {
         return $this->sameWith(Creator::type($morphName), Relation::getMorphAlias($modelClass));
+    }
+
+    public function isMorphModelSameAndDirty(string $morphName, string $modelClass): bool
+    {
+        return $this->sameWithAndDirty(Creator::type($morphName), Relation::getMorphAlias($modelClass));
     }
 
     public function getMany(string ...$columns): array
@@ -216,9 +278,19 @@ trait AdditionalQueries
         return empty($this->{$column});
     }
 
+    public function isEmptyAndDirty(string $column): bool
+    {
+        return $this->isDirty($column) && $this->isEmpty($column);
+    }
+
     public function isFilled(string $column): bool
     {
         return filled($this->{$column});
+    }
+
+    public function isFilledAndDirty(string $column): bool
+    {
+        return $this->isDirty($column) && $this->isFilled($column);
     }
 
     public function isNull(string $column): bool
@@ -226,9 +298,19 @@ trait AdditionalQueries
         return is_null($this->{$column});
     }
 
+    public function isNullAndDirty(string $column): bool
+    {
+        return $this->isDirty($column) && $this->isNull($column);
+    }
+
     public function isNotNull(string $column): bool
     {
         return is_not_null($this->{$column});
+    }
+
+    public function isNotNullAndDirty(string $column): bool
+    {
+        return $this->isDirty($column) && is_not_null($this->{$column});
     }
 
     public static function randomId(...$filter): ?int
