@@ -7,6 +7,24 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [0.86.0] - 2026-11-04
+
+### Added
+
+- `getRelVia(...$relationClasses)`: the related model of nested relations, like `getVia()` without a column. It takes prefixed relations too.
+
+  ```php
+  $comment->getRelVia(Post::class, User::class); // $comment->post?->user
+  ```
+
+### Changed
+
+- `getManyVia()` is no longer `@experimental`.
+
+### Tests
+
+- Added unit tests for `getRelVia()`.
+
 ## [0.85.0] - 2026-11-04
 
 ### Added
@@ -1719,7 +1737,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - `RawQuery` static helpers for raw SQL expressions.
 - Translations for `en` and `id`.
 
-[Unreleased]: https://github.com/jund-fauz/eloquent-kompact/compare/v0.85.0...HEAD
+[Unreleased]: https://github.com/jund-fauz/eloquent-kompact/compare/v0.86.0...HEAD
+[0.86.0]: https://github.com/jund-fauz/eloquent-kompact/compare/v0.85.0...v0.86.0
 [0.85.0]: https://github.com/jund-fauz/eloquent-kompact/compare/v0.84.0...v0.85.0
 [0.84.0]: https://github.com/jund-fauz/eloquent-kompact/compare/v0.83.0...v0.84.0
 [0.83.0]: https://github.com/jund-fauz/eloquent-kompact/compare/v0.82.0...v0.83.0
