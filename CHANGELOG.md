@@ -7,6 +7,26 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [0.90.0] - 2026-11-04
+
+### Added
+
+- `assign()` also takes an array of `[column => value]`.
+
+  ```php
+  $order->assign(['status' => 'paid', 'note' => '-']);
+  ```
+
+### Changed
+
+- **Breaking:** `isEmpty()`, `isEmptyAndDirty()`, `assignIfEmpty()` and `assignIfEmptyFrom()` are renamed to `isBlank()`, `isBlankAndDirty()`, `assignIfBlank()` and `assignIfBlankFrom()`.
+- **Breaking:** these methods use Laravel's `blank()` instead of PHP's `empty()`, so `0`, `'0'` and `false` are no longer replaced, and a string of only spaces now is. `isBlank()` is now the opposite of `isFilled()`.
+- The checks on lists inside the package use `blank()` too, with the same result.
+
+### Tests
+
+- Updated the tests of the renamed methods, and added tests for `0`, `'0'` and `false`, a string of only spaces and `assign()` with an array.
+
 ## [0.89.0] - 2026-11-04
 
 ### Added
@@ -1796,7 +1816,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - `RawQuery` static helpers for raw SQL expressions.
 - Translations for `en` and `id`.
 
-[Unreleased]: https://github.com/jund-fauz/eloquent-kompact/compare/v0.89.0...HEAD
+[Unreleased]: https://github.com/jund-fauz/eloquent-kompact/compare/v0.90.0...HEAD
+[0.90.0]: https://github.com/jund-fauz/eloquent-kompact/compare/v0.89.0...v0.90.0
 [0.89.0]: https://github.com/jund-fauz/eloquent-kompact/compare/v0.88.0...v0.89.0
 [0.88.0]: https://github.com/jund-fauz/eloquent-kompact/compare/v0.87.0...v0.88.0
 [0.87.0]: https://github.com/jund-fauz/eloquent-kompact/compare/v0.86.0...v0.87.0
