@@ -7,6 +7,22 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [0.88.0] - 2026-11-04
+
+### Added
+
+- `foreignFrom(...$modelClasses)`: the foreign key column of the model on another table.
+- `snakeTo($column, ...$modelClasses)`: a column on another table.
+
+  ```php
+  User::foreignFrom(BlogPost::class);      // blog_posts.user_id
+  User::snakeTo('title', BlogPost::class); // blog_posts.title
+  ```
+
+### Tests
+
+- Added unit tests for `foreignFrom()` and `snakeTo()`, including a join with a table prefix.
+
 ## [0.87.0] - 2026-11-04
 
 ### Added
@@ -1751,7 +1767,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - `RawQuery` static helpers for raw SQL expressions.
 - Translations for `en` and `id`.
 
-[Unreleased]: https://github.com/jund-fauz/eloquent-kompact/compare/v0.87.0...HEAD
+[Unreleased]: https://github.com/jund-fauz/eloquent-kompact/compare/v0.88.0...HEAD
+[0.88.0]: https://github.com/jund-fauz/eloquent-kompact/compare/v0.87.0...v0.88.0
 [0.87.0]: https://github.com/jund-fauz/eloquent-kompact/compare/v0.86.0...v0.87.0
 [0.86.0]: https://github.com/jund-fauz/eloquent-kompact/compare/v0.85.0...v0.86.0
 [0.85.0]: https://github.com/jund-fauz/eloquent-kompact/compare/v0.84.0...v0.85.0
