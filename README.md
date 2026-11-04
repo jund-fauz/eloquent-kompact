@@ -226,6 +226,12 @@ $order->isFilledAndDirty('note');
 $order->isNullAndDirty('note');
 $order->isNotNullAndDirty('note');
 
+// Whether columns were changed by the last save
+$order->wereChanged('status', 'note');    // every column was changed
+$order->wereNotChanged('status', 'note'); // every column was not changed
+$order->wereChanged();                    // any column was changed
+$order->wereNotChanged();                 // no column was changed
+
 // The id of a random row, or null if there is none
 Order::randomId();
 Order::randomId('status', 'paid'); // the arguments of where()
@@ -236,6 +242,8 @@ Order::randomId('status', 'paid'); // the arguments of where()
 `match()` and the `sameWithOther()` family return `false` when no condition or column is given. `notSameWithOther()` is not the opposite of `sameWithOther()`: that is `notSameWithOtherOr()`. Objects such as the Carbon dates of `datetime` columns are compared by identity, so two models never have the same date. An array value matches if the attribute equals one of its items, unless the attribute itself is an array.
 
 The `AndDirty` methods use Eloquent's `isDirty()` on each column, so `sameWithOtherOrAndDirty()` needs one column that is both dirty and the same, and `sameWithOtherAndDirty()` and `matchAndDirty()` are `false` if one of the columns is not dirty. Every attribute set on a new model is dirty. Changed columns are still dirty in the `saving`, `saved`, `updating`, `updated`, `creating` and `created` events, and nothing is dirty once `save()` has returned.
+
+`wereChanged()` and `wereNotChanged()` use Eloquent's `wasChanged()` on each column. Unlike `wasChanged('a', 'b')`, which needs one changed column, `wereChanged('a', 'b')` needs all of them. `wereNotChanged()` is not the opposite of `wereChanged()` when some columns were changed and others were not: both are `false`. Like `wasChanged()`, they see no change right after `create()`, and a `save()` without changes keeps the changes of the last update.
 
 `randomId()` reads the `id` column, so it does not work on a model with another primary key.
 
