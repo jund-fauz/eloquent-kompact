@@ -2,8 +2,6 @@
 
 namespace JundFauz\EloquentKompact\Model\Traits;
 
-use Illuminate\Database\Eloquent\Attributes\Scope;
-use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\Relation;
 use JundFauz\EloquentKompact\Column\Convert;
@@ -30,59 +28,9 @@ trait AdditionalQueries
         }
     }
 
-    #[Scope]
-    protected function whereSameWith(Builder $query, Model $other, mixed ...$columns): Builder
-    {
-        foreach ($columns as $column) {
-            $query->where($column, $other->{$column});
-        }
-
-        return $query;
-    }
-
-    #[Scope]
-    protected function whereMorphType(Builder $query, string $morphName, string $modelClass): Builder
-    {
-        return $query->where(Creator::type($morphName), Relation::getMorphAlias($modelClass));
-    }
-
-    #[Scope]
-    protected function whereMorphTypeNot(Builder $query, string $morphName, string $modelClass): Builder
-    {
-        return $query->whereNot(Creator::type($morphName), Relation::getMorphAlias($modelClass));
-    }
-
-    #[Scope]
-    protected function whereInRelation(Builder $query, string $relation, string $columnName, array $valuesToCompare): Builder
-    {
-        return $query->whereHas($relation, fn (Builder $query) => $query->whereIn($columnName, $valuesToCompare));
-    }
-
     public function getOr(string ...$columnNames)
     {
         return array_reduce($columnNames, fn ($acc, $column) => $acc ?? $this?->{$column});
-    }
-
-    /**
-     * @deprecated since 0.78.0, use getVia instead
-     * @param string $columnName
-     * @param string ...$relationClasses
-     * @return mixed
-     */
-    public function getDataFromRelation(string $columnName = '', string ...$relationClasses): mixed
-    {
-        return $this->getVia($columnName, ...$relationClasses);
-    }
-
-    /**
-     * @deprecated since 0.78.0, use getManyVia instead
-     * @param array $columnNames
-     * @param string ...$relationClasses
-     * @return array
-     */
-    public function getDatasFromRelation(array $columnNames, string ...$relationClasses): array
-    {
-        return $this->getManyVia($columnNames, ...$relationClasses);
     }
 
     public function getVia(string $columnName = '', string ...$relationClasses)
@@ -282,5 +230,15 @@ trait AdditionalQueries
     public function isNotNull(string $column): bool
     {
         return is_not_null($this->{$column});
+    }
+
+    public static function randomId(...$filter): ?int
+    {
+        if (count($filter)) {
+            $result = static::where(...$filter)->inRandomOrder();
+        } else {
+            $result = static::inRandomOrder();
+        }
+        return $result->value('id');
     }
 }

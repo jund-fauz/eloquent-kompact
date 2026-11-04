@@ -24,6 +24,13 @@ class StaticHTest extends TestCase
     }
 
     #[Test]
+    public function it_returns_the_base_name_of_the_class(): void
+    {
+        $this->assertSame('StaticHPost', StaticHPost::baseName());
+        $this->assertSame('StaticHAdminPost', StaticHAdminPost::baseName());
+    }
+
+    #[Test]
     public function it_returns_the_class_as_morph_class(): void
     {
         $this->assertSame(StaticHPost::class, StaticHPost::morphClass());

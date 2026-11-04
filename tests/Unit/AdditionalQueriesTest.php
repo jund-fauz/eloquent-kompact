@@ -12,6 +12,7 @@ use Illuminate\Database\QueryException;
 use Illuminate\Database\Schema\Blueprint;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Schema;
+use JundFauz\EloquentKompact\Model\Builder;
 use JundFauz\EloquentKompact\Model\Traits\AdditionalQueries;
 use JundFauz\EloquentKompact\Tests\TestCase;
 use PHPUnit\Framework\Attributes\Test;
@@ -404,6 +405,31 @@ class AdditionalQueriesTest extends TestCase
     }
 
     #[Test]
+    public function it_returns_a_random_id(): void
+    {
+        $this->createWhereInRelationTables();
+
+        $this->assertContains(WhereInAuthor::randomId(), [1, 2, 3]);
+    }
+
+    #[Test]
+    public function it_returns_a_random_id_of_the_filtered_rows(): void
+    {
+        $this->createWhereInRelationTables();
+
+        $this->assertSame(2, WhereInAuthor::randomId('id', 2));
+        $this->assertSame(3, WhereInAuthor::randomId('id', '>', 2));
+    }
+
+    #[Test]
+    public function it_returns_null_as_the_random_id_without_rows(): void
+    {
+        $this->createWhereInRelationTables();
+
+        $this->assertNull(WhereInAuthor::randomId('id', 99));
+    }
+
+    #[Test]
     public function it_compacts_the_given_columns(): void
     {
         $comment = MorphComment::find(1);
@@ -467,6 +493,8 @@ class MorphComment extends Model
 {
     use AdditionalQueries;
 
+    protected static string $builder = Builder::class;
+
     protected $table = 'comments';
 }
 
@@ -477,6 +505,8 @@ class MorphVideo extends Model {}
 class WhereInAuthor extends Model
 {
     use AdditionalQueries;
+
+    protected static string $builder = Builder::class;
 
     protected $table = 'authors';
 
@@ -500,6 +530,8 @@ class WhereInBook extends Model
 {
     use AdditionalQueries;
 
+    protected static string $builder = Builder::class;
+
     protected $table = 'books';
 
     public function author(): BelongsTo
@@ -516,6 +548,8 @@ class WhereInTag extends Model
 class WhereInNote extends Model
 {
     use AdditionalQueries;
+
+    protected static string $builder = Builder::class;
 
     protected $table = 'notes';
 

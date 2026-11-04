@@ -20,6 +20,11 @@ trait StaticH
         return (new static)->getMorphClass();
     }
 
+    public static function baseName(): string
+    {
+        return class_basename(static::class);
+    }
+
     public static function singular(): string
     {
         return Convert::modelToRelation(static::class);

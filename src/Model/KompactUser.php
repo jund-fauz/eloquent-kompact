@@ -10,4 +10,5 @@ abstract class KompactUser extends User
     use Kompact;
 
     protected static string $collectionClass = Collection::class;
+    protected static string $builder = Builder::class;
 }

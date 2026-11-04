@@ -13,6 +13,7 @@ abstract class KompactPivot extends Pivot
     use AdditionalQueries, AutoRelation, StaticH, SoftDeletes;
 
     protected static string $collectionClass = Collection::class;
+    protected static string $builder = Builder::class;
 
     public static function flushKompactCache(): void
     {

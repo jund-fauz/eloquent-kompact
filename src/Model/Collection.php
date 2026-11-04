@@ -19,4 +19,9 @@ class Collection extends \Illuminate\Database\Eloquent\Collection
         }
         return $result;
     }
+
+    public function toBase(): \JundFauz\EloquentKompact\Builder\Collection
+    {
+        return new \JundFauz\EloquentKompact\Builder\Collection($this);
+    }
 }

@@ -114,22 +114,9 @@ class GetViaTest extends TestCase
     }
 
     #[Test]
-    public function it_keeps_the_deprecated_names(): void
-    {
-        $comment = GetViaComment::find(1);
-
-        $this->assertSame('Ana', $comment->getDataFromRelation('name', GetViaPost::class, GetViaUser::class));
-        $this->assertSame($comment, $comment->getDataFromRelation());
-        $this->assertSame(
-            ['Ana', 'ana@example.com'],
-            $comment->getDatasFromRelation(['name', 'email'], GetViaPost::class, GetViaUser::class),
-        );
-    }
-
-    #[Test]
     public function it_has_the_methods_on_the_kompact_models(): void
     {
-        foreach (['getVia', 'getManyVia', 'getDataFromRelation', 'getDatasFromRelation'] as $method) {
+        foreach (['getVia', 'getManyVia'] as $method) {
             $this->assertTrue(method_exists(KompactModel::class, $method), "KompactModel::$method");
             $this->assertTrue(method_exists(KompactPivot::class, $method), "KompactPivot::$method");
         }

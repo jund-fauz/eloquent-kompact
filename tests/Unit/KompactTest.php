@@ -12,8 +12,10 @@ use Illuminate\Database\Schema\Blueprint;
 use Illuminate\Support\Collection as BaseCollection;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Schema;
+use JundFauz\EloquentKompact\Builder\Collection as BuilderCollection;
 use JundFauz\EloquentKompact\Builder\Str;
 use JundFauz\EloquentKompact\Column\ColumnListing;
+use JundFauz\EloquentKompact\Model\Builder;
 use JundFauz\EloquentKompact\Model\Collection;
 use JundFauz\EloquentKompact\Model\KompactModel;
 use JundFauz\EloquentKompact\Model\KompactPivot;
@@ -326,13 +328,75 @@ class KompactTest extends TestCase
     }
 
     #[Test]
-    public function it_gets_a_base_collection_from_results_that_are_not_models(): void
+    public function it_gets_a_builder_collection_from_results_that_are_not_models(): void
     {
         $parents = KompactTestParent::all();
 
-        $this->assertSame(BaseCollection::class, get_class($parents->pluck('name')));
-        $this->assertSame(BaseCollection::class, get_class($parents->map(fn (KompactTestParent $parent) => $parent->name)));
-        $this->assertSame(BaseCollection::class, get_class(KompactTestParent::query()->pluck('name')));
+        foreach ([
+            $parents->pluck('name'),
+            $parents->keys(),
+            $parents->map(fn (KompactTestParent $parent) => $parent->name),
+            $parents->mapWithKeys(fn (KompactTestParent $parent) => [$parent->id => $parent->name]),
+            $parents->flatten(),
+            $parents->collapse(),
+            $parents->zip([1, 2]),
+            $parents->pad(3, 1),
+            $parents->countBy('name'),
+            $parents->partition(fn (KompactTestParent $parent) => $parent->id === 1),
+            KompactTestParent::query()->pluck('name'),
+        ] as $result) {
+            $this->assertSame(BuilderCollection::class, get_class($result));
+        }
+    }
+
+    #[Test]
+    public function it_keeps_the_kompact_collection_for_results_that_are_models(): void
+    {
+        $parents = KompactTestParent::all();
+
+        $this->assertInstanceOf(Collection::class, $parents->filter());
+        $this->assertInstanceOf(Collection::class, $parents->map(fn (KompactTestParent $parent) => $parent));
+        $this->assertInstanceOf(Collection::class, $parents->partition(fn (KompactTestParent $parent) => $parent->id === 1)[0]);
+    }
+
+    #[Test]
+    public function it_gets_a_str_from_the_plucked_values(): void
+    {
+        $names = KompactTestParent::all()->pluck('name');
+
+        $this->assertInstanceOf(Str::class, $names->get(0));
+        $this->assertSame('a', $names->first());
+    }
+
+    #[Test]
+    public function it_leaves_the_pluck_of_the_query_builder_as_it_is(): void
+    {
+        $this->assertSame(BaseCollection::class, get_class(DB::table('kompact_parents')->pluck('name')));
+    }
+
+    #[Test]
+    public function it_loads_nested_relations_through_the_builder_collection(): void
+    {
+        $parents = KompactTestParent::all()->load('kompactTestChildren.kompactTestParent');
+
+        $this->assertCount(2, $parents->first()->kompactTestChildren);
+        $this->assertSame(1, $parents->first()->kompactTestChildren->first()->kompactTestParent->id);
+    }
+
+    public static function builderModels(): array
+    {
+        return [
+            'model' => [KompactTestParent::class],
+            'user' => [KompactTestUser::class],
+            'pivot' => [KompactTestPivot::class],
+        ];
+    }
+
+    #[Test]
+    #[DataProvider('builderModels')]
+    public function it_uses_the_kompact_builder(string $model): void
+    {
+        $this->assertInstanceOf(Builder::class, $model::query());
     }
 }
 
