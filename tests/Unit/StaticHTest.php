@@ -4,7 +4,10 @@ namespace JundFauz\EloquentKompact\Tests\Unit;
 
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\Relation;
+use Illuminate\Database\Schema\Blueprint;
 use Illuminate\Support\Facades\DB;
+use JundFauz\EloquentKompact\Query\Operator;
+use JundFauz\EloquentKompact\Query\RawQuery;
 use JundFauz\EloquentKompact\Model\Traits\StaticH;
 use JundFauz\EloquentKompact\Tests\TestCase;
 use PHPUnit\Framework\Attributes\Test;
@@ -27,26 +30,59 @@ class StaticHTest extends TestCase
     #[Test]
     public function it_returns_the_foreign_key_on_another_table(): void
     {
-        $this->assertSame('static_h_categories.static_h_post_id', StaticHPost::foreignFrom(StaticHCategory::class));
-        $this->assertSame('static_h_categories.static_h_admin_post_id', StaticHAdminPost::foreignFrom(StaticHCategory::class));
-        $this->assertSame('latest_static_h_categories.static_h_post_id', StaticHPost::foreignFrom(['latest' => StaticHCategory::class]));
-        $this->assertSame('static_h_post_id', StaticHPost::foreignFrom());
+        $this->assertInstanceOf(RawQuery::class, StaticHPost::foreignFrom(StaticHCategory::class));
+        $this->assertSame('"static_h_categories"."static_h_post_id"', StaticHPost::foreignFrom(StaticHCategory::class)->build());
+        $this->assertSame('"static_h_categories"."static_h_admin_post_id"', StaticHAdminPost::foreignFrom(StaticHCategory::class)->build());
+        $this->assertSame('"static_h_categories"."from_static_h_post_id"', StaticHPost::foreignFrom(StaticHCategory::class, 'from')->build());
     }
 
     #[Test]
     public function it_returns_a_column_on_another_table(): void
     {
-        $this->assertSame('static_h_categories.name', StaticHPost::snakeTo('name', StaticHCategory::class));
-        $this->assertSame('latest_static_h_categories.name', StaticHPost::snakeTo('name', ['latest' => StaticHCategory::class]));
-        $this->assertSame('static_h_categories', StaticHPost::snakeTo('', StaticHCategory::class));
-        $this->assertSame('name', StaticHPost::snakeTo('name'));
+        $this->assertInstanceOf(RawQuery::class, StaticHPost::qualify('name'));
+        $this->assertSame('"static_h_posts"."name"', StaticHPost::qualify('name')->build());
+        $this->assertSame('"static_h_admin_posts"."name"', StaticHAdminPost::qualify('name')->build());
+        $this->assertSame('"static_h_posts".*', StaticHPost::qualify('*')->build());
+        $this->assertSame('"other"."name"', StaticHPost::qualify('other.name')->build());
+        $this->assertSame('"static_h_posts"."name" as "n"', StaticHPost::qualify('name as n')->build());
     }
 
     #[Test]
-    public function it_uses_the_class_name_and_not_the_table_of_the_model(): void
+    public function it_continues_a_raw_query_chain_from_a_qualified_column(): void
     {
-        $this->assertSame('static_h_custom_tables.static_h_post_id', StaticHPost::foreignFrom(StaticHCustomTable::class));
-        $this->assertSame('static_h_custom_tables.name', StaticHPost::snakeTo('name', StaticHCustomTable::class));
+        $this->assertSame(
+            'SUM(COALESCE("static_h_posts"."qty", 0)) AS total',
+            StaticHPost::qualify('qty')->zeroIfNull()->sum()->as('total')->build(),
+        );
+    }
+
+    #[Test]
+    public function it_quotes_for_the_connection_of_the_model(): void
+    {
+        config(['database.connections.static_h_mysql' => ['driver' => 'mysql', 'database' => 'x', 'prefix' => '']]);
+
+        $this->assertSame('`static_h_mysql_posts`.`name`', StaticHMysqlPost::qualify('name')->build());
+        $this->assertSame('`static_h_mysql_posts`.`static_h_post_id`', StaticHPost::foreignFrom(StaticHMysqlPost::class)->build());
+    }
+
+    #[Test]
+    public function it_finds_the_model_with_or_without_a_trailing_backslash_in_the_config(): void
+    {
+        $blueprint = $this->createStub(Blueprint::class);
+        $blueprint->method('getTable')->willReturn('static_h_posts');
+
+        foreach ([__NAMESPACE__, __NAMESPACE__ . '\\'] as $namespace) {
+            config(['eloquent-kompact.path.model' => $namespace]);
+
+            $this->assertSame(StaticHPost::class, StaticHPost::getModel($blueprint));
+        }
+    }
+
+    #[Test]
+    public function it_uses_the_table_of_the_model(): void
+    {
+        $this->assertSame('"custom"."static_h_post_id"', StaticHPost::foreignFrom(StaticHCustomTable::class)->build());
+        $this->assertSame('"custom"."name"', StaticHCustomTable::qualify('name')->build());
     }
 
     #[Test]
@@ -63,6 +99,10 @@ class StaticHTest extends TestCase
 
         try {
             $this->assertStringEndsWith('= "app_static_h_categories"."static_h_post_id"', $join());
+            $this->assertStringEndsWith(
+                'having SUM("app_static_h_posts"."qty") > 1',
+                StaticHPost::query()->havingRaw(StaticHPost::qualify('qty')->sum()->compare('1', Operator::MoreThan))->toSql(),
+            );
         } finally {
             $connection->setTablePrefix('');
         }
@@ -257,6 +297,13 @@ class StaticHCustomTable extends Model
     use StaticH;
 
     protected $table = 'custom';
+}
+
+class StaticHMysqlPost extends Model
+{
+    use StaticH;
+
+    protected $connection = 'static_h_mysql';
 }
 
 class StaticHCategory extends Model

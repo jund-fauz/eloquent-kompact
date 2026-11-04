@@ -209,16 +209,13 @@ class RawQuery extends Builder implements Expression
         return $this->set("MAX($this)");
     }
 
-    public static function relations(string $columnName, ...$relationClasses): static
+    public static function relations(string $columnName, string|array $relationClass): static
     {
-        $result = Str::of();
-        foreach ($relationClasses as $relationClass) {
-            $result = $result->add(Convert::modelToRelation($relationClass, true, true), '.');
-        }
+        $result = Str::of(Convert::modelToRelation($relationClass, true, true));
 
         return ($columnName
-            ? $result->add($columnName)
-            : $result->substr(0, -1))
+            ? $result->add('.', $columnName)
+            : $result)
             ->asRawQuery();
     }
 

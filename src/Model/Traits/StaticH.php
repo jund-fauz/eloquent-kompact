@@ -2,12 +2,12 @@
 
 namespace JundFauz\EloquentKompact\Model\Traits;
 
+use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Schema\Blueprint;
 use JundFauz\EloquentKompact\Builder\Str;
 use JundFauz\EloquentKompact\Column\Convert;
 use JundFauz\EloquentKompact\Query\RawQuery;
 use JundFauz\EloquentKompact\Relation\Arrange;
-use const JundFauz\EloquentKompact\NAMESPACE_DELIMITER;
 
 trait StaticH
 {
@@ -51,14 +51,14 @@ trait StaticH
         return Convert::modelToColumn(static::class, $prefix);
     }
 
-    public static function foreignFrom(string|array ...$modelClasses): string
+    public static function foreignFrom(string $modelClass, ?string $foreignPrefix = null): RawQuery
     {
-        return (string) RawQuery::relations(static::foreign(), ...$modelClasses);
+        return self::wrapColumn(new $modelClass, static::foreign($foreignPrefix));
     }
 
-    public static function snakeTo(string $column, string|array ...$modelClasses): string
+    public static function qualify(string $column): RawQuery
     {
-        return (string) RawQuery::relations($column, ...$modelClasses);
+        return self::wrapColumn(new static, $column);
     }
 
     public static function getModel(Blueprint $column): ?string
@@ -67,8 +67,15 @@ trait StaticH
         $modelClass = (string) Str::of($tableName)
             ->singular()
             ->pascal()
-            ->addAtStart(config('eloquent-kompact.path.model'), NAMESPACE_DELIMITER);
+            ->addNamespaceAtStart(config('eloquent-kompact.path.model'));
 
         return class_exists($modelClass) ? $modelClass : null;
+    }
+
+    private static function wrapColumn(Model $model, string $column): RawQuery
+    {
+        return RawQuery::create(
+            $model->getConnection()->getQueryGrammar()->wrap($model->qualifyColumn($column))
+        );
     }
 }

@@ -254,9 +254,9 @@ SELECT * FROM t",
     #[Test]
     public function it_builds_relation_paths(): void
     {
-        $this->assertSame('users.blog_posts.title', RawQuery::relations('title', 'App\Models\User', 'App\Models\BlogPost')->build());
+        $this->assertSame('users.title', RawQuery::relations('title', 'App\Models\User')->build());
         $this->assertSame('users', RawQuery::relations('', 'App\Models\User')->build());
-        $this->assertSame('users.latest_blog_posts.title', RawQuery::relations('title', 'App\Models\User', ['latest' => 'App\Models\BlogPost'])->build());
+        $this->assertSame('latest_blog_posts.title', RawQuery::relations('title', ['latest' => 'App\Models\BlogPost'])->build());
         $this->assertInstanceOf(RawQuery::class, RawQuery::relations('title', 'App\Models\User'));
         $this->assertSame('COUNT(users.title)', RawQuery::relations('title', 'App\Models\User')->count()->build());
     }
