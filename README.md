@@ -188,16 +188,17 @@ $user->compact('name', 'email'); // ['name' => 'Ana', 'email' => 'ana@example.co
 
 // Set attributes, without saving
 $order->assign('status', 'paid');
+$order->assign(['status' => 'paid', 'note' => '-']);
 $order->assignFrom($otherOrder, 'tenant_id', 'branch_id');
-$order->assignIfEmpty('note', '-');
-$order->assignIfEmpty(['note' => '-', 'status' => 'new']);
-$order->assignIfEmptyFrom($otherOrder, 'tenant_id', 'branch_id');
+$order->assignIfBlank('note', '-');
+$order->assignIfBlank(['note' => '-', 'status' => 'new']);
+$order->assignIfBlankFrom($otherOrder, 'tenant_id', 'branch_id');
 $order->assignIfNull('note', '-');
 $order->assignIfNull(['note' => '-', 'status' => 'new']);
 $order->assignIfNullFrom($otherOrder, 'tenant_id', 'branch_id');
 
-// Whether an attribute is empty, filled or null
-$order->isEmpty('note');
+// Whether an attribute is blank, filled or null
+$order->isBlank('note');
 $order->isFilled('note');
 $order->isNull('note');
 $order->isNotNull('note');
@@ -220,7 +221,7 @@ $user->notSameWithOtherAndDirty($otherUser, 'tenant_id', 'branch_id');   // ever
 $user->notSameWithOtherOrAndDirty($otherUser, 'tenant_id', 'branch_id'); // at least one column is different and dirty
 $user->matchAndDirty(['role' => ['admin', 'editor'], 'active_is' => true]);
 $comment->isMorphModelSameAndDirty('commentable', Post::class);
-$order->isEmptyAndDirty('note');
+$order->isBlankAndDirty('note');
 $order->isFilledAndDirty('note');
 $order->isNullAndDirty('note');
 $order->isNotNullAndDirty('note');
@@ -230,7 +231,7 @@ Order::randomId();
 Order::randomId('status', 'paid'); // the arguments of where()
 ```
 
-`assignIfEmpty()`, `assignIfEmptyFrom()` and `isEmpty()` use PHP's `empty()`, so `null`, `''`, `'0'`, `0`, `false` and `[]` count as empty. `assignIfNull()` and `assignIfNullFrom()` only replace `null`. `isFilled()` uses Laravel's `filled()`, so `0`, `'0'` and `false` are filled, while `null`, blank strings and empty arrays are not.
+`assignIfBlank()`, `assignIfBlankFrom()` and `isBlank()` use Laravel's `blank()`, so `null`, blank strings (also `'   '`) and empty arrays count as blank, while `0`, `'0'` and `false` do not. `isFilled()` uses `filled()`, its opposite. `assignIfNull()` and `assignIfNullFrom()` only replace `null`.
 
 `match()` and the `sameWithOther()` family return `false` when no condition or column is given. `notSameWithOther()` is not the opposite of `sameWithOther()`: that is `notSameWithOtherOr()`. Objects such as the Carbon dates of `datetime` columns are compared by identity, so two models never have the same date. An array value matches if the attribute equals one of its items, unless the attribute itself is an array.
 
