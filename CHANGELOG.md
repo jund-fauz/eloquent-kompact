@@ -7,6 +7,35 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [0.84.0] - 2026-11-04
+
+### Added
+
+- Prefixed relations, written as `[prefix => model class]`, on `Convert::modelToRelation()`, `Arrange::relation()`, `Arrange::relations()`, `Builder\Relation::relation()`, `Builder\Relation::relations()`, `RawQuery::relations()`, `relationTo()`, `columnTo()`, `getVia()` and `getManyVia()`. Another array throws an `InvalidArgumentException`.
+
+  ```php
+  Convert::modelToRelation(['latest' => WorkOrderLedger::class]);       // latestWorkOrderLedger
+  Convert::modelToRelation(['latest' => WorkOrderLedger::class], true, true); // latest_work_order_ledgers
+  Arrange::relation('name', ['latest' => WorkOrderLedger::class]);      // latestWorkOrderLedger.name
+  ```
+
+- `singular(?string $prefix = null)` and `plural(?string $prefix = null)`: the relation name of the model with a prefix, e.g. `WorkOrderLedger::singular('latest')`.
+- `array_key_values($array)`: `[key, value]` of an array with one item, or every key and then every value in one flat list.
+- `array_normalize($list)`: the item of a list with one item, or the list as it is.
+
+### Changed
+
+- **Breaking:** the signatures of `relationTo()`, `columnTo()`, `getVia()`, `getManyVia()`, `singular()` and `plural()` changed for the prefix, so a class that overrides one of them with the old signature gives a fatal error.
+- **Breaking:** `Arrange::relation()` and `Arrange::relations()` only flatten lists now. An array with string keys used to be flattened to its values: with one key it is now a prefixed relation, and with several keys it throws an `InvalidArgumentException`.
+
+### Removed
+
+- **Breaking:** `Helper\Arr::arrange()`, deprecated since 0.35.0. Use `str_concat()`.
+
+### Tests
+
+- Added `ConvertTest`, and unit tests for prefixed relations on `Arrange`, `Builder\Relation`, `RawQuery`, `StaticH`, `getVia()` and `getManyVia()`, and for `array_key_values()` and `array_normalize()`.
+
 ## [0.83.0] - 2026-11-04
 
 ### Added
@@ -1680,7 +1709,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - `RawQuery` static helpers for raw SQL expressions.
 - Translations for `en` and `id`.
 
-[Unreleased]: https://github.com/jund-fauz/eloquent-kompact/compare/v0.83.0...HEAD
+[Unreleased]: https://github.com/jund-fauz/eloquent-kompact/compare/v0.84.0...HEAD
+[0.84.0]: https://github.com/jund-fauz/eloquent-kompact/compare/v0.83.0...v0.84.0
 [0.83.0]: https://github.com/jund-fauz/eloquent-kompact/compare/v0.82.0...v0.83.0
 [0.82.0]: https://github.com/jund-fauz/eloquent-kompact/compare/v0.81.0...v0.82.0
 [0.81.0]: https://github.com/jund-fauz/eloquent-kompact/compare/v0.80.0...v0.81.0
