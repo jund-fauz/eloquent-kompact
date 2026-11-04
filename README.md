@@ -211,6 +211,20 @@ $user->notSameWithOther($otherUser, 'tenant_id', 'branch_id');   // every column
 $user->notSameWithOtherOr($otherUser, 'tenant_id', 'branch_id'); // at least one column is different
 $user->match(['role' => ['admin', 'editor'], 'active_is' => true]);
 
+// The same comparisons, for columns that have changed and are not saved yet
+$user->sameWithAndDirty('role', 'admin');
+$user->notSameWithAndDirty('role', 'admin');
+$user->sameWithOtherAndDirty($otherUser, 'tenant_id', 'branch_id');      // every column is the same and dirty
+$user->sameWithOtherOrAndDirty($otherUser, 'tenant_id', 'branch_id');    // at least one column is the same and dirty
+$user->notSameWithOtherAndDirty($otherUser, 'tenant_id', 'branch_id');   // every column is different and dirty
+$user->notSameWithOtherOrAndDirty($otherUser, 'tenant_id', 'branch_id'); // at least one column is different and dirty
+$user->matchAndDirty(['role' => ['admin', 'editor'], 'active_is' => true]);
+$comment->isMorphModelSameAndDirty('commentable', Post::class);
+$order->isEmptyAndDirty('note');
+$order->isFilledAndDirty('note');
+$order->isNullAndDirty('note');
+$order->isNotNullAndDirty('note');
+
 // The id of a random row, or null if there is none
 Order::randomId();
 Order::randomId('status', 'paid'); // the arguments of where()
@@ -219,6 +233,8 @@ Order::randomId('status', 'paid'); // the arguments of where()
 `assignIfEmpty()`, `assignIfEmptyFrom()` and `isEmpty()` use PHP's `empty()`, so `null`, `''`, `'0'`, `0`, `false` and `[]` count as empty. `assignIfNull()` and `assignIfNullFrom()` only replace `null`. `isFilled()` uses Laravel's `filled()`, so `0`, `'0'` and `false` are filled, while `null`, blank strings and empty arrays are not.
 
 `match()` and the `sameWithOther()` family return `false` when no condition or column is given. `notSameWithOther()` is not the opposite of `sameWithOther()`: that is `notSameWithOtherOr()`. Objects such as the Carbon dates of `datetime` columns are compared by identity, so two models never have the same date. An array value matches if the attribute equals one of its items, unless the attribute itself is an array.
+
+The `AndDirty` methods use Eloquent's `isDirty()` on each column, so `sameWithOtherOrAndDirty()` needs one column that is both dirty and the same, and `sameWithOtherAndDirty()` and `matchAndDirty()` are `false` if one of the columns is not dirty. Every attribute set on a new model is dirty. Changed columns are still dirty in the `saving`, `saved`, `updating`, `updated`, `creating` and `created` events, and nothing is dirty once `save()` has returned.
 
 `randomId()` reads the `id` column, so it does not work on a model with another primary key.
 
