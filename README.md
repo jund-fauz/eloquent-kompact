@@ -180,6 +180,9 @@ $comment->getVia('name', Post::class, User::class);                // $comment->
 $comment->getManyVia(['name', 'email'], Post::class, User::class); // [$comment->post?->user?->name, $comment->post?->user?->email]
 $comment->getVia('name', ['latest' => Post::class]);               // $comment->latestPost?->name
 
+// The related model of nested relations, without a column
+$comment->getRelVia(Post::class, User::class);                     // $comment->post?->user
+
 // [column => value] for the given columns, after casting (a missing one is null)
 $user->compact('name', 'email'); // ['name' => 'Ana', 'email' => 'ana@example.com']
 
@@ -217,7 +220,7 @@ Order::randomId('status', 'paid'); // the arguments of where()
 
 `match()` and the `sameWithOther()` family return `false` when no condition or column is given. `notSameWithOther()` is not the opposite of `sameWithOther()`: that is `notSameWithOtherOr()`. Objects such as the Carbon dates of `datetime` columns are compared by identity, so two models never have the same date. An array value matches if the attribute equals one of its items, unless the attribute itself is an array.
 
-`getManyVia()` is `@experimental`. `randomId()` reads the `id` column, so it does not work on a model with another primary key.
+`randomId()` reads the `id` column, so it does not work on a model with another primary key.
 
 ### Builder
 
