@@ -292,9 +292,11 @@ BlogPost::plural('latest');    // latestBlogPosts
 BlogPost::foreign();           // blog_post_id
 BlogPost::foreign('from');     // from_blog_post_id
 
-// A column on another table, for use in a join
-User::foreignFrom(BlogPost::class);      // blog_posts.user_id
-User::snakeTo('title', BlogPost::class); // blog_posts.title
+// A column with its table, for a join or a RawQuery chain
+User::foreignFrom(BlogPost::class);           // "blog_posts"."user_id"
+User::foreignFrom(BlogPost::class, 'author'); // "blog_posts"."author_user_id"
+BlogPost::qualify('title');                   // "blog_posts"."title"
+BlogPost::qualify('qty')->zeroIfNull()->sum()->as('total'); // SUM(COALESCE("blog_posts"."qty", 0)) AS total
 
 User::leftJoin('blog_posts', 'users.id', '=', User::foreignFrom(BlogPost::class));
 
@@ -313,7 +315,7 @@ Post::getModel($table);        // App\Models\Post
 
 `singular()`, `plural()`, `foreign()`, `relationTo()` and `columnTo()` use the name of the class they are called on, so a subclass gives its own name, and a morph alias is not used. They do not create the model or read the database, so they are safe in a migration. `foreign()` always ends with `_id`, even for a model with another primary key, unlike Eloquent's `getForeignKey()`. In a path, a class becomes a singular name and any other string is kept as it is, so write a plural relation as a string (`'roles'`). A prefixed relation is written as `[prefix => model class]`, see [`Convert`](#migration-helpers).
 
-`foreignFrom()` and `snakeTo()` return a `string`, so the query quotes it and adds the table prefix of the connection. The table comes from the name of the given class, not from the `$table` of the model, so write the column by hand for a model with another table. `snakeTo()` does not use the class it is called on. Every class given is one more part of the path, so give one class for a column of a join.
+`foreignFrom()` and `qualify()` return a [`RawQuery`](#rawquery) that is already quoted by the grammar of the connection of the model, with its table prefix, so it stays right in a join and through a chain. They use the `$table` of the model, and a column that already has a table (`other.name`) keeps it. They create the model, without reading the database. An empty column gives invalid SQL. `pluck()` looks for a property with the quotes in its name and fails, so write the column as a string there: `pluck('blog_posts.title')`.
 
 ## IDE helper
 
@@ -394,13 +396,13 @@ RawQuery::create('price')->zeroIfNull()->sum()->as('total_price')->build();
 
 ### Using it with Laravel
 
-`build()` is optional when passing a `RawQuery` to Laravel's raw methods (`selectRaw`, `whereRaw`, `orWhereRaw`, `havingRaw`, `groupByRaw`, `orderByRaw`, `DB::raw`). A `RawQuery` is `Stringable`, so Laravel turns it into SQL when compiling the query:
+`build()` is optional when passing a `RawQuery` to Laravel's raw methods (`selectRaw`, `whereRaw`, `orWhereRaw`, `havingRaw`, `groupByRaw`, `orderByRaw`, `DB::raw`). A `RawQuery` is a query `Expression`, so Laravel turns it into SQL when compiling the query. `havingRaw()` uses it as a string instead, which gives the same SQL because a `RawQuery` is also `Stringable`:
 
 ```php
 Order::selectRaw(RawQuery::create('price')->zeroIfNull()->sum()->as('total_price'))->first();
 ```
 
-A `RawQuery` is also a Laravel query `Expression`, so methods that normally take a column or table name (`select`, `orderBy`, `groupBy`, `DB::table`, `from`, …) use it as raw SQL instead of quoting it:
+Methods that normally take a column or table name (`select`, `orderBy`, `groupBy`, `DB::table`, `from`, …) use it as raw SQL too, so it is not quoted and does not get the table prefix of the connection:
 
 ```php
 DB::table(RawQuery::create('(SELECT customer, SUM(price) AS total FROM orders GROUP BY customer) AS t'))->get();
@@ -514,7 +516,7 @@ In the table, `x` is the current subject.
 | `RawQuery::now()` | `NOW()` |
 | `RawQuery::string($value)` | Escaped string literal, e.g. `'available'`. Without an argument: `''` |
 | `RawQuery::queryConcat(...$expressions)` | Expressions joined with a space |
-| `RawQuery::relations($column, ...$models)` | Relation path, e.g. `relations('name', User::class, Post::class)` → `users.posts.name`; `['latest' => Post::class]` gives `latest_posts` |
+| `RawQuery::relations($column, $model)` | Column with the table named after one model, e.g. `relations('name', BlogPost::class)` → `blog_posts.name`; `['latest' => Post::class]` gives `latest_posts`, and an empty column gives only the table. It is not quoted, does not get the table prefix and does not read the `$table` of the model; use [`qualify()`](#statich) for that |
 | `RawQuery::select($columns, $table)` | `SELECT a, b FROM table`; `$columns` is a string or a list |
 | `RawQuery::recursive($name, $table, $columns, $where, $joinOn, $select = '*', $isUnionAll = true)` | Recursive CTE over a self-referencing table: `WITH RECURSIVE name AS (SELECT columns FROM table WHERE where UNION ALL SELECT table.columns FROM table JOIN name ON joinOn) SELECT select FROM name`, on several lines |
 | `RawQuery::recursiveUnion($name, $anchor, $recursive, $select = '*', $isUnionAll = true)` | `WITH RECURSIVE name AS (anchor UNION ALL recursive) SELECT select FROM name`, on several lines, for any two queries |
