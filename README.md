@@ -106,7 +106,7 @@ Checker::isEnum($table->string('status_enum')); // true
 
 ## KompactModel
 
-Extend `JundFauz\EloquentKompact\Model\KompactModel` instead of Eloquent's `Model` to get every trait below at once. `KompactUser` does the same for the user model, on top of Laravel's `Illuminate\Foundation\Auth\User`. Both only use the `Kompact` trait, which a model with another parent class can use too; such a model has to set `protected static string $collectionClass = Collection::class;` itself to get [`Model\Collection`](#other-helpers). `KompactUser` is abstract. `KompactPivot` does the same for pivot models, with `AdditionalQueries`, `AutoRelation`, `StaticH` and soft deletes.
+Extend `JundFauz\EloquentKompact\Model\KompactModel` instead of Eloquent's `Model` to get every trait below at once. `KompactUser` does the same for the user model, on top of Laravel's `Illuminate\Foundation\Auth\User`. Both only use the `Kompact` trait, which a model with another parent class can use too; such a model has to set `$collectionClass` and `$builder` itself to get [`Model\Collection`](#other-helpers) and [`Model\Builder`](#builder). `KompactUser` is abstract. `KompactPivot` does the same for pivot models, with `AdditionalQueries`, `AutoRelation`, `StaticH` and soft deletes.
 
 ```php
 use JundFauz\EloquentKompact\Model\KompactModel;
@@ -127,7 +127,7 @@ With `$useSoftDelete = false`, `delete()` removes the row, so the table does not
 
 Every trait can also be used on its own model.
 
-Model results use [`Model\Collection`](#other-helpers), unless the model has `#[CollectedBy]` or its own `$collectionClass`.
+Model results use [`Model\Collection`](#other-helpers), unless the model has `#[CollectedBy]` or its own `$collectionClass`. Queries use [`Model\Builder`](#builder), unless the model has `#[UseEloquentBuilder]` or its own `$builder`.
 
 ### AutoFillable
 
@@ -165,16 +165,6 @@ To get autocomplete for these relations, see [IDE helper](#ide-helper).
 ```php
 // Copy related rows to another model, keeping only the given columns
 $order->copyRelationsTo($newOrder, ['items' => ['product_id', 'qty_pcs']]);
-
-// where() on several columns, with the values taken from another model
-Order::whereSameWith($otherOrder, 'tenant_id', 'branch_id')->get();
-
-// where() on a morph type column, using the morph alias of the class if there is one
-Comment::whereMorphType('commentable', Post::class)->get(); // where commentable_type = 'App\Models\Post'
-Comment::whereMorphTypeNot('commentable', Post::class)->get(); // where not commentable_type = 'App\Models\Post'
-
-// whereHas() with whereIn() on a column of the relation
-Order::whereInRelation('items', 'status', ['paid', 'sent'])->get();
 
 // Whether a morph type attribute points to the class, using its morph alias if there is one
 $comment->isMorphModelSame('commentable', Post::class); // true
@@ -216,15 +206,44 @@ $user->sameWithOtherOr($otherUser, 'tenant_id', 'branch_id');    // at least one
 $user->notSameWithOther($otherUser, 'tenant_id', 'branch_id');   // every column is different
 $user->notSameWithOtherOr($otherUser, 'tenant_id', 'branch_id'); // at least one column is different
 $user->match(['role' => ['admin', 'editor'], 'active_is' => true]);
-```
 
-`whereInRelation()` uses the column as given, so on a `belongsToMany` relation, a column that is also on the pivot table has to be written with its table (`'tags.id'`), or the query fails with an ambiguous column error. An empty list of values finds nothing.
+// The id of a random row, or null if there is none
+Order::randomId();
+Order::randomId('status', 'paid'); // the arguments of where()
+```
 
 `assignIfEmpty()`, `assignIfEmptyFrom()` and `isEmpty()` use PHP's `empty()`, so `null`, `''`, `'0'`, `0`, `false` and `[]` count as empty. `assignIfNull()` and `assignIfNullFrom()` only replace `null`. `isFilled()` uses Laravel's `filled()`, so `0`, `'0'` and `false` are filled, while `null`, blank strings and empty arrays are not.
 
 `match()` and the `sameWithOther()` family return `false` when no condition or column is given. `notSameWithOther()` is not the opposite of `sameWithOther()`: that is `notSameWithOtherOr()`. Objects such as the Carbon dates of `datetime` columns are compared by identity, so two models never have the same date. An array value matches if the attribute equals one of its items, unless the attribute itself is an array.
 
-`getManyVia()` is `@experimental`. `getDataFromRelation()` and `getDatasFromRelation()` are the deprecated names of `getVia()` and `getManyVia()`.
+`getManyVia()` is `@experimental`. `randomId()` reads the `id` column, so it does not work on a model with another primary key.
+
+### Builder
+
+`KompactModel`, `KompactUser` and `KompactPivot` use `JundFauz\EloquentKompact\Model\Builder`, which extends Eloquent's `Builder`:
+
+```php
+// where() on several columns, with the values taken from another model
+Order::whereSameWith($otherOrder, 'tenant_id', 'branch_id')->get();
+
+// where() on a morph type column, using the morph alias of the class if there is one
+Comment::whereMorphType('commentable', Post::class)->get(); // where commentable_type = 'App\Models\Post'
+Comment::whereMorphTypeNot('commentable', Post::class)->get(); // where not commentable_type = 'App\Models\Post'
+
+// whereHas() with whereIn() on a column of the relation
+Order::whereInRelation('items', 'status', ['paid', 'sent'])->get();
+
+// A Builder\Collection instead of Laravel's Collection
+Order::pluck('status');
+```
+
+> **Note:** a model that only uses a trait has to set `protected static string $builder = Builder::class;` itself, and so does the related model when these methods are called on a relation. Without it there is **no error**: Laravel reads the call as a dynamic where, so `whereSameWith($other, 'id')` becomes `where same_with = ...`.
+
+Like a scope, these methods put the earlier conditions in a group if they contain an `or`, so `Order::where('a', 1)->orWhere('b', 1)->whereMorphType(...)` gives `where (a = ? or b = ?) and ...`. That group holds every earlier condition, and a later `orWhere()` is not grouped, so still use a closure to group the conditions yourself.
+
+`whereInRelation()` uses the column as given, so on a `belongsToMany` relation, a column that is also on the pivot table has to be written with its table (`'tags.id'`), or the query fails with an ambiguous column error. An empty list of values finds nothing.
+
+These methods are not scopes, so a scope of the same name on a model is never called, `hasNamedScope()` returns `false` for them, and they cannot be passed to `scopes()`.
 
 ### Filterable
 
@@ -241,6 +260,7 @@ $counts->{'user.name_count'}; // relational columns are always 1
 ```php
 Post::tableName();             // posts
 Post::morphClass();            // App\Models\Post, or its alias in Relation::morphMap()
+BlogPost::baseName();          // BlogPost
 
 // The relation name of the model
 BlogPost::singular();          // blogPost
@@ -719,7 +739,7 @@ Constants: `NEW_LINE` (`"\n"`), `DISTANCE_LINE` (`"\n\n"`), `NAMESPACE_DELIMITER
   Post::all()->get(99, 'none');               // Str 'none'
   ```
 
-  Like Eloquent's own collection, results that are not models become Laravel's base `Collection`, without these methods: `pluck()`, `keys()`, `map()` to other values, and `Post::query()->pluck()`. For data that is not models, use `Builder\Collection`, since many methods of Eloquent's collection expect models.
+  Results that are not models become a `Builder\Collection`, since many methods of Eloquent's collection expect models: `pluck()`, `keys()`, `map()` to other values, and `Post::pluck()`, which goes through [`Model\Builder`](#builder). So `Post::all()->pluck('name')->get(0)` is a `Str`, while `first()` stays a `string`. `DB::table()->pluck()` still gives Laravel's `Collection`.
 
 - `Helper\Arr` extends Laravel's `Arr` with `pullMany(&$array, ...$keys)` (pulls several keys at once) and `isKeysDontExist($array, ...$keys)`.
 - `Cast\UuidCast` casts an attribute to and from a `Ramsey\Uuid\UuidInterface`.
