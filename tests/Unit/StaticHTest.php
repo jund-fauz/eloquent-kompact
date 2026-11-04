@@ -4,6 +4,7 @@ namespace JundFauz\EloquentKompact\Tests\Unit;
 
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\Relation;
+use Illuminate\Support\Facades\DB;
 use JundFauz\EloquentKompact\Model\Traits\StaticH;
 use JundFauz\EloquentKompact\Tests\TestCase;
 use PHPUnit\Framework\Attributes\Test;
@@ -21,6 +22,50 @@ class StaticHTest extends TestCase
     public function it_returns_the_table_name(): void
     {
         $this->assertSame('static_h_posts', StaticHPost::tableName());
+    }
+
+    #[Test]
+    public function it_returns_the_foreign_key_on_another_table(): void
+    {
+        $this->assertSame('static_h_categories.static_h_post_id', StaticHPost::foreignFrom(StaticHCategory::class));
+        $this->assertSame('static_h_categories.static_h_admin_post_id', StaticHAdminPost::foreignFrom(StaticHCategory::class));
+        $this->assertSame('latest_static_h_categories.static_h_post_id', StaticHPost::foreignFrom(['latest' => StaticHCategory::class]));
+        $this->assertSame('static_h_post_id', StaticHPost::foreignFrom());
+    }
+
+    #[Test]
+    public function it_returns_a_column_on_another_table(): void
+    {
+        $this->assertSame('static_h_categories.name', StaticHPost::snakeTo('name', StaticHCategory::class));
+        $this->assertSame('latest_static_h_categories.name', StaticHPost::snakeTo('name', ['latest' => StaticHCategory::class]));
+        $this->assertSame('static_h_categories', StaticHPost::snakeTo('', StaticHCategory::class));
+        $this->assertSame('name', StaticHPost::snakeTo('name'));
+    }
+
+    #[Test]
+    public function it_uses_the_class_name_and_not_the_table_of_the_model(): void
+    {
+        $this->assertSame('static_h_custom_tables.static_h_post_id', StaticHPost::foreignFrom(StaticHCustomTable::class));
+        $this->assertSame('static_h_custom_tables.name', StaticHPost::snakeTo('name', StaticHCustomTable::class));
+    }
+
+    #[Test]
+    public function it_gives_a_column_that_a_join_quotes_and_prefixes(): void
+    {
+        $join = fn () => StaticHPost::query()
+            ->leftJoin('static_h_categories', 'static_h_posts.id', '=', StaticHPost::foreignFrom(StaticHCategory::class))
+            ->toSql();
+
+        $this->assertStringEndsWith('= "static_h_categories"."static_h_post_id"', $join());
+
+        $connection = DB::connection();
+        $connection->setTablePrefix('app_');
+
+        try {
+            $this->assertStringEndsWith('= "app_static_h_categories"."static_h_post_id"', $join());
+        } finally {
+            $connection->setTablePrefix('');
+        }
     }
 
     #[Test]
@@ -205,6 +250,13 @@ class StaticHOverriddenPost extends StaticHPost
     {
         return 'overridden';
     }
+}
+
+class StaticHCustomTable extends Model
+{
+    use StaticH;
+
+    protected $table = 'custom';
 }
 
 class StaticHCategory extends Model

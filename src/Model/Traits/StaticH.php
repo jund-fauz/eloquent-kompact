@@ -5,6 +5,7 @@ namespace JundFauz\EloquentKompact\Model\Traits;
 use Illuminate\Database\Schema\Blueprint;
 use JundFauz\EloquentKompact\Builder\Str;
 use JundFauz\EloquentKompact\Column\Convert;
+use JundFauz\EloquentKompact\Query\RawQuery;
 use JundFauz\EloquentKompact\Relation\Arrange;
 use const JundFauz\EloquentKompact\NAMESPACE_DELIMITER;
 
@@ -48,6 +49,16 @@ trait StaticH
     public static function foreign(?string $prefix = null): string
     {
         return Convert::modelToColumn(static::class, $prefix);
+    }
+
+    public static function foreignFrom(string|array ...$modelClasses): string
+    {
+        return (string) RawQuery::relations(static::foreign(), ...$modelClasses);
+    }
+
+    public static function snakeTo(string $column, string|array ...$modelClasses): string
+    {
+        return (string) RawQuery::relations($column, ...$modelClasses);
     }
 
     public static function getModel(Blueprint $column): ?string
