@@ -7,6 +7,35 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [0.89.0] - 2026-11-04
+
+### Added
+
+- `qualify($column)`: a column with the table of the model, as a `RawQuery` that is already quoted and has the table prefix of the connection, so a chain can go on from it.
+
+  ```php
+  BlogPost::qualify('qty')->zeroIfNull()->sum()->as('total'); // SUM(COALESCE("blog_posts"."qty", 0)) AS total
+  ```
+
+- `foreignFrom()` has a second parameter for the prefix of the foreign key, like `foreign()`.
+
+### Changed
+
+- **Breaking:** `foreignFrom()` takes one model class and returns a `RawQuery`, quoted like `qualify()`, using the `$table` of that model. `pluck()` fails on it, so write the column as a string there.
+- **Breaking:** `RawQuery::relations()` takes one model class, since a path with more of them is not a valid column. More classes are ignored without an error.
+
+### Removed
+
+- **Breaking:** `snakeTo()`. Use `qualify()`.
+
+### Fixed
+
+- `StaticH::getModel()` did not find the model when `path.model` ended with a backslash.
+
+### Tests
+
+- Updated the tests of `foreignFrom()` and `RawQuery::relations()`, and added tests for `qualify()`, including `havingRaw()` with a table prefix and another connection, and for `getModel()` with a trailing backslash.
+
 ## [0.88.0] - 2026-11-04
 
 ### Added
@@ -1767,7 +1796,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - `RawQuery` static helpers for raw SQL expressions.
 - Translations for `en` and `id`.
 
-[Unreleased]: https://github.com/jund-fauz/eloquent-kompact/compare/v0.88.0...HEAD
+[Unreleased]: https://github.com/jund-fauz/eloquent-kompact/compare/v0.89.0...HEAD
+[0.89.0]: https://github.com/jund-fauz/eloquent-kompact/compare/v0.88.0...v0.89.0
 [0.88.0]: https://github.com/jund-fauz/eloquent-kompact/compare/v0.87.0...v0.88.0
 [0.87.0]: https://github.com/jund-fauz/eloquent-kompact/compare/v0.86.0...v0.87.0
 [0.86.0]: https://github.com/jund-fauz/eloquent-kompact/compare/v0.85.0...v0.86.0
