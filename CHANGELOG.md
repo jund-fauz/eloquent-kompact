@@ -7,6 +7,32 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [0.83.0] - 2026-11-04
+
+### Added
+
+- `Model\Builder`: Eloquent's `Builder` with `whereSameWith()`, `whereMorphType()`, `whereMorphTypeNot()`, `whereInRelation()` and a `pluck()` that returns a `Builder\Collection`. `KompactModel`, `KompactUser` and `KompactPivot` use it through `$builder`.
+- `AdditionalQueries::randomId(...$filter)`: the id of a random row, with the arguments of `where()`, or `null` if there is none.
+- `StaticH::baseName()`: the class name without its namespace.
+
+### Changed
+
+- **Breaking:** `whereSameWith()`, `whereMorphType()`, `whereMorphTypeNot()` and `whereInRelation()` moved from scopes on the `AdditionalQueries` trait to `Model\Builder`.
+  - A model that only uses the trait has to set `protected static string $builder = Builder::class;`. Without it there is no error: Laravel reads the call as a dynamic where, e.g. `where same_with = ...`.
+  - A scope of the same name on a model is no longer called, `hasNamedScope()` returns `false` for them, and they cannot be passed to `scopes()`.
+  - They still group earlier conditions that contain an `or`, like a scope.
+- **Breaking:** results of `Model\Collection` that are not models are now a `Builder\Collection` instead of Laravel's `Collection`: `pluck()`, `keys()`, `map()` to other values, `flatten()`, `countBy()`, etc. `Post::pluck()` too. So `get()` on them returns a `Str` for a string, and `=== 'value'` is `false`.
+
+### Removed
+
+- **Breaking:** `getDataFromRelation()` and `getDatasFromRelation()`, deprecated since 0.78.0. Use `getVia()` and `getManyVia()`.
+
+### Tests
+
+- Added `BuilderTest`, covering the grouping of an earlier `or`, a related model with and without the builder, and `pluck()`.
+- Added unit tests for `randomId()`, `baseName()`, the collection of results that are not models, and the builder of `KompactModel`, `KompactUser` and `KompactPivot`.
+- Removed the tests of the deprecated names.
+
 ## [0.82.0] - 2026-11-04
 
 ### Changed
@@ -1654,7 +1680,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - `RawQuery` static helpers for raw SQL expressions.
 - Translations for `en` and `id`.
 
-[Unreleased]: https://github.com/jund-fauz/eloquent-kompact/compare/v0.82.0...HEAD
+[Unreleased]: https://github.com/jund-fauz/eloquent-kompact/compare/v0.83.0...HEAD
+[0.83.0]: https://github.com/jund-fauz/eloquent-kompact/compare/v0.82.0...v0.83.0
 [0.82.0]: https://github.com/jund-fauz/eloquent-kompact/compare/v0.81.0...v0.82.0
 [0.81.0]: https://github.com/jund-fauz/eloquent-kompact/compare/v0.80.0...v0.81.0
 [0.80.0]: https://github.com/jund-fauz/eloquent-kompact/compare/v0.79.0...v0.80.0
