@@ -178,6 +178,7 @@ $user->getMany('name', 'email'); // ['Ana', 'ana@example.com']
 // Attributes of nested relations without null checks, with the relations given as model classes
 $comment->getVia('name', Post::class, User::class);                // $comment->post?->user?->name
 $comment->getManyVia(['name', 'email'], Post::class, User::class); // [$comment->post?->user?->name, $comment->post?->user?->email]
+$comment->getVia('name', ['latest' => Post::class]);               // $comment->latestPost?->name
 
 // [column => value] for the given columns, after casting (a missing one is null)
 $user->compact('name', 'email'); // ['name' => 'Ana', 'email' => 'ana@example.com']
@@ -265,6 +266,8 @@ BlogPost::baseName();          // BlogPost
 // The relation name of the model
 BlogPost::singular();          // blogPost
 BlogPost::plural();            // blogPosts
+BlogPost::singular('latest');  // latestBlogPost
+BlogPost::plural('latest');    // latestBlogPosts
 
 // The foreign key column of the model
 BlogPost::foreign();           // blog_post_id
@@ -275,6 +278,7 @@ User::relationTo('roles');                // user.roles
 User::relationTo(BlogPost::class);        // user.blogPost
 User::columnTo('name', 'roles');          // user.roles.name
 User::columnTo('title', BlogPost::class); // user.blogPost.title
+User::relationTo(['latest' => BlogPost::class]); // user.latestBlogPost
 
 Order::with(User::relationTo('roles'));   // order → user → roles
 
@@ -282,7 +286,7 @@ Order::with(User::relationTo('roles'));   // order → user → roles
 Post::getModel($table);        // App\Models\Post
 ```
 
-`singular()`, `plural()`, `foreign()`, `relationTo()` and `columnTo()` use the name of the class they are called on, so a subclass gives its own name, and a morph alias is not used. They do not create the model or read the database, so they are safe in a migration. `foreign()` always ends with `_id`, even for a model with another primary key, unlike Eloquent's `getForeignKey()`. In a path, a class becomes a singular name and any other string is kept as it is, so write a plural relation as a string (`'roles'`).
+`singular()`, `plural()`, `foreign()`, `relationTo()` and `columnTo()` use the name of the class they are called on, so a subclass gives its own name, and a morph alias is not used. They do not create the model or read the database, so they are safe in a migration. `foreign()` always ends with `_id`, even for a model with another primary key, unlike Eloquent's `getForeignKey()`. In a path, a class becomes a singular name and any other string is kept as it is, so write a plural relation as a string (`'roles'`). A prefixed relation is written as `[prefix => model class]`, see [`Convert`](#migration-helpers).
 
 ## IDE helper
 
@@ -339,10 +343,14 @@ Convert::modelToColumn(User::class);                  // user_id
 Convert::modelToColumn(User::class, 'author');        // author_user_id
 Convert::modelToRelation(User::class);                // user
 Convert::modelToRelation(BlogPost::class, true, true); // blog_posts
+Convert::modelToRelation(['latest' => BlogPost::class]); // latestBlogPost
+Convert::modelToRelation(['latest' => BlogPost::class], true, true); // latest_blog_posts
 Convert::booleanToString('active_is');                // ['Not active', 'Active'], translated
 Convert::dayToSecond(1);                              // 86400
 Convert::hourToSecond(1);                             // 3600
 ```
+
+A prefix is only written as an array with one key, the prefix, and one value, the model class. Anything else throws an `InvalidArgumentException`.
 
 ## RawQuery
 
@@ -479,7 +487,7 @@ In the table, `x` is the current subject.
 | `RawQuery::now()` | `NOW()` |
 | `RawQuery::string($value)` | Escaped string literal, e.g. `'available'`. Without an argument: `''` |
 | `RawQuery::queryConcat(...$expressions)` | Expressions joined with a space |
-| `RawQuery::relations($column, ...$models)` | Relation path, e.g. `relations('name', User::class, Post::class)` → `users.posts.name` |
+| `RawQuery::relations($column, ...$models)` | Relation path, e.g. `relations('name', User::class, Post::class)` → `users.posts.name`; `['latest' => Post::class]` gives `latest_posts` |
 | `RawQuery::select($columns, $table)` | `SELECT a, b FROM table`; `$columns` is a string or a list |
 | `RawQuery::recursive($name, $table, $columns, $where, $joinOn, $select = '*', $isUnionAll = true)` | Recursive CTE over a self-referencing table: `WITH RECURSIVE name AS (SELECT columns FROM table WHERE where UNION ALL SELECT table.columns FROM table JOIN name ON joinOn) SELECT select FROM name`, on several lines |
 | `RawQuery::recursiveUnion($name, $anchor, $recursive, $select = '*', $isUnionAll = true)` | `WITH RECURSIVE name AS (anchor UNION ALL recursive) SELECT select FROM name`, on several lines, for any two queries |
@@ -678,6 +686,8 @@ use const JundFauz\EloquentKompact\NEW_LINE;
 | `array_get_or($array, ...$keys)` | The first value that is not `null`, in the order of the keys; dot notation is supported and missing keys are skipped |
 | `array_filter_filled($array)` | The values that are Laravel's `filled()`, keeping the keys: `null`, blank strings and empty arrays or collections are removed; `0`, `'0'` and `false` are kept |
 | `array_key_change(&$array, $oldKey, $newKey)` | Renames a key in place. The key moves to the end of the array, an existing `$newKey` is replaced, and a missing `$oldKey` gives PHP's `Undefined array key` warning |
+| `array_key_values($array)` | `[key, value]` of an array with one item; with several items, every key and then every value in one flat list |
+| `array_normalize($list)` | The item of a list with one item, or the list as it is. The list needs numeric keys from `0` |
 | `merge_as_array(...$values)` | Every value in one flat list, nested arrays and collections included; keys are dropped and `null` is kept |
 | `array_pull(&$array, ...$keys)` | `Arr::pullMany()`: removes the keys and returns the value of one key, or `[key => value]` for several |
 | `array_pull_list(&$array, ...$keys)` | `array_pull()`, but several keys give a list in the given order, e.g. for `[$name, $email] = array_pull_list($data, 'name', 'email')` |
@@ -696,6 +706,7 @@ Constants: `NEW_LINE` (`"\n"`), `DISTANCE_LINE` (`"\n\n"`), `NAMESPACE_DELIMITER
   ```php
   Arrange::relations('name', User::class, Post::class); // users.posts.name
   Arrange::relation('', User::class, 'roles');          // user.roles
+  Arrange::relation('name', ['latest' => Post::class]); // latestPost.name
   ```
 
 - `Builder\Relation` builds the same paths with a chain read from left to right. The column given to `arrange()` always comes last:
@@ -705,6 +716,7 @@ Constants: `NEW_LINE` (`"\n"`), `DISTANCE_LINE` (`"\n\n"`), `NAMESPACE_DELIMITER
 
   Relation::arrange('name')->relations(Post::class)->relation(User::class)->build(); // posts.user.name
   Relation::arrange()->relations(Post::class)->relation('comments')->build();        // posts.comments
+  Relation::arrange('name')->relation(['latest' => Post::class])->build();           // latestPost.name
   ```
 
   Every method returns a new `Relation`. It is a query `Expression`, but Eloquent's `with()`, `load()` and `loadMissing()` only take strings, so call `build()`, cast it to a `string`, or pass the list through `stringify()` for them: `$user->loadMissing(stringify([$relation, $other]))`. Its name is the same as Eloquent's `Relation`; import one of them with an alias if a file needs both.
