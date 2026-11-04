@@ -74,7 +74,7 @@ trait AdditionalQueries
      */
     public function match(array $conditions): bool
     {
-        if (empty($conditions)) {
+        if (blank($conditions)) {
             return false;
         }
 
@@ -128,7 +128,7 @@ trait AdditionalQueries
 
     public function sameWithOther(Model $other, string ...$columns): bool
     {
-        if (empty($columns)) {
+        if (blank($columns)) {
             return false;
         }
 
@@ -137,7 +137,7 @@ trait AdditionalQueries
 
     public function sameWithOtherAndDirty(Model $other, string ...$columns): bool
     {
-        if (empty($columns)) {
+        if (blank($columns)) {
             return false;
         }
 
@@ -146,7 +146,7 @@ trait AdditionalQueries
 
     public function sameWithOtherOr(Model $other, string ...$columns): bool
     {
-        if (empty($columns)) {
+        if (blank($columns)) {
             return false;
         }
 
@@ -155,7 +155,7 @@ trait AdditionalQueries
 
     public function sameWithOtherOrAndDirty(Model $other, string ...$columns): bool
     {
-        if (empty($columns)) {
+        if (blank($columns)) {
             return false;
         }
 
@@ -164,7 +164,7 @@ trait AdditionalQueries
 
     public function notSameWithOther(Model $other, string ...$columns): bool
     {
-        if (empty($columns)) {
+        if (blank($columns)) {
             return false;
         }
 
@@ -173,7 +173,7 @@ trait AdditionalQueries
 
     public function notSameWithOtherAndDirty(Model $other, string ...$columns): bool
     {
-        if (empty($columns)) {
+        if (blank($columns)) {
             return false;
         }
 
@@ -182,7 +182,7 @@ trait AdditionalQueries
 
     public function notSameWithOtherOr(Model $other, string ...$columns): bool
     {
-        if (empty($columns)) {
+        if (blank($columns)) {
             return false;
         }
 
@@ -191,7 +191,7 @@ trait AdditionalQueries
 
     public function notSameWithOtherOrAndDirty(Model $other, string ...$columns): bool
     {
-        if (empty($columns)) {
+        if (blank($columns)) {
             return false;
         }
 
@@ -213,9 +213,15 @@ trait AdditionalQueries
         return array_map(fn (string $column) => $this->{$column}, $columns);
     }
 
-    public function assign(string $column, mixed $value): void
+    public function assign(string|array $columns, mixed $value = null): void
     {
-        $this->{$column} = $value;
+        if (is_string($columns)) {
+            $this->{$columns} = $value;
+        } else {
+            foreach ($columns as $column => $value) {
+                $this->{$column} = $value;
+            }
+        }
     }
 
     public function assignFrom(Model $other, string ...$columns): void
@@ -225,25 +231,25 @@ trait AdditionalQueries
         }
     }
 
-    public function assignIfEmpty(string|array $columns, mixed $value = null): void
+    public function assignIfBlank(string|array $columns, mixed $value = null): void
     {
         if (is_string($columns)) {
-            if ($this->isEmpty($columns)) {
+            if ($this->isBlank($columns)) {
                 $this->assign($columns, $value);
             }
         } else {
             foreach ($columns as $column => $value) {
-                if ($this->isEmpty($column)) {
+                if ($this->isBlank($column)) {
                     $this->assign($column, $value);
                 }
             }
         }
     }
 
-    public function assignIfEmptyFrom(Model $other, string ...$columns): void
+    public function assignIfBlankFrom(Model $other, string ...$columns): void
     {
         foreach ($columns as $column) {
-            if ($this->isEmpty($column)) {
+            if ($this->isBlank($column)) {
                 $this->assign($column, $other->{$column});
             }
         }
@@ -273,14 +279,14 @@ trait AdditionalQueries
         }
     }
 
-    public function isEmpty(string $column): bool
+    public function isBlank(string $column): bool
     {
-        return empty($this->{$column});
+        return blank($this->{$column});
     }
 
-    public function isEmptyAndDirty(string $column): bool
+    public function isBlankAndDirty(string $column): bool
     {
-        return $this->isDirty($column) && $this->isEmpty($column);
+        return $this->isDirty($column) && $this->isBlank($column);
     }
 
     public function isFilled(string $column): bool

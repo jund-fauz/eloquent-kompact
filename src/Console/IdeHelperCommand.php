@@ -174,7 +174,7 @@ final class IdeHelperCommand extends Command
             }
 
             // morphMany: The runtime accepts it in any parent, so it is restricted to morphMap if one exists.
-            if (empty($morphMap) || in_array($parent, $morphMap, true) && $call('resolveMorphName', $model, $table)) {
+            if (blank($morphMap) || in_array($parent, $morphMap, true) && $call('resolveMorphName', $model, $table)) {
                 yield (string) $plural->camel() => $model;
             }
         }

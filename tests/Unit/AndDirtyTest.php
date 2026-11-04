@@ -152,18 +152,21 @@ class AndDirtyTest extends TestCase
     }
 
     #[Test]
-    public function it_checks_empty_and_dirty(): void
+    public function it_checks_blank_and_dirty(): void
     {
         $model = $this->saved(['note' => 'x']);
-        $this->assertFalse($model->isEmptyAndDirty('note'));
+        $this->assertFalse($model->isBlankAndDirty('note'));
+
+        $model->note = '   ';
+        $this->assertTrue($model->isBlankAndDirty('note'));
 
         $model->note = '0';
-        $this->assertTrue($model->isEmptyAndDirty('note'));
+        $this->assertFalse($model->isBlankAndDirty('note'));
 
         $model->note = 'y';
-        $this->assertFalse($model->isEmptyAndDirty('note'));
+        $this->assertFalse($model->isBlankAndDirty('note'));
 
-        $this->assertFalse($this->saved(['note' => ''])->isEmptyAndDirty('note'));
+        $this->assertFalse($this->saved(['note' => ''])->isBlankAndDirty('note'));
     }
 
     #[Test]
@@ -269,7 +272,7 @@ class AndDirtyTest extends TestCase
             'sameWithAndDirty', 'notSameWithAndDirty',
             'sameWithOtherAndDirty', 'sameWithOtherOrAndDirty', 'notSameWithOtherAndDirty', 'notSameWithOtherOrAndDirty',
             'matchAndDirty', 'isMorphModelSameAndDirty',
-            'isEmptyAndDirty', 'isFilledAndDirty', 'isNullAndDirty', 'isNotNullAndDirty',
+            'isBlankAndDirty', 'isFilledAndDirty', 'isNullAndDirty', 'isNotNullAndDirty',
         ];
 
         foreach ($methods as $method) {

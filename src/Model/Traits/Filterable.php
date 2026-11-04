@@ -24,7 +24,7 @@ trait Filterable
             }
         }
 
-        $result = empty($selects) ? new static : static::selectRaw(implode(', ', $selects))->first();
+        $result = blank($selects) ? new static : static::selectRaw(implode(', ', $selects))->first();
 
         if ($result) {
             foreach ($relationalColumns as $relationalColumn) {

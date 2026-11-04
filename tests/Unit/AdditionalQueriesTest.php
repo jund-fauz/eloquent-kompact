@@ -155,43 +155,76 @@ class AdditionalQueriesTest extends TestCase
     }
 
     #[Test]
-    public function it_assigns_attributes_only_if_empty(): void
+    public function it_assigns_many_attributes(): void
     {
-        $comment = (new MorphComment)->forceFill(['commentable_type' => 'video', 'commentable_id' => 0]);
+        $comment = (new MorphComment)->forceFill(['commentable_type' => 'video']);
 
-        $comment->assignIfEmpty('commentable_type', 'post');
-        $comment->assignIfEmpty('commentable_id', 5);
-        $comment->assignIfEmpty('missing', 'x');
+        $comment->assign(['commentable_type' => 'post', 'commentable_id' => 5]);
+
+        $this->assertSame(['post', 5], $comment->getMany('commentable_type', 'commentable_id'));
+        $this->assertFalse($comment->exists);
+    }
+
+    #[Test]
+    public function it_assigns_null_when_no_value_is_given(): void
+    {
+        $comment = (new MorphComment)->forceFill(['commentable_type' => 'video']);
+
+        $comment->assign('commentable_type');
+
+        $this->assertNull($comment->commentable_type);
+    }
+
+    #[Test]
+    public function it_assigns_attributes_only_if_blank(): void
+    {
+        $comment = (new MorphComment)->forceFill(['commentable_type' => 'video', 'commentable_id' => '   ']);
+
+        $comment->assignIfBlank('commentable_type', 'post');
+        $comment->assignIfBlank('commentable_id', 5);
+        $comment->assignIfBlank('missing', 'x');
 
         $this->assertSame(['video', 5, 'x'], $comment->getMany('commentable_type', 'commentable_id', 'missing'));
     }
 
     #[Test]
-    public function it_assigns_many_attributes_only_if_empty(): void
+    public function it_keeps_zero_and_false_because_they_are_not_blank(): void
     {
-        $comment = (new MorphComment)->forceFill(['commentable_type' => 'video', 'commentable_id' => 0]);
+        $comment = (new MorphComment)->forceFill(['a' => 0, 'b' => '0', 'c' => false]);
 
-        $comment->assignIfEmpty(['commentable_type' => 'post', 'commentable_id' => 5, 'missing' => 'x']);
+        $comment->assignIfBlank(['a' => 5, 'b' => 5, 'c' => 5]);
+
+        $this->assertSame([0, '0', false], $comment->getMany('a', 'b', 'c'));
+    }
+
+    #[Test]
+    public function it_assigns_many_attributes_only_if_blank(): void
+    {
+        $comment = (new MorphComment)->forceFill(['commentable_type' => 'video', 'commentable_id' => '']);
+
+        $comment->assignIfBlank(['commentable_type' => 'post', 'commentable_id' => 5, 'missing' => 'x']);
 
         $this->assertSame(['video', 5, 'x'], $comment->getMany('commentable_type', 'commentable_id', 'missing'));
     }
 
     #[Test]
-    public function it_checks_whether_an_attribute_is_empty(): void
+    public function it_checks_whether_an_attribute_is_blank(): void
     {
-        $comment = (new MorphComment)->forceFill(['commentable_type' => 'video', 'commentable_id' => 0]);
+        $comment = (new MorphComment)->forceFill(['commentable_type' => 'video', 'commentable_id' => '   ', 'zero' => 0, 'off' => false]);
 
-        $this->assertFalse($comment->isEmpty('commentable_type'));
-        $this->assertTrue($comment->isEmpty('commentable_id'));
-        $this->assertTrue($comment->isEmpty('missing'));
+        $this->assertFalse($comment->isBlank('commentable_type'));
+        $this->assertTrue($comment->isBlank('commentable_id'));
+        $this->assertTrue($comment->isBlank('missing'));
+        $this->assertFalse($comment->isBlank('zero'));
+        $this->assertFalse($comment->isBlank('off'));
     }
 
     #[Test]
-    public function it_assigns_attributes_from_another_model_only_if_empty(): void
+    public function it_assigns_attributes_from_another_model_only_if_blank(): void
     {
         $comment = (new MorphComment)->forceFill(['commentable_type' => '', 'commentable_id' => 7]);
 
-        $comment->assignIfEmptyFrom(MorphComment::find(3), 'commentable_type', 'commentable_id');
+        $comment->assignIfBlankFrom(MorphComment::find(3), 'commentable_type', 'commentable_id');
 
         $this->assertSame(['video', 7], $comment->getMany('commentable_type', 'commentable_id'));
     }

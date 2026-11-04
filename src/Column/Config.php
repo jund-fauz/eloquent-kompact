@@ -30,7 +30,7 @@ class Config
             $columnsByName[$column->name] = $column;
         }
         $columnNames = array_keys($columnsByName);
-        if (! empty($payloads)) {
+        if (! blank($payloads)) {
             $restPayloads = Arr::pull($payloads, 'rest');
             foreach ($payloads as $regex => $payload) {
                 if (@preg_match($regex, '') !== false) {
