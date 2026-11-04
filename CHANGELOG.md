@@ -7,6 +7,20 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [0.87.0] - 2026-11-04
+
+### Added
+
+- `AndDirty` variants of the comparison methods, which also need the column to be dirty: `sameWithAndDirty()`, `notSameWithAndDirty()`, `sameWithOtherAndDirty()`, `sameWithOtherOrAndDirty()`, `notSameWithOtherAndDirty()`, `notSameWithOtherOrAndDirty()`, `matchAndDirty()`, `isMorphModelSameAndDirty()`, `isEmptyAndDirty()`, `isFilledAndDirty()`, `isNullAndDirty()` and `isNotNullAndDirty()`.
+
+  ```php
+  $order->sameWithAndDirty('status', 'paid'); // status has changed to 'paid' and is not saved yet
+  ```
+
+### Tests
+
+- Added `AndDirtyTest`.
+
 ## [0.86.0] - 2026-11-04
 
 ### Added
@@ -1737,7 +1751,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - `RawQuery` static helpers for raw SQL expressions.
 - Translations for `en` and `id`.
 
-[Unreleased]: https://github.com/jund-fauz/eloquent-kompact/compare/v0.86.0...HEAD
+[Unreleased]: https://github.com/jund-fauz/eloquent-kompact/compare/v0.87.0...HEAD
+[0.87.0]: https://github.com/jund-fauz/eloquent-kompact/compare/v0.86.0...v0.87.0
 [0.86.0]: https://github.com/jund-fauz/eloquent-kompact/compare/v0.85.0...v0.86.0
 [0.85.0]: https://github.com/jund-fauz/eloquent-kompact/compare/v0.84.0...v0.85.0
 [0.84.0]: https://github.com/jund-fauz/eloquent-kompact/compare/v0.83.0...v0.84.0
