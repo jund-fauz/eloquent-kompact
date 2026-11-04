@@ -101,6 +101,36 @@ class KompactTest extends TestCase
     }
 
     #[Test]
+    public function it_only_allows_the_user_to_be_extended(): void
+    {
+        $this->assertTrue((new \ReflectionClass(KompactUser::class))->isAbstract());
+    }
+
+    /**
+     * PHP before 8.5 binds a trait after the parent class, so a different default value of a
+     * property of Model is a fatal error there, which a run on PHP 8.5 alone never shows.
+     */
+    #[Test]
+    public function it_does_not_declare_a_property_of_model_in_the_trait(): void
+    {
+        $modelProperties = array_map(
+            fn (\ReflectionProperty $property) => $property->getName(),
+            (new \ReflectionClass(\Illuminate\Foundation\Auth\User::class))->getProperties(),
+        );
+
+        foreach ((new \ReflectionClass(Kompact::class))->getProperties() as $property) {
+            $this->assertNotContains($property->getName(), $modelProperties);
+        }
+    }
+
+    #[Test]
+    #[DataProvider('softDeleteModels')]
+    public function it_uses_the_kompact_collection_for_the_model_and_the_user(string $model): void
+    {
+        $this->assertInstanceOf(Collection::class, $model::all());
+    }
+
+    #[Test]
     #[DataProvider('softDeleteModels')]
     public function it_soft_deletes_by_default(string $model): void
     {

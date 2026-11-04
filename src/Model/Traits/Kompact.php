@@ -3,7 +3,6 @@
 namespace JundFauz\EloquentKompact\Model\Traits;
 
 use Illuminate\Database\Eloquent\SoftDeletes;
-use JundFauz\EloquentKompact\Model\Collection;
 
 trait Kompact
 {
@@ -13,8 +12,6 @@ trait Kompact
     }
 
     protected static bool $useSoftDelete = true;
-
-    protected static string $collectionClass = Collection::class;
 
     public static function bootSoftDeletes(): void
     {
