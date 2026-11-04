@@ -316,7 +316,23 @@ trait AdditionalQueries
 
     public function isNotNullAndDirty(string $column): bool
     {
-        return $this->isDirty($column) && is_not_null($this->{$column});
+        return $this->isDirty($column) && $this->isNotNull($column);
+    }
+
+    public function wereChanged(string ...$columns): bool
+    {
+        if (blank($columns)) {
+            return $this->wasChanged();
+        }
+        return array_reduce($columns, fn ($acc, $column) => $acc && $this->wasChanged($column), true);
+    }
+
+    public function wereNotChanged(string ...$columns): bool
+    {
+        if (blank($columns)) {
+            return ! $this->wasChanged();
+        }
+        return array_reduce($columns, fn ($acc, $column) => $acc && ! $this->wasChanged($column), true);
     }
 
     public static function randomId(...$filter): ?int
