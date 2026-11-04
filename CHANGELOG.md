@@ -7,6 +7,22 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [0.91.0] - 2026-11-04
+
+### Added
+
+- `wereChanged(...$columns)`: whether every column was changed by the last save.
+- `wereNotChanged(...$columns)`: whether every column was not changed by the last save. Without columns, both methods read any column, like `wasChanged()`.
+
+  ```php
+  $order->wereChanged('status', 'note');
+  $order->wereNotChanged('status', 'note');
+  ```
+
+### Tests
+
+- Added tests for `wereChanged()` and `wereNotChanged()`, including no columns, right after `create()`, a `save()` without changes and a change that is not saved.
+
 ## [0.90.0] - 2026-11-04
 
 ### Added
@@ -1816,7 +1832,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - `RawQuery` static helpers for raw SQL expressions.
 - Translations for `en` and `id`.
 
-[Unreleased]: https://github.com/jund-fauz/eloquent-kompact/compare/v0.90.0...HEAD
+[Unreleased]: https://github.com/jund-fauz/eloquent-kompact/compare/v0.91.0...HEAD
+[0.91.0]: https://github.com/jund-fauz/eloquent-kompact/compare/v0.90.0...v0.91.0
 [0.90.0]: https://github.com/jund-fauz/eloquent-kompact/compare/v0.89.0...v0.90.0
 [0.89.0]: https://github.com/jund-fauz/eloquent-kompact/compare/v0.88.0...v0.89.0
 [0.88.0]: https://github.com/jund-fauz/eloquent-kompact/compare/v0.87.0...v0.88.0
