@@ -186,6 +186,9 @@ $comment->getRelVia(Post::class, User::class);                     // $comment->
 // [column => value] for the given columns, after casting (a missing one is null)
 $user->compact('name', 'email'); // ['name' => 'Ana', 'email' => 'ana@example.com']
 
+// update() with several arrays merged, where a later key wins
+$order->updateMany($data, $order->compact('note'), ['status' => 'paid']);
+
 // Set attributes, without saving
 $order->assign('status', 'paid');
 $order->assign(['status' => 'paid', 'note' => '-']);
@@ -244,6 +247,8 @@ Order::randomId('status', 'paid'); // the arguments of where()
 The `AndDirty` methods use Eloquent's `isDirty()` on each column, so `sameWithOtherOrAndDirty()` needs one column that is both dirty and the same, and `sameWithOtherAndDirty()` and `matchAndDirty()` are `false` if one of the columns is not dirty. Every attribute set on a new model is dirty. Changed columns are still dirty in the `saving`, `saved`, `updating`, `updated`, `creating` and `created` events, and nothing is dirty once `save()` has returned.
 
 `wereChanged()` and `wereNotChanged()` use Eloquent's `wasChanged()` on each column. Unlike `wasChanged('a', 'b')`, which needs one changed column, `wereChanged('a', 'b')` needs all of them. `wereNotChanged()` is not the opposite of `wereChanged()` when some columns were changed and others were not: both are `false`. Like `wasChanged()`, they see no change right after `create()`, and a `save()` without changes keeps the changes of the last update.
+
+`updateMany()` only takes arrays and ignores the empty ones. If one of them is a list, it changes nothing and returns `false` without an error, so check the result when the data can be a list. Like `update()`, it only fills the fillable columns and returns `false` on a model that is not saved.
 
 `randomId()` reads the `id` column, so it does not work on a model with another primary key.
 
