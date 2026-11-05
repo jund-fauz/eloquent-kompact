@@ -3,6 +3,7 @@
 namespace JundFauz\EloquentKompact\Tests\Unit;
 
 use Illuminate\Database\Eloquent\Model;
+use Illuminate\Support\Collection as SupportCollection;
 use JundFauz\EloquentKompact\Builder\Relation;
 use JundFauz\EloquentKompact\Tests\TestCase;
 use PHPUnit\Framework\Attributes\DataProvider;
@@ -24,6 +25,7 @@ use function JundFauz\EloquentKompact\comment;
 use function JundFauz\EloquentKompact\full_path_on_app;
 use function JundFauz\EloquentKompact\higher_than;
 use function JundFauz\EloquentKompact\is_all_null;
+use function JundFauz\EloquentKompact\is_associative_array;
 use function JundFauz\EloquentKompact\is_not_array;
 use function JundFauz\EloquentKompact\is_not_null;
 use function JundFauz\EloquentKompact\lower_than;
@@ -222,7 +224,72 @@ class FunctionsTest extends TestCase
     {
         $this->assertSame(['a', 'b', 'c', 'd', null], merge_as_array('a', ['b', ['c']], ['k' => 'd'], null, []));
         $this->assertSame([1, 2], merge_as_array(collect([1, 2])));
+        $this->assertSame([1, 2, 'b'], merge_as_array(collect([1, 2]), ['k' => 'b']));
         $this->assertSame([], merge_as_array());
+    }
+
+    #[Test]
+    public function it_merges_associative_arrays_with_their_keys(): void
+    {
+        $this->assertSame(['a' => 1, 'b' => 2], merge_as_array(['a' => 1], ['b' => 2]));
+        $this->assertSame(['a' => 1], merge_as_array(['a' => 1]));
+        $this->assertSame(['a' => 9, 'b' => 2], merge_as_array(['a' => 1, 'b' => 2], ['a' => 9]));
+        $this->assertSame(['a' => ['x' => [1, 2]], 'b' => [3]], merge_as_array(['a' => ['x' => [1, 2]]], ['b' => [3]]));
+        $this->assertSame(['a' => null, 'b' => 2], merge_as_array(['a' => null], ['b' => 2]));
+    }
+
+    #[Test]
+    public function it_merges_associative_collections_with_their_keys(): void
+    {
+        $this->assertSame(['a' => 1, 'b' => 2], merge_as_array(collect(['a' => 1]), ['b' => 2]));
+        $this->assertSame(['a' => 1, 'b' => 2], merge_as_array(new SupportCollection(['a' => 1]), new SupportCollection(['b' => 2])));
+    }
+
+    #[Test]
+    public function it_ignores_blank_values_when_merging_associative_arrays(): void
+    {
+        $this->assertSame(['a' => 1], merge_as_array([], ['a' => 1], []));
+        $this->assertSame(['a' => 1], merge_as_array(['a' => 1], null, '', '   ', collect()));
+    }
+
+    #[Test]
+    public function it_drops_the_keys_when_an_associative_array_is_mixed_with_other_values(): void
+    {
+        $this->assertSame([1, 'x'], merge_as_array(['a' => 1], 'x'));
+        $this->assertSame([1, 5, 6], merge_as_array(['a' => 1], [5, 6]));
+        $this->assertSame([1, false], merge_as_array(['a' => 1], false));
+        $this->assertSame([1, 0], merge_as_array(['a' => 1], 0));
+    }
+
+    #[Test]
+    public function it_merges_named_arguments_without_an_error(): void
+    {
+        $this->assertSame([1, 2], merge_as_array(a: 1, b: 2));
+        $this->assertSame(['k' => 1, 'j' => 2], merge_as_array(a: ['k' => 1], b: ['j' => 2]));
+    }
+
+    #[Test]
+    public function it_renumbers_numeric_keys_when_merging(): void
+    {
+        $this->assertSame(['x', 'y'], merge_as_array([5 => 'x'], [7 => 'y']));
+    }
+
+    #[Test]
+    public function it_keeps_array_key_values_flat_when_the_value_is_associative(): void
+    {
+        $this->assertSame(['k', 1], array_key_values(['k' => ['a' => 1]]));
+    }
+
+    #[Test]
+    public function it_checks_whether_a_value_is_an_associative_array(): void
+    {
+        $this->assertTrue(is_associative_array(['a' => 1]));
+        $this->assertTrue(is_associative_array([5 => 'x']));
+        $this->assertFalse(is_associative_array([]));
+        $this->assertFalse(is_associative_array([1, 2]));
+        $this->assertFalse(is_associative_array('a'));
+        $this->assertFalse(is_associative_array(null));
+        $this->assertFalse(is_associative_array(collect(['a' => 1])));
     }
 
     #[Test]

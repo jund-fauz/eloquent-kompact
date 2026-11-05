@@ -3,6 +3,7 @@
 namespace JundFauz\EloquentKompact;
 
 use Illuminate\Database\Eloquent\Model;
+use Illuminate\Support\Collection as SupportCollection;
 use JundFauz\EloquentKompact\Builder\Collection;
 use JundFauz\EloquentKompact\Builder\Str;
 use JundFauz\EloquentKompact\Helper\Arr;
@@ -150,6 +151,11 @@ function assign_as(mixed $data, string ...$keys): array
     return $result;
 }
 
+function is_associative_array(mixed $data): bool
+{
+    return is_array($data) && ! array_is_list($data);
+}
+
 function str_before_last(string $subject, string $search): string
 {
     return \Illuminate\Support\Str::beforeLast($subject, $search);
@@ -209,6 +215,13 @@ function stringify(array $datas): array
 
 function merge_as_array(mixed ...$values): array
 {
+    $values = array_map(fn ($value) => $value instanceof SupportCollection ? $value->all() : $value, $values);
+    $filled = array_filter_filled($values);
+
+    if ($filled && array_all($filled, fn ($value) => is_associative_array($value))) {
+        return array_merge(...array_values($filled));
+    }
+    
     array_flat($values);
     return $values;
 }
