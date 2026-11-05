@@ -704,6 +704,7 @@ use const JundFauz\EloquentKompact\NEW_LINE;
 |---|---|
 | `is_not_null($value)` / `is_not_array($value)` | Negated `is_null()` / `is_array()` |
 | `is_all_null(...$values)` | Whether every value, nested arrays included, is `null` |
+| `is_associative_array($value)` | Whether the value is an array that is not a list, so also `[5 => 'x']`; `[]` is not |
 | `same_with($a, $b)` / `not_same_with($a, $b)` | `$a === $b` / `$a !== $b` |
 | `same_with_one_of($value, ...$others)` | Whether `$value` is `===` to one of the others; `false` without others |
 | `higher_than($a, $b)` / `lower_than($a, $b)` | `$a > $b` / `$a < $b` for `int`, `float` and numeric strings, e.g. decimal casts like `'2.50'` |
@@ -727,7 +728,7 @@ use const JundFauz\EloquentKompact\NEW_LINE;
 | `array_key_values($array)` | `[key, value]` of an array with one item; with several items, every key and then every value in one flat list |
 | `array_normalize($list)` | The item of a list with one item, or the list as it is. The list needs numeric keys from `0` |
 | `assign_as($value, ...$keys)` | `[key => value]` with the same value for every key, e.g. `assign_as(1, 'a', 'b')` → `['a' => 1, 'b' => 1]`; `[]` without keys |
-| `merge_as_array(...$values)` | Every value in one flat list, nested arrays and collections included; keys are dropped and `null` is kept |
+| `merge_as_array(...$values)` | Associative arrays or collections merged with their keys, where a later key wins and nested values stay as they are: `merge_as_array(['a' => 1], ['b' => 2])` → `['a' => 1, 'b' => 2]`. `null`, blank strings and empty arrays are ignored there. With any other value next to them, every value goes in one flat list, nested arrays and collections included; keys are dropped and `null` is kept: `merge_as_array(['a' => 1], 'x')` → `[1, 'x']` |
 | `array_pull(&$array, ...$keys)` | `Arr::pullMany()`: removes the keys and returns the value of one key, or `[key => value]` for several |
 | `array_pull_list(&$array, ...$keys)` | `array_pull()`, but several keys give a list in the given order, e.g. for `[$name, $email] = array_pull_list($data, 'name', 'email')` |
 | `stringify($array)` | Every value cast to a `string`, nested arrays included, keeping the keys; `null` and `false` become `''` |
