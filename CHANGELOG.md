@@ -7,6 +7,25 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [0.92.0] - 2026-11-05
+
+### Added
+
+- `is_associative_array($value)`: whether the value is an array that is not a list.
+
+### Changed
+
+- **Breaking:** `merge_as_array()` merges associative arrays and collections with their keys, instead of flattening them to a list. A later key wins and nested values stay as they are. `null`, blank strings and empty arrays next to them are ignored. Any other value next to them still gives one flat list without keys.
+
+  ```php
+  merge_as_array(['a' => 1], ['b' => 2]); // ['a' => 1, 'b' => 2]
+  merge_as_array(['a' => 1], 'x');        // [1, 'x']
+  ```
+
+### Tests
+
+- Added tests for `merge_as_array()` with associative arrays and collections, blank values, mixed values, named arguments and numeric keys, and for `is_associative_array()`.
+
 ## [0.91.0] - 2026-11-04
 
 ### Added
@@ -1832,7 +1851,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - `RawQuery` static helpers for raw SQL expressions.
 - Translations for `en` and `id`.
 
-[Unreleased]: https://github.com/jund-fauz/eloquent-kompact/compare/v0.91.0...HEAD
+[Unreleased]: https://github.com/jund-fauz/eloquent-kompact/compare/v0.92.0...HEAD
+[0.92.0]: https://github.com/jund-fauz/eloquent-kompact/compare/v0.91.0...v0.92.0
 [0.91.0]: https://github.com/jund-fauz/eloquent-kompact/compare/v0.90.0...v0.91.0
 [0.90.0]: https://github.com/jund-fauz/eloquent-kompact/compare/v0.89.0...v0.90.0
 [0.89.0]: https://github.com/jund-fauz/eloquent-kompact/compare/v0.88.0...v0.89.0
