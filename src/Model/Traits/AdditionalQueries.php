@@ -6,8 +6,10 @@ use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\Relation;
 use JundFauz\EloquentKompact\Column\Convert;
 use JundFauz\EloquentKompact\Column\Creator;
+use function JundFauz\EloquentKompact\array_filter_filled;
 use function JundFauz\EloquentKompact\is_not_array;
 use function JundFauz\EloquentKompact\is_not_null;
+use function JundFauz\EloquentKompact\merge_as_array;
 use function JundFauz\EloquentKompact\model_compact;
 
 trait AdditionalQueries
@@ -15,15 +17,15 @@ trait AdditionalQueries
     public function copyRelationsTo(Model $target, array $relations): void
     {
         foreach ($relations as $relationName => $columns) {
-            $datas = $this
+            $data = $this
                 ->{$relationName}()
                 ->get($columns)
                 ->map
                 ->only($columns)
                 ->all();
 
-            if ($datas) {
-                $target->{$relationName}()->createMany($datas);
+            if ($data) {
+                $target->{$relationName}()->createMany($data);
             }
         }
     }
@@ -60,6 +62,15 @@ trait AdditionalQueries
     public function compact(string ...$columns): array
     {
         return model_compact($this, ...$columns);
+    }
+
+    public function updateMany(array ...$data): bool
+    {
+        $data = array_filter_filled($data);
+        if (array_any($data, fn ($data) => array_is_list($data))) {
+            return false;
+        }
+        return $this->update(merge_as_array(...$data));
     }
 
     /**
