@@ -7,6 +7,20 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [0.93.0] - 2026-11-05
+
+### Added
+
+- `updateMany(...$data)`: `update()` with several arrays merged, where a later key wins. Empty arrays are ignored, and a list changes nothing and returns `false`.
+
+  ```php
+  $order->updateMany($data, $order->compact('note'), ['status' => 'paid']);
+  ```
+
+### Tests
+
+- Added tests for `updateMany()`, including a later key, empty arrays, a list, a value that is not an array, named arguments, columns that are not fillable and a model that is not saved.
+
 ## [0.92.0] - 2026-11-05
 
 ### Added
@@ -1851,7 +1865,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - `RawQuery` static helpers for raw SQL expressions.
 - Translations for `en` and `id`.
 
-[Unreleased]: https://github.com/jund-fauz/eloquent-kompact/compare/v0.92.0...HEAD
+[Unreleased]: https://github.com/jund-fauz/eloquent-kompact/compare/v0.93.0...HEAD
+[0.93.0]: https://github.com/jund-fauz/eloquent-kompact/compare/v0.92.0...v0.93.0
 [0.92.0]: https://github.com/jund-fauz/eloquent-kompact/compare/v0.91.0...v0.92.0
 [0.91.0]: https://github.com/jund-fauz/eloquent-kompact/compare/v0.90.0...v0.91.0
 [0.90.0]: https://github.com/jund-fauz/eloquent-kompact/compare/v0.89.0...v0.90.0
