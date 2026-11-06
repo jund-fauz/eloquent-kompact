@@ -605,7 +605,7 @@ RawQuery::create('paid')->sum()->divide(RawQuery::create('total')->sum())->as('p
 ### Notes
 
 - Arguments are inserted into the SQL as they are. Never pass user input directly: use bindings (`?`) or `RawQuery::string()`.
-- `now()`, `dateAfter()` and `diff()` generate driver-specific SQL for MySQL, MariaDB, PostgreSQL and SQLite; other drivers throw a `RuntimeException`. The driver is read from the default connection, so these methods need a booted app (not in a PHPUnit data provider), and a model on another connection gets the SQL of the default one.
+- `now()`, `dateAfter()` and `diff()` generate driver-specific SQL for MySQL, MariaDB, PostgreSQL and SQLite. On another driver, e.g. SQL Server, `now()` and `dateAfter()` give the SQL of MySQL (`NOW()`, `INTERVAL`), and `diff()` throws a `RuntimeException`. The driver is read from the default connection, so these methods need a booted app (not in a PHPUnit data provider), and a model on another connection gets the SQL of the default one.
 - On SQLite, `diff()` drops fractions of a second, `datetime()` always gives `YYYY-MM-DD HH:MM:SS`, also for a date column, and `CURRENT_TIMESTAMP` is in UTC, while MySQL's `NOW()` uses the time zone of the session.
 
 ## Str
