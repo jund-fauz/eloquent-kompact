@@ -719,7 +719,7 @@ use const JundFauz\EloquentKompact\NEW_LINE;
 | `same_with_one_of($value, ...$others)` | Whether `$value` is `===` to one of the others; `false` without others |
 | `higher_than($a, $b)` / `lower_than($a, $b)` | `$a > $b` / `$a < $b` for `int`, `float` and numeric strings, e.g. decimal casts like `'2.50'` |
 | `is_natural_number($number)` / `is_whole_number($number)` | Whether the `int` is `> 0` / `>= 0` |
-| `is_local_or_test()` | Whether the app runs in the `local` or `testing` environment |
+| `is_app_local_or_test()` | Whether the app runs in the `local` or `testing` environment |
 | `not($condition)` | `! $condition` |
 | `str_concat(...$values)` | Joined without a delimiter |
 | `word_concat(...$values)` | Joined with a space |
