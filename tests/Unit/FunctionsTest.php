@@ -26,6 +26,7 @@ use function JundFauz\EloquentKompact\full_path_on_app;
 use function JundFauz\EloquentKompact\higher_than;
 use function JundFauz\EloquentKompact\is_all_null;
 use function JundFauz\EloquentKompact\is_associative_array;
+use function JundFauz\EloquentKompact\is_local_or_test;
 use function JundFauz\EloquentKompact\is_natural_number;
 use function JundFauz\EloquentKompact\is_whole_number;
 use function JundFauz\EloquentKompact\is_not_array;
@@ -444,6 +445,20 @@ class FunctionsTest extends TestCase
         $this->assertSame('App\Models', str_before_last('App\Models\User', '\\'));
         $this->assertSame('äöü', str_lower('ÄÖÜ'));
         $this->assertSame('ÄÖÜ', str_upper('äöü'));
+    }
+
+    #[Test]
+    public function it_checks_a_local_or_test_environment(): void
+    {
+        $this->assertTrue(is_local_or_test());
+
+        $this->app['env'] = 'local';
+        $this->assertTrue(is_local_or_test());
+
+        foreach (['production', 'staging'] as $environment) {
+            $this->app['env'] = $environment;
+            $this->assertFalse(is_local_or_test(), $environment);
+        }
     }
 
     #[Test]

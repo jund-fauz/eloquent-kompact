@@ -18,7 +18,7 @@ use function JundFauz\EloquentKompact\str_empty_if_false;
 use function JundFauz\EloquentKompact\word_concat;
 
 /**
- * NOTE: Built to compatible with MySQL & PostgreSQL database
+ * NOTE: Built to compatible with SQLite, MySQL & PostgreSQL database
  * @method static self create(string|self $expression = '')
  */
 class RawQuery extends Builder implements Expression

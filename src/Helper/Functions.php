@@ -4,6 +4,7 @@ namespace JundFauz\EloquentKompact;
 
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Support\Collection as SupportCollection;
+use Illuminate\Support\Facades\App;
 use JundFauz\EloquentKompact\Builder\Collection;
 use JundFauz\EloquentKompact\Builder\Str;
 use JundFauz\EloquentKompact\Helper\Arr;
@@ -244,4 +245,9 @@ function is_natural_number(int $number): bool
 function is_whole_number(int $number): bool
 {
     return $number >= 0;
+}
+
+function is_local_or_test(): bool
+{
+    return App::isLocal() || App::runningUnitTests();
 }
