@@ -7,6 +7,30 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [0.95.0] - 2026-11-06
+
+### Added
+
+- SQLite support in `RawQuery::now()`, `dateAfter()` and `diff()`:
+
+  ```php
+  RawQuery::now();                                     // CURRENT_TIMESTAMP
+  RawQuery::create('created_at')->dateAfter(30);       // datetime(created_at, '30 days')
+  RawQuery::create('due_date')->diff('created_at');    // (strftime('%s', due_date) - strftime('%s', created_at)) / 86400
+  ```
+
+  `diff()` still only supports `Interval::Day`.
+- `is_natural_number($number)` and `is_whole_number($number)`: whether an `int` is `> 0` / `>= 0`.
+
+### Changed
+
+- **Breaking:** `RawQuery::now()` and `dateAfter()` read the driver of the default connection, like `diff()`. They need a booted app, and throw a `RuntimeException` on a driver other than MySQL, MariaDB, PostgreSQL and SQLite, e.g. SQL Server, instead of giving `NOW()` and `INTERVAL`.
+
+### Tests
+
+- Added tests for `now()`, `dateAfter()` and `diff()` on every supported driver, run on SQLite too, and for an unsupported driver. The `dateAfter()` cases left the data provider, which runs before the app boots.
+- Added tests for `is_natural_number()` and `is_whole_number()`.
+
 ## [0.94.0] - 2026-11-06
 
 ### Added
@@ -1883,7 +1907,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - `RawQuery` static helpers for raw SQL expressions.
 - Translations for `en` and `id`.
 
-[Unreleased]: https://github.com/jund-fauz/eloquent-kompact/compare/v0.94.0...HEAD
+[Unreleased]: https://github.com/jund-fauz/eloquent-kompact/compare/v0.95.0...HEAD
+[0.95.0]: https://github.com/jund-fauz/eloquent-kompact/compare/v0.94.0...v0.95.0
 [0.94.0]: https://github.com/jund-fauz/eloquent-kompact/compare/v0.93.0...v0.94.0
 [0.93.0]: https://github.com/jund-fauz/eloquent-kompact/compare/v0.92.0...v0.93.0
 [0.92.0]: https://github.com/jund-fauz/eloquent-kompact/compare/v0.91.0...v0.92.0
