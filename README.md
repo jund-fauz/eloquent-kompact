@@ -341,6 +341,8 @@ php artisan kompact:ide-helper
 
 It writes `_ide_helper_kompact.php` (`@property-read` and `@method` for every dynamic relation of the models directly in `path.model` that use `AutoRelation`) and registers it as a class mixin in `ide.json` for Laravel Idea. Each mixin is a `_EK_`-prefixed class inside `EloquentKompact\IdeHelper`, e.g. `EloquentKompact\IdeHelper\App\Models\_EK_User` for `App\Models\User`, so it never shows up as a second `User` class. Other `classMixins` entries in `ide.json` are kept.
 
+When the related model uses its own builder, such as [`Model\Builder`](#builder) on a `KompactModel`, the `@method` of the relation also returns that builder, so its methods are suggested after `$post->comments()`.
+
 Set `KOMPACT_IDE_HELPER=true` in `.env` to run it automatically after every `php artisan migrate` in the `local` environment. You will probably want to add `_ide_helper_kompact.php` to `.gitignore`.
 
 ## Migration helpers
@@ -739,6 +741,7 @@ use const JundFauz\EloquentKompact\NEW_LINE;
 | `stringify($array)` | Every value cast to a `string`, nested arrays included, keeping the keys; `null` and `false` become `''` |
 | `model_compact($model, ...$columns)` | `[column => value]` for the given columns, after casting; missing attributes are `null` and loaded relations become arrays |
 | `str_before_last()`, `str_lower()`, `str_upper()` | Laravel's `Str::beforeLast()`, `lower()`, `upper()` |
+| `str_empty_if_false($condition, $value)` | `$value`, or `''` if `$condition` is falsy, like [`Str::emptyIfFalse()`](#str) |
 
 The joining functions accept arrays too, which are flattened: `str_concat('a', ['b', ['c']])` → `abc`.
 
