@@ -7,6 +7,16 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [0.97.0] - 2026-11-06
+
+### Added
+
+- `is_local_or_test()`: whether the app runs in the `local` or `testing` environment.
+
+### Tests
+
+- Added tests for `is_local_or_test()` in the `testing`, `local`, `production` and `staging` environments.
+
 ## [0.96.0] - 2026-11-06
 
 ### Changed
@@ -1917,7 +1927,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - `RawQuery` static helpers for raw SQL expressions.
 - Translations for `en` and `id`.
 
-[Unreleased]: https://github.com/jund-fauz/eloquent-kompact/compare/v0.96.0...HEAD
+[Unreleased]: https://github.com/jund-fauz/eloquent-kompact/compare/v0.97.0...HEAD
+[0.97.0]: https://github.com/jund-fauz/eloquent-kompact/compare/v0.96.0...v0.97.0
 [0.96.0]: https://github.com/jund-fauz/eloquent-kompact/compare/v0.95.0...v0.96.0
 [0.95.0]: https://github.com/jund-fauz/eloquent-kompact/compare/v0.94.0...v0.95.0
 [0.94.0]: https://github.com/jund-fauz/eloquent-kompact/compare/v0.93.0...v0.94.0
