@@ -7,6 +7,24 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [0.94.0] - 2026-11-06
+
+### Added
+
+- `str_empty_if_false($condition, $value)`: `$value`, or `''` if `$condition` is falsy.
+
+### Changed
+
+- `kompact:ide-helper` adds the builder of the related model to the `@method` of a relation when it is not Eloquent's own one, e.g. `HasMany<\App\Models\Comment, \App\Models\Post>|\JundFauz\EloquentKompact\Model\Builder comments()`, so the methods of [`Model\Builder`](README.md#builder) are suggested on the relation.
+
+### Fixed
+
+- `ColumnListing` imports the `Cache` and `Schema` facades by their full name, so it no longer needs Laravel's global aliases.
+
+### Tests
+
+- Added tests for `str_empty_if_false()`, the builder in the `@method` of the IDE helper, and the builder found for a `KompactModel`, a model with its own builder and a plain model.
+
 ## [0.93.0] - 2026-11-05
 
 ### Added
@@ -1865,7 +1883,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - `RawQuery` static helpers for raw SQL expressions.
 - Translations for `en` and `id`.
 
-[Unreleased]: https://github.com/jund-fauz/eloquent-kompact/compare/v0.93.0...HEAD
+[Unreleased]: https://github.com/jund-fauz/eloquent-kompact/compare/v0.94.0...HEAD
+[0.94.0]: https://github.com/jund-fauz/eloquent-kompact/compare/v0.93.0...v0.94.0
 [0.93.0]: https://github.com/jund-fauz/eloquent-kompact/compare/v0.92.0...v0.93.0
 [0.92.0]: https://github.com/jund-fauz/eloquent-kompact/compare/v0.91.0...v0.92.0
 [0.91.0]: https://github.com/jund-fauz/eloquent-kompact/compare/v0.90.0...v0.91.0
