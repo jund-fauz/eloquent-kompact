@@ -379,21 +379,22 @@ SELECT * FROM t",
     }
 
     #[Test]
-    public function it_rejects_an_unsupported_driver(): void
+    public function it_rejects_diff_for_an_unsupported_driver(): void
     {
         $this->useDriver('sqlsrv');
 
-        foreach ([
-            fn () => RawQuery::create('due_date')->diff('created_at'),
-            fn () => RawQuery::create('created_at')->dateAfter(30),
-            fn () => RawQuery::now(),
-        ] as $call) {
-            try {
-                $call();
-                $this->fail('No exception was thrown.');
-            } catch (RuntimeException $exception) {
-                $this->assertSame("Database driver sqlsrv isn't supported yet.", $exception->getMessage());
-            }
-        }
+        $this->expectException(RuntimeException::class);
+        $this->expectExceptionMessage("Database driver sqlsrv isn't supported yet.");
+
+        RawQuery::create('due_date')->diff('created_at');
+    }
+
+    #[Test]
+    public function it_falls_back_to_now_and_interval_for_another_driver(): void
+    {
+        $this->useDriver('sqlsrv');
+
+        $this->assertSame('NOW()', RawQuery::now());
+        $this->assertSame("created_at + INTERVAL '30' DAY", RawQuery::create('created_at')->dateAfter(30)->build());
     }
 }

@@ -27,7 +27,7 @@ class Driver
             self::MySQL, self::MariaDB => $mysql ?: $etc,
             self::PostgresSQL => $pgsql ?: $etc,
             self::SQLite => $sqlite ?: $etc,
-            default => throw new RuntimeException(__('eloquent-kompact::messages.driver_not_supported_yet', compact('driver')))
+            default => $etc ?: throw new RuntimeException(__('eloquent-kompact::messages.driver_not_supported_yet', compact('driver')))
         };
     }
 }
