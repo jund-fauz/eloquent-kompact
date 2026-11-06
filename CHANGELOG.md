@@ -7,6 +7,16 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [0.96.0] - 2026-11-06
+
+### Changed
+
+- On a driver other than MySQL, MariaDB, PostgreSQL and SQLite, e.g. SQL Server, `RawQuery::now()` and `dateAfter()` give `NOW()` and `INTERVAL` again, like before 0.95.0, instead of throwing a `RuntimeException`. `diff()` still throws there.
+
+### Tests
+
+- Split the test for an unsupported driver: `diff()` throws, while `now()` and `dateAfter()` fall back to `NOW()` and `INTERVAL`.
+
 ## [0.95.0] - 2026-11-06
 
 ### Added
@@ -1907,7 +1917,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - `RawQuery` static helpers for raw SQL expressions.
 - Translations for `en` and `id`.
 
-[Unreleased]: https://github.com/jund-fauz/eloquent-kompact/compare/v0.95.0...HEAD
+[Unreleased]: https://github.com/jund-fauz/eloquent-kompact/compare/v0.96.0...HEAD
+[0.96.0]: https://github.com/jund-fauz/eloquent-kompact/compare/v0.95.0...v0.96.0
 [0.95.0]: https://github.com/jund-fauz/eloquent-kompact/compare/v0.94.0...v0.95.0
 [0.94.0]: https://github.com/jund-fauz/eloquent-kompact/compare/v0.93.0...v0.94.0
 [0.93.0]: https://github.com/jund-fauz/eloquent-kompact/compare/v0.92.0...v0.93.0
