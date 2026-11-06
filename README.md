@@ -399,7 +399,7 @@ A prefix is only written as an array with one key, the prefix, and one value, th
 
 ## RawQuery
 
-`JundFauz\EloquentKompact\Query\RawQuery` builds raw SQL expressions (for `selectRaw`, `whereRaw`, `orderByRaw`, etc.) with a fluent chain, compatible with MySQL & PostgreSQL.
+`JundFauz\EloquentKompact\Query\RawQuery` builds raw SQL expressions (for `selectRaw`, `whereRaw`, `orderByRaw`, etc.) with a fluent chain, compatible with MySQL, MariaDB, PostgreSQL & SQLite.
 
 Start with `create()`, chain the operations in reading order, then call `build()` to get the SQL string.
 
@@ -512,8 +512,8 @@ In the table, `x` is the current subject.
 | `concat(...$values)` | `CONCAT_WS('', x, a, b)` |
 | `cast($type)` | `CAST(x AS type)` |
 | `as($alias)` | `x AS alias` |
-| `dateAfter($count, $interval = Interval::Day)` | `x + INTERVAL 'count' DAY` |
-| `diff($other, $interval = Interval::Day)` | MySQL: `TIMESTAMPDIFF(DAY, other, x)`<br>PostgreSQL: `EXTRACT(DAY FROM (x - other))` |
+| `dateAfter($count, $interval = Interval::Day)` | MySQL, PostgreSQL: `x + INTERVAL 'count' DAY`<br>SQLite: `datetime(x, 'count days')` |
+| `diff($other, $interval = Interval::Day)` | MySQL: `TIMESTAMPDIFF(DAY, other, x)`<br>PostgreSQL: `EXTRACT(DAY FROM (x - other))`<br>SQLite: `(strftime('%s', x) - strftime('%s', other)) / 86400` |
 | `compare($other = '?', $operator = Operator::SameWith)` | `x = other` |
 | `where($column, $operator = Operator::SameWith, $other = '?')` | `x WHERE column = other` |
 | `in($values)` | `x IN (values)`, e.g. a list or a subquery |
@@ -529,7 +529,7 @@ In the table, `x` is the current subject.
 
 | Helper | Result |
 | --- | --- |
-| `RawQuery::now()` | `NOW()` |
+| `RawQuery::now()` | `NOW()`; SQLite: `CURRENT_TIMESTAMP` |
 | `RawQuery::string($value)` | Escaped string literal, e.g. `'available'`. Without an argument: `''` |
 | `RawQuery::queryConcat(...$expressions)` | Expressions joined with a space |
 | `RawQuery::relations($column, $model)` | Column with the table named after one model, e.g. `relations('name', BlogPost::class)` → `blog_posts.name`; `['latest' => Post::class]` gives `latest_posts`, and an empty column gives only the table. It is not quoted, does not get the table prefix and does not read the `$table` of the model; use [`qualify()`](#statich) for that |
@@ -590,10 +590,12 @@ RawQuery::create('email')->replaceIfNull(RawQuery::string())->count()->as('email
 RawQuery::create('due_date')->diff(RawQuery::now())->as('days_left')->build();
 // MySQL:      TIMESTAMPDIFF(DAY, NOW(), due_date) AS days_left
 // PostgreSQL: EXTRACT(DAY FROM (due_date - NOW())) AS days_left
+// SQLite:     (strftime('%s', due_date) - strftime('%s', CURRENT_TIMESTAMP)) / 86400 AS days_left
 
 // Expiry date 30 days after creation
 RawQuery::create('created_at')->dateAfter(30)->as('expired_at')->build();
-// created_at + INTERVAL '30' DAY AS expired_at
+// MySQL, PostgreSQL: created_at + INTERVAL '30' DAY AS expired_at
+// SQLite:            datetime(created_at, '30 days') AS expired_at
 
 // Paid ratio, safe from division by zero
 RawQuery::create('paid')->sum()->divide(RawQuery::create('total')->sum())->as('paid_ratio')->build();
@@ -603,7 +605,8 @@ RawQuery::create('paid')->sum()->divide(RawQuery::create('total')->sum())->as('p
 ### Notes
 
 - Arguments are inserted into the SQL as they are. Never pass user input directly: use bindings (`?`) or `RawQuery::string()`.
-- `diff()` generates driver-specific SQL for MySQL, MariaDB and PostgreSQL; other drivers throw a `RuntimeException`.
+- `now()`, `dateAfter()` and `diff()` generate driver-specific SQL for MySQL, MariaDB, PostgreSQL and SQLite; other drivers throw a `RuntimeException`. The driver is read from the default connection, so these methods need a booted app (not in a PHPUnit data provider), and a model on another connection gets the SQL of the default one.
+- On SQLite, `diff()` drops fractions of a second, `datetime()` always gives `YYYY-MM-DD HH:MM:SS`, also for a date column, and `CURRENT_TIMESTAMP` is in UTC, while MySQL's `NOW()` uses the time zone of the session.
 
 ## Str
 
@@ -715,6 +718,7 @@ use const JundFauz\EloquentKompact\NEW_LINE;
 | `same_with($a, $b)` / `not_same_with($a, $b)` | `$a === $b` / `$a !== $b` |
 | `same_with_one_of($value, ...$others)` | Whether `$value` is `===` to one of the others; `false` without others |
 | `higher_than($a, $b)` / `lower_than($a, $b)` | `$a > $b` / `$a < $b` for `int`, `float` and numeric strings, e.g. decimal casts like `'2.50'` |
+| `is_natural_number($number)` / `is_whole_number($number)` | Whether the `int` is `> 0` / `>= 0` |
 | `not($condition)` | `! $condition` |
 | `str_concat(...$values)` | Joined without a delimiter |
 | `word_concat(...$values)` | Joined with a space |
