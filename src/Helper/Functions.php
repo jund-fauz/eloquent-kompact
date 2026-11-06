@@ -235,3 +235,13 @@ function collect(mixed $data): Collection
 {
     return new Collection($data);
 }
+
+function is_natural_number(int $number): bool
+{
+    return $number > 0;
+}
+
+function is_whole_number(int $number): bool
+{
+    return $number >= 0;
+}

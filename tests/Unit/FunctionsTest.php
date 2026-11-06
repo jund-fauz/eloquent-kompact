@@ -26,6 +26,8 @@ use function JundFauz\EloquentKompact\full_path_on_app;
 use function JundFauz\EloquentKompact\higher_than;
 use function JundFauz\EloquentKompact\is_all_null;
 use function JundFauz\EloquentKompact\is_associative_array;
+use function JundFauz\EloquentKompact\is_natural_number;
+use function JundFauz\EloquentKompact\is_whole_number;
 use function JundFauz\EloquentKompact\is_not_array;
 use function JundFauz\EloquentKompact\is_not_null;
 use function JundFauz\EloquentKompact\lower_than;
@@ -442,6 +444,20 @@ class FunctionsTest extends TestCase
         $this->assertSame('App\Models', str_before_last('App\Models\User', '\\'));
         $this->assertSame('äöü', str_lower('ÄÖÜ'));
         $this->assertSame('ÄÖÜ', str_upper('äöü'));
+    }
+
+    #[Test]
+    public function it_checks_natural_and_whole_numbers(): void
+    {
+        $this->assertTrue(is_natural_number(1));
+        $this->assertTrue(is_natural_number(PHP_INT_MAX));
+        $this->assertFalse(is_natural_number(0));
+        $this->assertFalse(is_natural_number(-1));
+
+        $this->assertTrue(is_whole_number(0));
+        $this->assertTrue(is_whole_number(1));
+        $this->assertFalse(is_whole_number(-1));
+        $this->assertFalse(is_whole_number(PHP_INT_MIN));
     }
 
     #[Test]

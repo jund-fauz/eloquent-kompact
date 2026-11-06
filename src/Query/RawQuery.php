@@ -10,8 +10,12 @@ use JundFauz\EloquentKompact\Column\Convert;
 use JundFauz\EloquentKompact\Internal\Concerns\Builder;
 use JundFauz\EloquentKompact\Internal\Database\Driver;
 use function JundFauz\EloquentKompact\array_wrap;
+use function JundFauz\EloquentKompact\is_natural_number;
 use function JundFauz\EloquentKompact\is_not_null;
+use function JundFauz\EloquentKompact\is_whole_number;
 use function JundFauz\EloquentKompact\str_concat;
+use function JundFauz\EloquentKompact\str_empty_if_false;
+use function JundFauz\EloquentKompact\word_concat;
 
 /**
  * NOTE: Built to compatible with MySQL & PostgreSQL database
@@ -226,7 +230,10 @@ class RawQuery extends Builder implements Expression
 
     public function dateAfter(int $count, Interval $type = Interval::Day): static
     {
-        return $this->set("$this + INTERVAL '$count' $type->value");
+        return $this->set(Driver::matcher(
+            sqlite: str_concat("datetime($this, '$count ", Str::of($type->value)->plural()->lower(), "')"),
+            etc: "$this + INTERVAL '$count' $type->value"
+        ));
     }
 
     /**
@@ -237,13 +244,20 @@ class RawQuery extends Builder implements Expression
     {
         return $this->set(Driver::matcher(
             mysql: "TIMESTAMPDIFF($interval->value, $secondColumnName, $this)",
-            pgsql: "EXTRACT($interval->value FROM ($this - $secondColumnName))"
+            pgsql: "EXTRACT($interval->value FROM ($this - $secondColumnName))",
+            sqlite: str_concat("(strftime('%s', $this) - strftime('%s', $secondColumnName)) / ", match ($interval) {
+                Interval::Day => 60 * 60 * 24,
+                default => ''
+            })
         ));
     }
 
     public static function now(): string
     {
-        return 'NOW()';
+        return Driver::matcher(
+            sqlite: 'CURRENT_TIMESTAMP',
+            etc: 'NOW()'
+        );
     }
 
     public function compare(string|self $secondColumnName = '?', Operator $operator = Operator::SameWith): static

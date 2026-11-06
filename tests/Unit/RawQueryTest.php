@@ -2,6 +2,7 @@
 
 namespace JundFauz\EloquentKompact\Tests\Unit;
 
+use Illuminate\Support\Facades\DB;
 use JundFauz\EloquentKompact\Builder\Str;
 use JundFauz\EloquentKompact\Internal\Database\Driver;
 use JundFauz\EloquentKompact\Query\Interval;
@@ -58,8 +59,6 @@ class RawQueryTest extends TestCase
         yield 'concat' => [RawQuery::create('first_name')->concat("' '", 'last_name'), "CONCAT_WS('', first_name, ' ', last_name)"];
         yield 'cast' => [RawQuery::create('id')->cast(RawQuery::CHAR), 'CAST(id AS CHAR)'];
         yield 'as' => [RawQuery::create('price')->as('total'), 'price AS total'];
-        yield 'dateAfter' => [RawQuery::create('created_at')->dateAfter(30), "created_at + INTERVAL '30' DAY"];
-        yield 'dateAfter month' => [RawQuery::create('created_at')->dateAfter(2, Interval::Month), "created_at + INTERVAL '2' MONTH"];
         yield 'compare default' => [RawQuery::create('total')->compare(), 'total = ?'];
         yield 'compare operator' => [RawQuery::create('stock')->compare('0', Operator::MoreThanOrSame), 'stock >= 0'];
 
@@ -247,8 +246,60 @@ SELECT * FROM t",
     #[Test]
     public function it_builds_static_helpers(): void
     {
-        $this->assertSame('NOW()', RawQuery::now());
+        $this->assertSame('CURRENT_TIMESTAMP', RawQuery::now());
         $this->assertSame('SELECT SUM(price)', RawQuery::queryConcat('SELECT', RawQuery::create('price')->sum()));
+    }
+
+    #[Test]
+    public function it_builds_now_for_mysql_mariadb_and_postgresql(): void
+    {
+        foreach ([Driver::MySQL, Driver::MariaDB, Driver::PostgresSQL] as $driver) {
+            $this->useDriver($driver);
+
+            $this->assertSame('NOW()', RawQuery::now(), $driver);
+        }
+    }
+
+    #[Test]
+    public function it_builds_date_after_for_mysql_mariadb_and_postgresql(): void
+    {
+        foreach ([Driver::MySQL, Driver::MariaDB, Driver::PostgresSQL] as $driver) {
+            $this->useDriver($driver);
+
+            $this->assertSame("created_at + INTERVAL '30' DAY", RawQuery::create('created_at')->dateAfter(30)->build(), $driver);
+            $this->assertSame("created_at + INTERVAL '2' MONTH", RawQuery::create('created_at')->dateAfter(2, Interval::Month)->build(), $driver);
+            $this->assertSame("created_at + INTERVAL '-5' DAY", RawQuery::create('created_at')->dateAfter(-5)->build(), $driver);
+        }
+    }
+
+    #[Test]
+    public function it_builds_date_after_for_sqlite(): void
+    {
+        $this->assertSame("datetime(created_at, '30 days')", RawQuery::create('created_at')->dateAfter(30)->build());
+        $this->assertSame("datetime(created_at, '2 months')", RawQuery::create('created_at')->dateAfter(2, Interval::Month)->build());
+        $this->assertSame("datetime(created_at, '1 hours')", RawQuery::create('created_at')->dateAfter(1, Interval::Hour)->build());
+    }
+
+    #[Test]
+    public function it_runs_date_after_on_sqlite(): void
+    {
+        $date = RawQuery::string('2026-11-06 10:00:00');
+        $run = fn (RawQuery $query) => DB::selectOne("SELECT $query AS value")->value;
+
+        $this->assertSame('2026-12-06 10:00:00', $run(RawQuery::create($date)->dateAfter(30)));
+        $this->assertSame('2026-11-01 10:00:00', $run(RawQuery::create($date)->dateAfter(-5)));
+        $this->assertSame('2026-11-06 10:00:00', $run(RawQuery::create($date)->dateAfter(0)));
+        $this->assertSame('2027-01-06 10:00:00', $run(RawQuery::create($date)->dateAfter(2, Interval::Month)));
+        $this->assertSame('2026-11-06 12:00:00', $run(RawQuery::create($date)->dateAfter(2, Interval::Hour)));
+        $this->assertSame('2026-11-06 10:00:30', $run(RawQuery::create($date)->dateAfter(30, Interval::Second)));
+        $this->assertSame('2026-11-06 10:05:00', $run(RawQuery::create($date)->dateAfter(5, Interval::Minute)));
+        $this->assertSame('2027-11-06 10:00:00', $run(RawQuery::create($date)->dateAfter(1, Interval::Year)));
+    }
+
+    #[Test]
+    public function it_runs_now_on_sqlite(): void
+    {
+        $this->assertMatchesRegularExpression('/^\d{4}-\d{2}-\d{2} \d{2}:\d{2}:\d{2}$/', DB::selectOne('SELECT '.RawQuery::now().' AS value')->value);
     }
 
     #[Test]
@@ -303,11 +354,46 @@ SELECT * FROM t",
     }
 
     #[Test]
-    public function it_rejects_diff_for_unsupported_driver(): void
+    public function it_builds_diff_for_sqlite(): void
     {
-        $this->expectException(RuntimeException::class);
-        $this->expectExceptionMessage("Database driver sqlite isn't supported yet.");
+        $this->assertSame(
+            "(strftime('%s', due_date) - strftime('%s', CURRENT_TIMESTAMP)) / 86400",
+            RawQuery::create('due_date')->diff(RawQuery::now())->build()
+        );
+    }
 
-        RawQuery::create('due_date')->diff(RawQuery::now());
+    #[Test]
+    public function it_runs_diff_on_sqlite(): void
+    {
+        $run = fn (string $first, ?string $second) => DB::selectOne(
+            'SELECT '.RawQuery::create('?')->diff('?').' AS value',
+            [$first, $second]
+        )->value;
+
+        $this->assertSame(5, $run('2026-11-06 00:00:00', '2026-11-01 00:00:00'));
+        $this->assertSame(5, $run('2026-11-06', '2026-11-01'));
+        $this->assertSame(0, $run('2026-11-06 23:59:00', '2026-11-06 00:00:00'));
+        $this->assertSame(0, $run('2026-11-06 10:00:00', '2026-11-05 11:00:00'));
+        $this->assertSame(-5, $run('2026-11-01 00:00:00', '2026-11-06 12:00:00'));
+        $this->assertNull($run('2026-11-06', null));
+    }
+
+    #[Test]
+    public function it_rejects_an_unsupported_driver(): void
+    {
+        $this->useDriver('sqlsrv');
+
+        foreach ([
+            fn () => RawQuery::create('due_date')->diff('created_at'),
+            fn () => RawQuery::create('created_at')->dateAfter(30),
+            fn () => RawQuery::now(),
+        ] as $call) {
+            try {
+                $call();
+                $this->fail('No exception was thrown.');
+            } catch (RuntimeException $exception) {
+                $this->assertSame("Database driver sqlsrv isn't supported yet.", $exception->getMessage());
+            }
+        }
     }
 }
