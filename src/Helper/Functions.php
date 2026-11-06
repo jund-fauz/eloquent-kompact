@@ -247,7 +247,7 @@ function is_whole_number(int $number): bool
     return $number >= 0;
 }
 
-function is_local_or_test(): bool
+function is_app_local_or_test(): bool
 {
     return App::isLocal() || App::runningUnitTests();
 }
