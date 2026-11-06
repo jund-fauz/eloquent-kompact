@@ -171,6 +171,11 @@ function str_upper(string $subject): string
     return \Illuminate\Support\Str::upper($subject);
 }
 
+function str_empty_if_false(mixed $condition, string $value): string
+{
+    return $condition ? $value : '';
+}
+
 function same_with(mixed $firstValue, mixed $secondValue): bool
 {
     return $firstValue === $secondValue;

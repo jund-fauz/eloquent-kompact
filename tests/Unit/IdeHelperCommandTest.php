@@ -2,7 +2,10 @@
 
 namespace JundFauz\EloquentKompact\Tests\Unit;
 
+use Illuminate\Database\Eloquent\Model;
 use JundFauz\EloquentKompact\Console\IdeHelperCommand;
+use JundFauz\EloquentKompact\Model\Builder;
+use JundFauz\EloquentKompact\Model\KompactModel;
 use JundFauz\EloquentKompact\Tests\TestCase;
 use PHPUnit\Framework\Attributes\Test;
 
@@ -53,6 +56,26 @@ class IdeHelperCommandTest extends TestCase
     }
 
     #[Test]
+    public function it_adds_the_builder_of_the_related_model_to_the_relation_method(): void
+    {
+        $block = $this->invoke('renderMixin', 'App\Models\Post', [
+            'comments' => ['type' => 'hasMany', 'class' => 'App\Models\Comment', 'builder' => Builder::class],
+            'authorUser' => ['type' => 'belongsTo', 'class' => 'App\Models\User', 'builder' => null],
+        ]);
+
+        $this->assertStringContainsString('     * @method \Illuminate\Database\Eloquent\Relations\HasMany<\App\Models\Comment, \App\Models\Post>|\JundFauz\EloquentKompact\Model\Builder comments()', $block);
+        $this->assertStringContainsString('     * @method \Illuminate\Database\Eloquent\Relations\BelongsTo<\App\Models\User, \App\Models\Post> authorUser()', $block);
+    }
+
+    #[Test]
+    public function it_finds_the_builder_that_the_model_uses(): void
+    {
+        $this->assertSame(Builder::class, $this->invoke('builderOf', IdeHelperKompactModel::class));
+        $this->assertSame(IdeHelperCustomBuilder::class, $this->invoke('builderOf', IdeHelperCustomBuilderModel::class));
+        $this->assertNull($this->invoke('builderOf', IdeHelperPlainModel::class));
+    }
+
+    #[Test]
     public function it_renders_the_file_header(): void
     {
         $this->assertSame(implode("\n", [
@@ -67,4 +90,24 @@ class IdeHelperCommandTest extends TestCase
             '',
         ]), $this->invoke('renderFile', ['BLOCK']));
     }
+}
+
+class IdeHelperKompactModel extends KompactModel
+{
+    protected $table = 'ide_helper_kompact_models';
+}
+
+class IdeHelperCustomBuilder extends \Illuminate\Database\Eloquent\Builder
+{
+    //
+}
+
+class IdeHelperCustomBuilderModel extends Model
+{
+    protected static string $builder = IdeHelperCustomBuilder::class;
+}
+
+class IdeHelperPlainModel extends Model
+{
+    //
 }

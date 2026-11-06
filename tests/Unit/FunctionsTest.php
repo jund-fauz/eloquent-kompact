@@ -42,6 +42,7 @@ use function JundFauz\EloquentKompact\schema_concat;
 use function JundFauz\EloquentKompact\str_before_last;
 use function JundFauz\EloquentKompact\stringify;
 use function JundFauz\EloquentKompact\str_concat;
+use function JundFauz\EloquentKompact\str_empty_if_false;
 use function JundFauz\EloquentKompact\str_lower;
 use function JundFauz\EloquentKompact\str_upper;
 use function JundFauz\EloquentKompact\word_concat;
@@ -441,6 +442,18 @@ class FunctionsTest extends TestCase
         $this->assertSame('App\Models', str_before_last('App\Models\User', '\\'));
         $this->assertSame('äöü', str_lower('ÄÖÜ'));
         $this->assertSame('ÄÖÜ', str_upper('äöü'));
+    }
+
+    #[Test]
+    public function str_empty_if_false_keeps_the_value_only_when_the_condition_is_truthy(): void
+    {
+        $this->assertSame('a', str_empty_if_false(true, 'a'));
+        $this->assertSame('a', str_empty_if_false('x', 'a'));
+        $this->assertSame('a', str_empty_if_false([1], 'a'));
+
+        foreach ([false, null, 0, '', '0', []] as $condition) {
+            $this->assertSame('', str_empty_if_false($condition, 'a'));
+        }
     }
 
     private static function model(array $attributes): Model

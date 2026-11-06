@@ -6,6 +6,7 @@ use BadMethodCallException;
 use Closure;
 use Generator;
 use Illuminate\Console\Command;
+use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use Illuminate\Database\Eloquent\Relations\HasMany;
@@ -19,13 +20,16 @@ use JundFauz\EloquentKompact\Column\Creator;
 use JundFauz\EloquentKompact\Model\Traits\AutoRelation;
 use ReflectionClass;
 use ReflectionException;
+use function JundFauz\EloquentKompact\array_pull_list;
 use function JundFauz\EloquentKompact\comment;
 use function JundFauz\EloquentKompact\full_path_on_app;
+use function JundFauz\EloquentKompact\merge_as_array;
 use function JundFauz\EloquentKompact\namespace_concat;
 use function JundFauz\EloquentKompact\path_concat;
 use function JundFauz\EloquentKompact\same_with;
 use function JundFauz\EloquentKompact\str_before_last;
 use function JundFauz\EloquentKompact\str_concat;
+use function JundFauz\EloquentKompact\str_empty_if_false;
 use function JundFauz\EloquentKompact\word_concat;
 use function JundFauz\EloquentKompact\write_line;
 use const JundFauz\EloquentKompact\DISTANCE_LINE;
@@ -129,8 +133,8 @@ final class IdeHelperCommand extends Command
                 continue;
             }
 
-            if ($config && (is_null($expectedClass) || same_with($config['class'], $expectedClass))) {
-                $relations[$name] = $config;
+            if ($config and (is_null($expectedClass) or same_with($config['class'], $expectedClass))) {
+                $relations[$name] = merge_as_array($config, ['builder' => $this->builderOf($config['class'])]);
             }
         }
 
@@ -195,6 +199,20 @@ final class IdeHelperCommand extends Command
         );
     }
 
+    /**
+     * The builder that the related model really uses. Eloquent's own one is left out,
+     * because `Relation` already exposes it through its `@mixin`.
+     *
+     * @param class-string<Model> $class
+     * @return class-string<Builder>|null
+     */
+    protected function builderOf(string $class): ?string
+    {
+        $builder = get_class((new $class)->newModelQuery());
+
+        return same_with($builder, Builder::class) ? null : $builder;
+    }
+
     protected function mixinFqn(string $class): string
     {
         return namespace_concat(
@@ -209,7 +227,9 @@ final class IdeHelperCommand extends Command
         $mixin = $this->mixinFqn($parent);
         $lines = [];
 
-        foreach ($relations as $name => ['type' => $type, 'class' => $class]) {
+        foreach ($relations as $name => $relation) {
+            [$type, $class, $builder] = array_pull_list($relation, 'type', 'class', 'builder');
+
             $lines[] = str_concat(self::Indentation,
                 ' * @property-read \\',
                 in_array($type, self::SingularTypes, true)
@@ -217,7 +237,7 @@ final class IdeHelperCommand extends Command
                     : str_concat(namespace_concat('Illuminate', 'Database', 'Eloquent', 'Collection'), "<int, \\$class>"),
                 " \$$name"
             );
-            $lines[] = str_concat(self::Indentation, ' * @method \\', self::RelationClasses[$type], "<\\$class, \\$parent> $name()");
+            $lines[] = word_concat(self::Indentation,  str_concat('* @method \\', self::RelationClasses[$type], "<\\$class, \\$parent>", str_empty_if_false($builder, "|\\$builder")), "$name()");
         }
 
         return write_line(

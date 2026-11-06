@@ -2,9 +2,9 @@
 
 namespace JundFauz\EloquentKompact\Column;
 
-use Cache;
 use Illuminate\Cache\Repository;
-use Schema;
+use Illuminate\Support\Facades\Cache;
+use Illuminate\Support\Facades\Schema;
 use function JundFauz\EloquentKompact\schema_concat;
 use function JundFauz\EloquentKompact\str_lower;
 
