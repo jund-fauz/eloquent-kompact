@@ -718,7 +718,10 @@ use const JundFauz\EloquentKompact\NEW_LINE;
 | `same_with($a, $b)` / `not_same_with($a, $b)` | `$a === $b` / `$a !== $b` |
 | `same_with_one_of($value, ...$others)` | Whether `$value` is `===` to one of the others; `false` without others |
 | `higher_than($a, $b)` / `lower_than($a, $b)` | `$a > $b` / `$a < $b` for `int`, `float` and numeric strings, e.g. decimal casts like `'2.50'` |
+| `higher_than_or_same_with($a, $b)` / `lower_than_or_same_with($a, $b)` | `$a >= $b` / `$a <= $b`, for the same values |
 | `is_natural_number($number)` / `is_whole_number($number)` | Whether the `int` is `> 0` / `>= 0` |
+| `is_zero($number)` | Whether the `int` or `float` is `0`, also `-0.0` |
+| `is_count_zero($value)` / `is_count_one($value)` / `is_count_many($value)` | Whether the array or `Countable` has no item / one item / more than one item |
 | `is_app_local_or_test()` | Whether the app runs in the `local` or `testing` environment |
 | `not($condition)` | `! $condition` |
 | `str_concat(...$values)` | Joined without a delimiter |
@@ -732,7 +735,7 @@ use const JundFauz\EloquentKompact\NEW_LINE;
 | `add_tab($sentence, $count = 1)` | The sentence indented with `$count` tabs of 4 spaces |
 | `full_path_on_app($path)` | Absolute path inside `app/`, e.g. `App\Models` → `{app_path}/Models` |
 | `array_flat(&$array)` | Flattens the array in place |
-| `collect($value)` | A [`Builder\Collection`](#other-helpers) of the value, like Laravel's `collect()`; import it to use it instead of Laravel's |
+| `collect(...$values)` | A [`Builder\Collection`](#other-helpers) of one value, like Laravel's `collect()`, or of several values as its items: `collect(1, 2)` → `[1, 2]`. Without a value it throws a `BadMethodCallException`, unlike Laravel's. Import it to use it instead of Laravel's |
 | `array_wrap($value)` | Laravel's `Arr::wrap()`: the value as an array, `[]` for `null` |
 | `array_get_or($array, ...$keys)` | The first value that is not `null`, in the order of the keys; dot notation is supported and missing keys are skipped |
 | `array_filter_filled($array)` | The values that are Laravel's `filled()`, keeping the keys: `null`, blank strings and empty arrays or collections are removed; `0`, `'0'` and `false` are kept |
