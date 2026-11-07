@@ -7,6 +7,24 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [0.99.0] - 2026-11-07
+
+### Added
+
+- `collect()` takes several values, which become the items of the collection: `collect(1, 2)` gives `[1, 2]`. One value is collected as before.
+- `is_count_zero()`, `is_count_one()` and `is_count_many()`: whether an array or `Countable` has no item, one item or more than one item.
+- `higher_than_or_same_with()` and `lower_than_or_same_with()`: `>=` and `<=`.
+- `is_zero()`: whether an `int` or `float` is `0`.
+
+### Changed
+
+- **Breaking:** `collect()` without a value throws a `BadMethodCallException`. Before, it failed with an `ArgumentCountError`.
+- **Breaking:** the parameter of `stringify()` is renamed from `$datas` to `$data`, so a call with the named argument `datas:` fails.
+
+### Tests
+
+- Added tests for `collect()` with several values and without a value, and for the new helpers.
+
 ## [0.98.0] - 2026-11-06
 
 ### Changed
@@ -1937,7 +1955,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - `RawQuery` static helpers for raw SQL expressions.
 - Translations for `en` and `id`.
 
-[Unreleased]: https://github.com/jund-fauz/eloquent-kompact/compare/v0.98.0...HEAD
+[Unreleased]: https://github.com/jund-fauz/eloquent-kompact/compare/v0.99.0...HEAD
+[0.99.0]: https://github.com/jund-fauz/eloquent-kompact/compare/v0.98.0...v0.99.0
 [0.98.0]: https://github.com/jund-fauz/eloquent-kompact/compare/v0.97.0...v0.98.0
 [0.97.0]: https://github.com/jund-fauz/eloquent-kompact/compare/v0.96.0...v0.97.0
 [0.96.0]: https://github.com/jund-fauz/eloquent-kompact/compare/v0.95.0...v0.96.0
