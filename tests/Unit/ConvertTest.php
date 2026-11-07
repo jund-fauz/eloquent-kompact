@@ -58,4 +58,41 @@ class ConvertTest extends TestCase
 
         Convert::modelToRelation($model);
     }
+
+    #[Test]
+    public function it_converts_a_model_to_a_column(): void
+    {
+        $this->assertSame('work_order_ledger_id', Convert::modelToColumn(self::Model));
+        $this->assertSame('user_id', Convert::modelToColumn('User'));
+        $this->assertSame('author_work_order_ledger_id', Convert::modelToColumn(self::Model, 'author'));
+        $this->assertSame('work_order_ledger_id', Convert::modelToColumn(self::Model, ''));
+    }
+
+    #[Test]
+    public function it_converts_a_boolean_column_to_strings(): void
+    {
+        $this->assertSame(['Not active', 'Active'], Convert::booleanToString('active_is'));
+        $this->assertSame(['Not verified', 'Verified'], Convert::booleanToString('verified'));
+    }
+
+    #[Test]
+    public function it_translates_the_boolean_strings(): void
+    {
+        $this->app->setLocale('id');
+
+        $this->assertSame(['Tidak active', 'Active'], Convert::booleanToString('active_is'));
+    }
+
+    #[Test]
+    public function it_converts_hours_and_days_to_seconds(): void
+    {
+        $this->assertSame(0, Convert::hourToSecond(0));
+        $this->assertSame(3600, Convert::hourToSecond(1));
+        $this->assertSame(7200, Convert::hourToSecond(2));
+        $this->assertSame(-3600, Convert::hourToSecond(-1));
+
+        $this->assertSame(0, Convert::dayToSecond(0));
+        $this->assertSame(86400, Convert::dayToSecond(1));
+        $this->assertSame(604800, Convert::dayToSecond(7));
+    }
 }

@@ -483,6 +483,50 @@ class AdditionalQueriesTest extends TestCase
         $this->assertSame([], MorphComment::find(1)->compact());
     }
 
+    #[Test]
+    public function it_copies_relations_to_another_model_with_the_given_columns(): void
+    {
+        $this->createCopyTables();
+
+        CopyOrder::find(1)->copyRelationsTo(CopyOrder::find(2), ['items' => ['product', 'qty']]);
+
+        $this->assertSame(
+            [['order_id' => 2, 'product' => 'a', 'qty' => 1, 'note' => null], ['order_id' => 2, 'product' => 'b', 'qty' => 2, 'note' => null]],
+            DB::table('copy_items')->where('order_id', 2)->orderBy('id')->get(['order_id', 'product', 'qty', 'note'])->map(fn ($row) => (array) $row)->all()
+        );
+        $this->assertSame(2, DB::table('copy_items')->where('order_id', 1)->count());
+    }
+
+    #[Test]
+    public function it_copies_nothing_from_an_empty_relation(): void
+    {
+        $this->createCopyTables();
+
+        CopyOrder::find(2)->copyRelationsTo(CopyOrder::find(1), ['items' => ['product', 'qty']]);
+
+        $this->assertSame(2, DB::table('copy_items')->count());
+    }
+
+    private function createCopyTables(): void
+    {
+        Schema::create('copy_orders', function (Blueprint $table) {
+            $table->id();
+        });
+        Schema::create('copy_items', function (Blueprint $table) {
+            $table->id();
+            $table->foreignId('order_id');
+            $table->string('product');
+            $table->integer('qty');
+            $table->string('note')->nullable();
+        });
+
+        DB::table('copy_orders')->insert([['id' => 1], ['id' => 2]]);
+        DB::table('copy_items')->insert([
+            ['order_id' => 1, 'product' => 'a', 'qty' => 1, 'note' => 'x'],
+            ['order_id' => 1, 'product' => 'b', 'qty' => 2, 'note' => 'y'],
+        ]);
+    }
+
     private function createWhereInRelationTables(): void
     {
         Schema::create('authors', function (Blueprint $table) {
@@ -590,4 +634,27 @@ class WhereInNote extends Model
     {
         return $this->morphTo();
     }
+}
+
+class CopyOrder extends Model
+{
+    use AdditionalQueries;
+
+    public $timestamps = false;
+
+    protected $table = 'copy_orders';
+
+    public function items(): HasMany
+    {
+        return $this->hasMany(CopyItem::class, 'order_id');
+    }
+}
+
+class CopyItem extends Model
+{
+    public $timestamps = false;
+
+    protected $table = 'copy_items';
+
+    protected $guarded = [];
 }
