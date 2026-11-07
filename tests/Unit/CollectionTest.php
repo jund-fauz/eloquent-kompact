@@ -2,6 +2,7 @@
 
 namespace JundFauz\EloquentKompact\Tests\Unit;
 
+use BadMethodCallException;
 use JundFauz\EloquentKompact\Builder\Collection;
 use JundFauz\EloquentKompact\Builder\Str;
 use JundFauz\EloquentKompact\Tests\TestCase;
@@ -163,6 +164,23 @@ class CollectionTest extends TestCase
         $this->assertSame(['a'], collect('a')->all());
         $this->assertSame([], collect(null)->all());
         $this->assertSame([1], collect(new \Illuminate\Support\Collection([1]))->all());
+        $this->assertSame([[1]], collect([[1]])->all());
+    }
+
+    #[Test]
+    public function the_collect_helper_collects_several_values_as_items(): void
+    {
+        $this->assertSame([1, 2], collect(1, 2)->all());
+        $this->assertSame([[1], [2]], collect([1], [2])->all());
+        $this->assertSame([null, null], collect(null, null)->all());
+    }
+
+    #[Test]
+    public function the_collect_helper_throws_without_a_value(): void
+    {
+        $this->expectException(BadMethodCallException::class);
+
+        collect();
     }
 
     #[Test]

@@ -2,6 +2,7 @@
 
 namespace JundFauz\EloquentKompact\Tests\Unit;
 
+use ArrayObject;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Support\Collection as SupportCollection;
 use JundFauz\EloquentKompact\Builder\Relation;
@@ -24,14 +25,20 @@ use function JundFauz\EloquentKompact\array_wrap;
 use function JundFauz\EloquentKompact\comment;
 use function JundFauz\EloquentKompact\full_path_on_app;
 use function JundFauz\EloquentKompact\higher_than;
+use function JundFauz\EloquentKompact\higher_than_or_same_with;
 use function JundFauz\EloquentKompact\is_all_null;
 use function JundFauz\EloquentKompact\is_associative_array;
+use function JundFauz\EloquentKompact\is_count_many;
+use function JundFauz\EloquentKompact\is_count_one;
+use function JundFauz\EloquentKompact\is_count_zero;
 use function JundFauz\EloquentKompact\is_app_local_or_test;
 use function JundFauz\EloquentKompact\is_natural_number;
 use function JundFauz\EloquentKompact\is_whole_number;
+use function JundFauz\EloquentKompact\is_zero;
 use function JundFauz\EloquentKompact\is_not_array;
 use function JundFauz\EloquentKompact\is_not_null;
 use function JundFauz\EloquentKompact\lower_than;
+use function JundFauz\EloquentKompact\lower_than_or_same_with;
 use function JundFauz\EloquentKompact\merge_as_array;
 use function JundFauz\EloquentKompact\model_compact;
 use function JundFauz\EloquentKompact\namespace_concat;
@@ -427,6 +434,51 @@ class FunctionsTest extends TestCase
         $this->assertTrue(lower_than(-1, '0.5'));
         $this->assertFalse(lower_than(1, 1));
         $this->assertFalse(lower_than('2.50', 2));
+    }
+
+    #[Test]
+    public function it_compares_numbers_or_same(): void
+    {
+        $this->assertTrue(higher_than_or_same_with(2, 1));
+        $this->assertTrue(higher_than_or_same_with(1, 1));
+        $this->assertTrue(higher_than_or_same_with('2.50', 2.5));
+        $this->assertTrue(higher_than_or_same_with('10', '9'));
+        $this->assertFalse(higher_than_or_same_with(0.2, 0.9));
+
+        $this->assertTrue(lower_than_or_same_with(1, 2));
+        $this->assertTrue(lower_than_or_same_with(1, 1));
+        $this->assertTrue(lower_than_or_same_with('2.50', 2.5));
+        $this->assertTrue(lower_than_or_same_with('9', '10'));
+        $this->assertFalse(lower_than_or_same_with(0.9, 0.2));
+    }
+
+    #[Test]
+    public function it_checks_zero(): void
+    {
+        $this->assertTrue(is_zero(0));
+        $this->assertTrue(is_zero(0.0));
+        $this->assertTrue(is_zero(-0.0));
+        $this->assertFalse(is_zero(1));
+        $this->assertFalse(is_zero(0.1));
+        $this->assertFalse(is_zero(-1));
+    }
+
+    #[Test]
+    public function it_checks_the_count(): void
+    {
+        $this->assertTrue(is_count_zero([]));
+        $this->assertTrue(is_count_zero(new ArrayObject));
+        $this->assertFalse(is_count_zero([null]));
+
+        $this->assertTrue(is_count_one([null]));
+        $this->assertTrue(is_count_one(new ArrayObject(['a' => 1])));
+        $this->assertFalse(is_count_one([]));
+        $this->assertFalse(is_count_one([1, 2]));
+
+        $this->assertTrue(is_count_many([1, 2]));
+        $this->assertTrue(is_count_many(new ArrayObject([1, 2, 3])));
+        $this->assertFalse(is_count_many([1]));
+        $this->assertFalse(is_count_many([]));
     }
 
     #[Test]

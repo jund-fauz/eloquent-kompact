@@ -2,6 +2,8 @@
 
 namespace JundFauz\EloquentKompact;
 
+use BadMethodCallException;
+use Countable;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Support\Collection as SupportCollection;
 use Illuminate\Support\Facades\App;
@@ -157,6 +159,21 @@ function is_associative_array(mixed $data): bool
     return is_array($data) && ! array_is_list($data);
 }
 
+function is_count_zero(array|Countable $data): bool
+{
+    return same_with(count($data), 0);
+}
+
+function is_count_one(array|Countable $data): bool
+{
+    return same_with(count($data), 1);
+}
+
+function is_count_many(array|Countable $data): bool
+{
+    return higher_than(count($data), 1);
+}
+
 function str_before_last(string $subject, string $search): string
 {
     return \Illuminate\Support\Str::beforeLast($subject, $search);
@@ -202,6 +219,16 @@ function lower_than(int|float|string $firstNumber, int|float|string $secondNumbe
     return $firstNumber < $secondNumber;
 }
 
+function higher_than_or_same_with(int|float|string $firstNumber, int|float|string $secondNumber): bool
+{
+    return $firstNumber >= $secondNumber;
+}
+
+function lower_than_or_same_with(int|float|string $firstNumber, int|float|string $secondNumber): bool
+{
+    return $firstNumber <= $secondNumber;
+}
+
 function not(bool $condition): bool
 {
     return ! $condition;
@@ -214,9 +241,9 @@ function model_compact(Model $model, string ...$columns): array
         ->toArray();
 }
 
-function stringify(array $datas): array
+function stringify(array $data): array
 {
-    return array_map(fn (mixed $data) => is_array($data) ? stringify($data) : (string) $data, $datas);
+    return array_map(fn (mixed $data) => is_array($data) ? stringify($data) : (string) $data, $data);
 }
 
 function merge_as_array(mixed ...$values): array
@@ -232,9 +259,12 @@ function merge_as_array(mixed ...$values): array
     return $values;
 }
 
-function collect(mixed $data): Collection
+function collect(mixed ...$data): Collection
 {
-    return new Collection($data);
+    if (is_count_zero($data)) {
+        throw new BadMethodCallException('No argument passed');
+    }
+    return new Collection(is_count_one($data) ? $data[0] : $data);
 }
 
 function is_natural_number(int $number): bool
@@ -245,6 +275,11 @@ function is_natural_number(int $number): bool
 function is_whole_number(int $number): bool
 {
     return $number >= 0;
+}
+
+function is_zero(float|int $data): bool
+{
+    return (float) $data === 0.0;
 }
 
 function is_app_local_or_test(): bool
