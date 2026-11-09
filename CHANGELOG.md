@@ -7,6 +7,23 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [0.101.0] - 2026-11-09
+
+### Added
+
+- `Str::asRegex()`: a `Regex` started with the value.
+- `Builder\Collection::implodeAsStr()` and `Model\Collection::implodeAsStr()`: Laravel's `implode()` as a `Str`.
+
+### Changed
+
+- The `BadMethodCallException` of a dynamic relation that cannot be resolved is translated (`relation_not_resolvable`) in English and Indonesian. Before, it was always in Indonesian.
+- `Creator` builds its token matcher with `implodeAsStr()` and `asRegex()`; the matcher is the same.
+
+### Tests
+
+- Added tests for `AutoRelation` (belongsTo, hasMany, morphMany, prefixes, eager loading, the translated error), `AutoCast`, `UuidCast`, `Str::asRegex()`, `implodeAsStr()` and `Regex::__set_state()`.
+- Added tests that run `kompact:ide-helper`: the helper file, `ide.json`, the warnings and the morph map.
+
 ## [0.100.0] - 2026-11-09
 
 ### Added
@@ -1981,7 +1998,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - `RawQuery` static helpers for raw SQL expressions.
 - Translations for `en` and `id`.
 
-[Unreleased]: https://github.com/jund-fauz/eloquent-kompact/compare/v0.100.0...HEAD
+[Unreleased]: https://github.com/jund-fauz/eloquent-kompact/compare/v0.101.0...HEAD
+[0.101.0]: https://github.com/jund-fauz/eloquent-kompact/compare/v0.100.0...v0.101.0
 [0.100.0]: https://github.com/jund-fauz/eloquent-kompact/compare/v0.99.0...v0.100.0
 [0.99.0]: https://github.com/jund-fauz/eloquent-kompact/compare/v0.98.0...v0.99.0
 [0.98.0]: https://github.com/jund-fauz/eloquent-kompact/compare/v0.97.0...v0.98.0
