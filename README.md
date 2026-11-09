@@ -185,6 +185,8 @@ Model results use [`Model\Collection`](#other-helpers), unless the model has `#[
 ],
 ```
 
+A missing key of `exclude_column_by` leaves nothing out for it, so a config published before `1.0.0`, with `excluded_columns_by_regex`, only leaves out the timestamp columns: `id` becomes fillable. Rename the key there.
+
 A model that should fill its timestamp columns too sets:
 
 ```php
@@ -785,7 +787,8 @@ use const JundFauz\EloquentKompact\NEW_LINE;
 | `str_constant($class, $constant)` | `Class::Constant`, e.g. for `defined()` or `constant()` |
 | `ternary($condition, $trueValue, $falseValue)` | `$condition ? $trueValue : $falseValue` |
 | `elvis($value, $default)` | `$value ?: $default` |
-| `null_coalescing($value, $default)` | `$value ?? $default` |
+| `null_coalescing($value, $default)` | `$value ?? $default`, for a value that exists: a missing array key still gives PHP's `Undefined array key` warning, use `array_get()` for that |
+| `array_get(&$value, $default)` | `$value ?? $default` without a warning for a missing array key, also nested or on `null`: `array_get($config['token'], [])`. The value is taken by reference, so it has to be a variable or an array item, and a missing key is added to the array as `null` |
 | `str_concat(...$values)` | Joined without a delimiter |
 | `word_concat(...$values)` | Joined with a space |
 | `schema_concat(...$values)` | Joined with `:` |
