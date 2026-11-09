@@ -4,7 +4,7 @@ namespace JundFauz\EloquentKompact\Tests\Unit;
 
 use BadMethodCallException;
 use Illuminate\Support\Fluent;
-use JundFauz\EloquentKompact\Column\ColumnChecker;
+use JundFauz\EloquentKompact\Column\ColumnCheck;
 use JundFauz\EloquentKompact\Tests\TestCase;
 use PHPUnit\Framework\Attributes\DataProvider;
 use PHPUnit\Framework\Attributes\Test;
@@ -31,14 +31,14 @@ class CheckerTest extends TestCase
     #[DataProvider('columnProvider')]
     public function it_checks_the_token_at_the_end_of_a_column(string $method, string $column, bool $expected): void
     {
-        $this->assertSame($expected, ColumnChecker::{$method}($column));
+        $this->assertSame($expected, ColumnCheck::{$method}($column));
     }
 
     #[Test]
     public function it_checks_a_column_definition(): void
     {
-        $this->assertTrue(ColumnChecker::isEnum(new Fluent(['name' => 'status_enum'])));
-        $this->assertFalse(ColumnChecker::isEnum(new Fluent(['name' => 'status'])));
+        $this->assertTrue(ColumnCheck::isEnum(new Fluent(['name' => 'status_enum'])));
+        $this->assertFalse(ColumnCheck::isEnum(new Fluent(['name' => 'status'])));
     }
 
     #[Test]
@@ -46,9 +46,9 @@ class CheckerTest extends TestCase
     {
         config(['eloquent-kompact.column.custom_tokens' => ['kg' => 'kg', 'per_unit' => ['pu', 'decimal:3']]]);
 
-        $this->assertTrue(ColumnChecker::isKg('weight_kg'));
-        $this->assertFalse(ColumnChecker::isKg('weight_lb'));
-        $this->assertTrue(ColumnChecker::isPerUnit('price_pu'));
+        $this->assertTrue(ColumnCheck::isKg('weight_kg'));
+        $this->assertFalse(ColumnCheck::isKg('weight_lb'));
+        $this->assertTrue(ColumnCheck::isPerUnit('price_pu'));
     }
 
     #[Test]
@@ -56,6 +56,6 @@ class CheckerTest extends TestCase
     {
         $this->expectException(BadMethodCallException::class);
 
-        ColumnChecker::isUnknown('status');
+        ColumnCheck::isUnknown('status');
     }
 }

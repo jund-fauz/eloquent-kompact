@@ -20,7 +20,7 @@ use function JundFauz\EloquentKompact\str_constant;
  * @method static bool isTime(mixed $column)
  * @method static bool isType(mixed $column)
  */
-final class ColumnChecker
+final class ColumnCheck
 {
     use ErrorThrow;
 
