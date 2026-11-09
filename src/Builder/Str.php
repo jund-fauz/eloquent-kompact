@@ -11,6 +11,7 @@ use function JundFauz\EloquentKompact\not_same_with;
 use function JundFauz\EloquentKompact\path_concat;
 use function JundFauz\EloquentKompact\same_with;
 use function JundFauz\EloquentKompact\str_concat;
+use function JundFauz\EloquentKompact\str_constant;
 use function JundFauz\EloquentKompact\word_concat;
 use const JundFauz\EloquentKompact\NEW_LINE;
 use const JundFauz\EloquentKompact\PATH_DELIMITER;
@@ -61,6 +62,11 @@ class Str extends Stringable
         return new static(self::joinWords([$this->value, ...$otherWords]));
     }
 
+    public function addConstant(string $constantName): static
+    {
+        return new static(str_constant($this->value, $constantName));
+    }
+
     public function addNamespace(string ...$otherNamespace): static
     {
         return new static(namespace_concat($this->value, $otherNamespace));
@@ -79,6 +85,11 @@ class Str extends Stringable
     public function addWordAtStart(string ...$otherWords): static
     {
         return new static(self::joinWords([...$otherWords, $this->value]));
+    }
+
+    public function addConstantAtStart(string $className): static
+    {
+        return new static(str_constant($className, $this->value));
     }
 
     public function addNamespaceAtStart(string ...$otherNamespace): static
@@ -195,5 +206,14 @@ class Str extends Stringable
             $paths,
             array_keys($paths)
         ));
+    }
+
+    /**
+     * Checks whether a given named constant exists using `defined()` function from php
+     * @return bool
+     */
+    public function isDefined(): bool
+    {
+        return defined($this->value);
     }
 }

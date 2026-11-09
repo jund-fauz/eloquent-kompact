@@ -24,6 +24,7 @@ class CheckerTest extends TestCase
         yield 'only the last token' => ['isEnum', 'user_id_enum', true];
         yield 'not the last token' => ['isRelation', 'user_id_enum', false];
         yield 'plain' => ['isRelation', 'name', false];
+        yield 'token without the delimiter' => ['isRelation', 'paid', false];
     }
 
     #[Test]
@@ -38,6 +39,16 @@ class CheckerTest extends TestCase
     {
         $this->assertTrue(Checker::isEnum(new Fluent(['name' => 'status_enum'])));
         $this->assertFalse(Checker::isEnum(new Fluent(['name' => 'status'])));
+    }
+
+    #[Test]
+    public function it_checks_a_custom_token(): void
+    {
+        config(['eloquent-kompact.column.custom_tokens' => ['kg' => 'kg', 'per_unit' => ['pu', 'decimal:3']]]);
+
+        $this->assertTrue(Checker::isKg('weight_kg'));
+        $this->assertFalse(Checker::isKg('weight_lb'));
+        $this->assertTrue(Checker::isPerUnit('price_pu'));
     }
 
     #[Test]

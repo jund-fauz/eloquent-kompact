@@ -47,6 +47,7 @@ use function JundFauz\EloquentKompact\elvis;
 use function JundFauz\EloquentKompact\not;
 use function JundFauz\EloquentKompact\not_defined;
 use function JundFauz\EloquentKompact\not_in;
+use function JundFauz\EloquentKompact\in;
 use function JundFauz\EloquentKompact\not_in_array;
 use function JundFauz\EloquentKompact\null_coalescing;
 use function JundFauz\EloquentKompact\str_constant;
@@ -608,6 +609,17 @@ class FunctionsTest extends TestCase
         $this->assertFalse(not_in('a', new SupportCollection(['a'])));
         $this->assertFalse(not_in('a', ['a']));
         $this->assertTrue(not_in('1', collect([1]), true));
+    }
+
+    #[Test]
+    public function it_checks_a_value_is_in_a_list(): void
+    {
+        $this->assertTrue(in('a', ['a', 'b']));
+        $this->assertTrue(in('a', collect(['a'])));
+        $this->assertTrue(in('a', new SupportCollection(['a'])));
+        $this->assertFalse(in('c', ['a', 'b']));
+        $this->assertTrue(in('1', [1]));
+        $this->assertFalse(in('1', collect([1]), true));
     }
 
     #[Test]

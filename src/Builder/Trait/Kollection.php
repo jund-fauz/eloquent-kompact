@@ -63,7 +63,7 @@ trait Kollection
         return $result;
     }
 
-    public function implodeAsStr(callable|string|null $value, $glue = null): Str
+    public function implodeAsStr(callable|string|null $value = '', $glue = null): Str
     {
         return Str::of($this->implode($value, $glue));
     }

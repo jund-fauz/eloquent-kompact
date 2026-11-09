@@ -32,6 +32,12 @@ class RegexTest extends TestCase
         yield 'group with parts' => [Regex::create()->group('a', '|b'), '/(a|b)/'];
         yield 'group then endsWith' => [Regex::create('_id|_at')->group()->endsWith(), '/(_id|_at)$/'];
 
+        yield 'before' => [Regex::create('id|at')->group()->before('_'), '/_(id|at)/'];
+        yield 'before several parts' => [Regex::create('b')->before('^', 'a'), '/^ab/'];
+        yield 'before nested' => [Regex::create('b')->before(Regex::create('a')->group()), '/(a)b/'];
+        yield 'before then endsWith' => [Regex::create('id')->group()->before('_')->endsWith(), '/_(id)$/'];
+        yield 'before empty' => [Regex::create()->before('a'), '/a/'];
+
         yield 'exceptWord' => [Regex::create()->exceptWord('id'), '/(?!id)/'];
         yield 'contain' => [Regex::create()->contain(Quantifier::oneOrMore, Regex::create()->range('a', 'z')), '/[a-z]+/'];
         yield 'contain string quantifier' => [Regex::create()->contain('{2}', '0-9'), '/[0-9]{2}/'];
@@ -74,6 +80,15 @@ class RegexTest extends TestCase
         $this->assertInstanceOf(Regex::class, $restored);
         $this->assertSame('/a$/', $restored->build());
         $this->assertSame('//', Regex::__set_state([])->build());
+    }
+
+    #[Test]
+    public function it_returns_the_pattern_as_a_str(): void
+    {
+        $str = Regex::create('a')->endsWith()->asStr();
+
+        $this->assertInstanceOf(\JundFauz\EloquentKompact\Builder\Str::class, $str);
+        $this->assertSame('/a$/', $str->toString());
     }
 
     #[Test]

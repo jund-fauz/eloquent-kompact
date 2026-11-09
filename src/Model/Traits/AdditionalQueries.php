@@ -257,6 +257,12 @@ trait AdditionalQueries
         }
     }
 
+    /**
+     * @experimental
+     * @param Model $other
+     * @param string ...$columns
+     * @return void
+     */
     public function assignIfBlankFrom(Model $other, string ...$columns): void
     {
         foreach ($columns as $column) {
@@ -290,11 +296,21 @@ trait AdditionalQueries
         }
     }
 
+    /**
+     * @experimental
+     * @param string $column
+     * @return bool
+     */
     public function isBlank(string $column): bool
     {
         return blank($this->{$column});
     }
 
+    /**
+     * @experimental
+     * @param string $column
+     * @return bool
+     */
     public function isBlankAndDirty(string $column): bool
     {
         return $this->isDirty($column) && $this->isBlank($column);

@@ -81,7 +81,7 @@ function path_concat(string|array ...$folderOrPackages): string
 function full_path_on_app(string $path): string
 {
     return app_path(
-        (string) Str::of($path)
+        (string)Str::of($path)
             ->replace(NAMESPACE_DELIMITER, PATH_DELIMITER)
             ->replaceByRegex('/^app(\/|$)/i', '')
             ->trim(PATH_DELIMITER)
@@ -241,6 +241,11 @@ function lower_than_or_same_with(int|float|string $firstNumber, int|float|string
     return $firstNumber <= $secondNumber;
 }
 
+function in(mixed $needle, array|SupportCollection|Collection $haystack, bool $strict = false): bool
+{
+    return in_array($needle, array_cast($haystack), $strict);
+}
+
 function not(bool $condition): bool
 {
     return ! $condition;
@@ -248,7 +253,7 @@ function not(bool $condition): bool
 
 function not_in(mixed $needle, array|SupportCollection|Collection $haystack, bool $strict = false): bool
 {
-    return not_in_array($needle, array_cast($haystack), $strict);
+    return ! in($needle, $haystack, $strict);
 }
 
 function not_in_array(mixed $needle, array $haystack, bool $strict = false): bool
@@ -287,7 +292,7 @@ function model_compact(Model $model, string ...$columns): array
 
 function stringify(array $data): array
 {
-    return array_map(fn (mixed $data) => is_array($data) ? stringify($data) : (string) $data, $data);
+    return array_map(fn (mixed $data) => is_array($data) ? stringify($data) : (string)$data, $data);
 }
 
 function merge_as_array(mixed ...$values): array
@@ -298,17 +303,18 @@ function merge_as_array(mixed ...$values): array
     if ($filled && array_all($filled, fn ($value) => is_associative_array($value))) {
         return array_merge(...array_values($filled));
     }
-    
+
     array_flat($values);
     return $values;
 }
 
 function collect(mixed ...$data): Collection
 {
-    if (is_count_zero($data)) {
-        throw new BadMethodCallException('No argument passed');
-    }
-    return new Collection(is_count_one($data) ? $data[0] : $data);
+    return new Collection(match (count($data)) {
+        1 => $data[0],
+        0 => [],
+        default => $data
+    });
 }
 
 function is_natural_number(int $number): bool
@@ -323,7 +329,7 @@ function is_whole_number(int $number): bool
 
 function is_zero(float|int $data): bool
 {
-    return (float) $data === 0.0;
+    return (float)$data === 0.0;
 }
 
 function is_app_local_or_test(): bool

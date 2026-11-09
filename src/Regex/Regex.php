@@ -2,7 +2,9 @@
 
 namespace JundFauz\EloquentKompact\Regex;
 
+use JundFauz\EloquentKompact\Builder\Str;
 use JundFauz\EloquentKompact\Internal\Concerns\Builder;
+use function JundFauz\EloquentKompact\collect;
 use function JundFauz\EloquentKompact\str_concat;
 
 class Regex extends Builder
@@ -40,6 +42,16 @@ class Regex extends Builder
         return $this->set(str_concat('(', $this->withResult(...$regex), ')'));
     }
 
+    public function before(string|self ...$regex): static
+    {
+        return collect($regex)
+            ->flatten()
+            ->map(static::raw(...))
+            ->implodeAsStr()
+            ->add($this->result)
+            ->asRegex();
+    }
+
     public function exceptWord(string|self $word): static
     {
         return $this->set(str_concat($this->withResult(str_concat('(?!', static::raw($word), ')'))));
@@ -58,6 +70,11 @@ class Regex extends Builder
     public function range(string $from, string $until): static
     {
         return $this->set(str_concat($this->withResult("$from-$until")));
+    }
+
+    public function asStr(): Str
+    {
+        return Str::of($this->build());
     }
 
     /**
