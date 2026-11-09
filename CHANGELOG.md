@@ -7,6 +7,32 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [0.100.0] - 2026-11-09
+
+### Added
+
+- `Regex::group()`: wraps the pattern and the given parts in `(…)`.
+- `Builder\Collection::normalFilter()` and `Model\Collection::normalFilter()`: `array_filter()` with the value only, so a PHP function such as `'is_string'` can be the callback.
+- `str_concat()` accepts collections, which are flattened like arrays.
+- Helpers `not_in_array()`, `not_in()` (also for a collection), `not_defined()`, `str_constant()`, `array_cast()`, `ternary()`, `elvis()` and `null_coalescing()`.
+- `Checker` docblock lists `isTime()` and `isType()`.
+
+### Changed
+
+- **Breaking:** column tokens are always suffixes. `Checker::is*()` only matches the last token of the name, so `isRelation('user_identity')`, `isTimestamp('created_at_backup')` and `isRelation('user_id_enum')` are `false`. Before, a token anywhere in the name matched.
+- **Breaking:** `Creator::tokens()` returns a `Builder\Collection` instead of an `array`.
+- `Creator::getColumnType($column, true)` only removes the `_` at the start of the token.
+- `Creator` appends the token to the column name directly, without a regex.
+
+### Removed
+
+- **Breaking:** the `Filterable` trait and `getCountForFilter()`. Use `RawQuery::create($column)->replaceIfNull(RawQuery::string())->count()` in a `selectRaw()` instead.
+
+### Tests
+
+- Added tests for `Checker`, `Regex::group()`, `normalFilter()`, Laravel's `filter()` and `reject()` with the key, the new helpers, and the suffix-only tokens.
+- Added tests for `Config`, `Payload`, `Arr`, `Convert` and `copyRelationsTo()`.
+
 ## [0.99.0] - 2026-11-07
 
 ### Added
@@ -1955,7 +1981,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - `RawQuery` static helpers for raw SQL expressions.
 - Translations for `en` and `id`.
 
-[Unreleased]: https://github.com/jund-fauz/eloquent-kompact/compare/v0.99.0...HEAD
+[Unreleased]: https://github.com/jund-fauz/eloquent-kompact/compare/v0.100.0...HEAD
+[0.100.0]: https://github.com/jund-fauz/eloquent-kompact/compare/v0.99.0...v0.100.0
 [0.99.0]: https://github.com/jund-fauz/eloquent-kompact/compare/v0.98.0...v0.99.0
 [0.98.0]: https://github.com/jund-fauz/eloquent-kompact/compare/v0.97.0...v0.98.0
 [0.97.0]: https://github.com/jund-fauz/eloquent-kompact/compare/v0.96.0...v0.97.0
