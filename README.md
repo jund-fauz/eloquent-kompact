@@ -23,7 +23,7 @@ Requires PHP 8.3+ and Laravel 12 or 13. The service provider is registered throu
 
 ## Versioning
 
-This package follows [Semantic Versioning](https://semver.org). It is still in initial development (`0.x`): a minor release (`0.x.0`) may contain breaking changes, while a patch release (`0.x.y`) never does. Composer's `^0.x` constraint only allows patch updates, so require it as e.g. `^0.20`. The API is considered stable from `1.0.0`.
+This package follows [Semantic Versioning](https://semver.org) and is stable since `1.0.0`: breaking changes only come in a major release (`2.0.0`), new features in a minor release (`1.x.0`) and fixes in a patch release (`1.x.y`). Require it as `^1.0`.
 
 Classes and methods marked `@internal` or `@experimental` are not covered by this promise and may change in any release.
 
@@ -39,7 +39,10 @@ php artisan vendor:publish --tag=eloquent-kompact-config
 |---|---|---|
 | `path.model` | `App\Models` | Namespace where dynamic relations and `StaticH::getModel()` look for models |
 | `path.database_enum` | `App\Enums` | Namespace where `AutoCast` looks for enums |
-| `fillable.excluded_columns_by_regex` | `id`, columns ending in `_at` | Columns left out of the dynamic fillable list |
+| `column.custom_tokens` | `[]` | Your own column tokens, see [Custom tokens](#custom-tokens) |
+| `fillable.exclude_column_by.exact` | `['id']` | Column names left out of the dynamic fillable list |
+| `fillable.exclude_column_by.token` | `[]` | Token names (`'relation'`, `'enum'`, a custom token name, …) whose columns are left out of the dynamic fillable list |
+| `fillable.exclude_column_by.regex` | `[]` | Regexes of columns left out of the dynamic fillable list |
 | `ide-helper.auto_generate` | `env('KOMPACT_IDE_HELPER', false)` | Run `kompact:ide-helper` after `php artisan migrate` in the local environment |
 
 A namespace may be written with or without a trailing backslash (`App\Models` or `App\Models\`).
@@ -63,21 +66,21 @@ Long-running processes (queue workers, Octane) keep their in-memory copy until t
 
 ## Column naming convention
 
-Most automation reads the **type of a column from its name**: a token at the end of the column name. A token is always a suffix that starts with `_`, so a token elsewhere in the name (`user_identity`, `created_at_backup`) does not count.
+Most automation reads the **type of a column from its name**: a token at the end of the column name, after the delimiter (`_`). A token is always a suffix, so a token elsewhere in the name (`user_identity`, `created_at_backup`) or without the delimiter (`paid`) does not count.
 
 | Token | Constant | Example | Auto cast |
 |---|---|---|---|
-| `_id` | `Creator::Relation` | `author_user_id` | – (used by dynamic relations) |
-| `_enum` | `Creator::Enum` | `status_enum` | Enum class, see [AutoCast](#autocast) |
-| `_array` | `Creator::Array` | `tags_array` | `array` |
-| `_is` | `Creator::Boolean` | `active_is` | `boolean` |
-| `_gram` | `Creator::Gram` | `weight_gram` | `decimal:7` |
-| `_percentage` | `Creator::Percentage` | `tax_percentage` | `decimal:2` |
-| `_pcs` | `Creator::Pcs` | `stock_pcs` | – |
-| `_at` | `Creator::Timestamp` | `paid_at` | – |
-| `_time` | `Creator::Time` | `start_time` | – |
-| `_dropdown` | `Creator::Dropdown` | `size_dropdown` | – |
-| `_type` | `Creator::Type` | `commentable_type` | – (morph type column) |
+| `id` | `Creator::Relation` | `author_user_id` | – (used by dynamic relations) |
+| `enum` | `Creator::Enum` | `status_enum` | Enum class, see [AutoCast](#autocast) |
+| `array` | `Creator::Array` | `tags_array` | `array` |
+| `is` | `Creator::Boolean` | `active_is` | `boolean` |
+| `gram` | `Creator::Gram` | `weight_gram` | `decimal:7` |
+| `percentage` | `Creator::Percentage` | `tax_percentage` | `decimal:2` |
+| `pcs` | `Creator::Pcs` | `stock_pcs` | – |
+| `at` | `Creator::Timestamp` | `paid_at` | – |
+| `time` | `Creator::Time` | `start_time` | – |
+| `dropdown` | `Creator::Dropdown` | `size_dropdown` | – |
+| `type` | `Creator::Type` | `commentable_type` | – (morph type column) |
 
 `JundFauz\EloquentKompact\Column\Creator` builds and reads these names, so a migration never has to spell a token by hand:
 
@@ -89,11 +92,48 @@ Creator::enum('status');                          // status_enum
 Creator::quantity();                              // ['quantity_gram', 'quantity_pcs']
 
 Creator::getPlainColumnName('author_user_id');    // Str: author_user
-Creator::getColumnType('author_user_id');         // _id
-Creator::getColumnType('author_user_id', true);   // id
+Creator::getColumnType('author_user_id');         // id
+Creator::getColumnType('author_user_id', true);   // _id, with the delimiter
 Creator::castOf(Creator::Gram);                   // decimal:7
 Creator::tokens();                                // Builder\Collection of every token, longest first
 ```
+
+### Custom tokens
+
+Add your own tokens in `column.custom_tokens`, as `name => token` or `name => [token, cast]`:
+
+```php
+'column' => [
+    'custom_tokens' => [
+        'kg' => 'kg',
+        'per_unit' => ['pu', 'decimal:3'],
+    ],
+],
+```
+
+```php
+Creator::kg('weight');              // weight_kg
+Creator::perUnit('price');          // price_pu
+Creator::getColumnType('price_pu'); // pu
+Creator::castOf('pu');              // decimal:3, so AutoCast casts price_pu
+Checker::isPerUnit('price_pu');     // true
+```
+
+The name is written in snake case and called in camel case. A custom token is checked before a built-in one, so a custom name or token that is also built in wins. The caches of `Creator` are rebuilt when the config changes; the casts of a model are cached by `AutoCast` until `flushKompactCache()`, see [Column cache](#column-cache).
+
+### Delimiter
+
+The delimiter between the column name and the token is `_`. Change it once, before any model is used, e.g. in the `register()` of a service provider:
+
+```php
+Creator::configureDelimiter('-');
+
+Creator::relation('user');         // user-id
+Creator::getColumnType('user-id'); // id
+Creator::getDelimiter();           // -
+```
+
+Only the token gets the delimiter: the name itself, with a prefix, stays snake case, e.g. `Convert::modelToColumn(User::class, 'author')` → `author_user-id`.
 
 `Checker` tells whether a column (a name or a column definition with a `name`) ends with a token. Only the last token counts:
 
@@ -133,9 +173,25 @@ Model results use [`Model\Collection`](#other-helpers), unless the model has `#[
 
 ### AutoFillable
 
-`getFillable()` returns every column of the table, except the ones matching `fillable.excluded_columns_by_regex`, merged with the model's own `$fillable`. No more `$fillable` arrays to keep in sync with the migrations.
+`getFillable()` returns every column of the table, merged with the model's own `$fillable`. No more `$fillable` arrays to keep in sync with the migrations. Left out are the timestamp columns (`Creator::Timestamp`, e.g. `paid_at`) and the columns of `fillable.exclude_column_by`:
 
-> **Note:** this includes columns such as `password` and `remember_token` on a `KompactUser`. Add the columns that should not be mass assigned to `fillable.excluded_columns_by_regex`, e.g. `'/^remember_token$/'`, and never pass unfiltered input to `create()` or `fill()`.
+```php
+'fillable' => [
+    'exclude_column_by' => [
+        'exact' => ['id', 'remember_token'],
+        'token' => ['relation'],                  // every column ending in _id
+        'regex' => [Regex::create('secret_')->startsWith()],
+    ],
+],
+```
+
+A model that should fill its timestamp columns too sets:
+
+```php
+protected static bool $includeTimestampColumn = true;
+```
+
+> **Note:** this includes columns such as `password` and `remember_token` on a `KompactUser`. Add the columns that should not be mass assigned to `fillable.exclude_column_by`, and never pass unfiltered input to `create()` or `fill()`.
 
 ### AutoCast
 
@@ -624,6 +680,8 @@ RawQuery::create('paid')->sum()->divide(RawQuery::create('total')->sum())->as('p
 | `appPath()` | Laravel's `app_path()` of the value, e.g. `Models` → `{app_path}/Models` |
 | `emptyIfFalse($condition)` | The value, or `''` if `$condition` is falsy |
 | `relation()` | The value with the relation token, e.g. `user_id` |
+| `addConstant($constant)` / `addConstantAtStart($class)` | `Class::Constant`, with the value as the class / the constant |
+| `isDefined()` | PHP's `defined()` of the value, e.g. `Str::of('Relation')->addConstantAtStart(Creator::class)->isDefined()` |
 | `asRawQuery()` | A [`RawQuery`](#rawquery) started with the value |
 | `asRegex()` | A [`Regex`](#regex) started with the value, e.g. `Str::of('_id')->asRegex()->endsWith()` → `/_id$/` |
 | `sameWith($value)` / `notSameWith($value)` | Strict `===` / `!==`, a Laravel `Stringable` is compared by its value |
@@ -693,7 +751,9 @@ Regex::create()->contain(Quantifier::oneOrMore, Regex::create()->range('a', 'z')
 | `exceptWord($word)` | `(?!word)` |
 | `contain($quantifier, ...$parts)` | `[…]` followed by the quantifier (`Quantifier::zeroOrMore`, `oneOrMore`, `zeroOrOne` or a string) |
 | `range($from, $until)` | `from-until` |
+| `before(...$parts)` | The parts in front of the pattern, e.g. `Regex::create('id')->group()->before('_')` → `/_(id)/` |
 | `build()` | The pattern with its `/` delimiters |
+| `asStr()` | `build()` as a [`Str`](#str) |
 
 ## Helper functions
 
@@ -718,6 +778,7 @@ use const JundFauz\EloquentKompact\NEW_LINE;
 | `is_count_zero($value)` / `is_count_one($value)` / `is_count_many($value)` | Whether the array or `Countable` has no item / one item / more than one item |
 | `is_app_local_or_test()` | Whether the app runs in the `local` or `testing` environment |
 | `not($condition)` | `! $condition` |
+| `in($needle, $haystack, $strict = false)` | `in_array()` for an array or a collection |
 | `not_in_array($needle, $haystack, $strict = false)` | `! in_array()` |
 | `not_in($needle, $haystack, $strict = false)` | `not_in_array()` for an array or a collection |
 | `not_defined($constant)` | `! defined()` |
@@ -736,7 +797,7 @@ use const JundFauz\EloquentKompact\NEW_LINE;
 | `add_tab($sentence, $count = 1)` | The sentence indented with `$count` tabs of 4 spaces |
 | `full_path_on_app($path)` | Absolute path inside `app/`, e.g. `App\Models` → `{app_path}/Models` |
 | `array_flat(&$array)` | Flattens the array in place |
-| `collect(...$values)` | A [`Builder\Collection`](#other-helpers) of one value, like Laravel's `collect()`, or of several values as its items: `collect(1, 2)` → `[1, 2]`. Without a value it throws a `BadMethodCallException`, unlike Laravel's. Import it to use it instead of Laravel's |
+| `collect(...$values)` | A [`Builder\Collection`](#other-helpers) of one value, like Laravel's `collect()`, or of several values as its items: `collect(1, 2)` → `[1, 2]`. Without a value it is empty. Import it to use it instead of Laravel's |
 | `array_wrap($value)` | Laravel's `Arr::wrap()`: the value as an array, `[]` for `null` |
 | `array_cast($value)` | The items of a collection, or `array_wrap()` of any other value |
 | `array_get_or($array, ...$keys)` | The first value that is not `null`, in the order of the keys; dot notation is supported and missing keys are skipped |
@@ -779,7 +840,7 @@ Constants: `NEW_LINE` (`"\n"`), `DISTANCE_LINE` (`"\n\n"`), `NAMESPACE_DELIMITER
 
   Every method returns a new `Relation`. It is a query `Expression`, but Eloquent's `with()`, `load()` and `loadMissing()` only take strings, so call `build()`, cast it to a `string`, or pass the list through `stringify()` for them: `$user->loadMissing(stringify([$relation, $other]))`. Its name is the same as Eloquent's `Relation`; import one of them with an alias if a file needs both.
 
-- `Builder\Collection` extends Laravel's `Collection` with `filterFilled()`, `deleteNull()`, `sumAndCompact(...$columns)`, `getOr(...$keys)`, `getOrWithDefault($default, ...$keys)`, `getOrWithDefaultAsCollection($default, ...$keys)`, `normalFilter($callback)` and `implodeAsStr($value, $glue)` (Laravel's `implode()` as a [`Str`](#str)), built on `array_filter_filled()` and `array_get_or()`. These methods, and Laravel's `get()`, `before()` and `after()`, return a string value or default as a [`Str`](#str) and an array as a `Collection`; other values are returned as they are. Laravel's methods keep the class through the chain. Its name is the same as Laravel's `Collection`; import one of them with an alias if a file needs both.
+- `Builder\Collection` extends Laravel's `Collection` with `filterFilled()`, `deleteNull()`, `sumAndCompact(...$columns)`, `getOr(...$keys)`, `getOrWithDefault($default, ...$keys)`, `getOrWithDefaultAsCollection($default, ...$keys)`, `normalFilter($callback)` and `implodeAsStr($value = '', $glue)` (Laravel's `implode()` as a [`Str`](#str)), built on `array_filter_filled()` and `array_get_or()`. These methods, and Laravel's `get()`, `before()` and `after()`, return a string value or default as a [`Str`](#str) and an array as a `Collection`; other values are returned as they are. Laravel's methods keep the class through the chain. Its name is the same as Laravel's `Collection`; import one of them with an alias if a file needs both.
 
   ```php
   use function JundFauz\EloquentKompact\collect;
