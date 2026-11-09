@@ -7,6 +7,24 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [1.1.0] - 2026-11-09
+
+### Added
+
+- Helper `array_get(&$value, $default)`: `$value ?? $default` without a warning for a missing array key, e.g. `array_get($config['token'], [])`.
+
+### Fixed
+
+- `AutoFillable` works when a key of `fillable.exclude_column_by` is missing, or the whole key is (a config published before `1.0.0`). Before, `getFillable()` threw an `ErrorException`. A missing key leaves nothing out for it, so with an old config `id` becomes fillable.
+
+### Changed
+
+- The package archive leaves out `tests/`, `.github/`, `phpunit.xml`, `.gitattributes` and `.gitignore`, so they are no longer installed in `vendor/`.
+
+### Tests
+
+- Added tests for `array_get()` and `AutoFillable` with an incomplete or older config.
+
 ## [1.0.0] - 2026-11-09
 
 The first stable release: from now on, breaking changes only come in a major release.
@@ -2027,7 +2045,8 @@ The first stable release: from now on, breaking changes only come in a major rel
 - `RawQuery` static helpers for raw SQL expressions.
 - Translations for `en` and `id`.
 
-[Unreleased]: https://github.com/jund-fauz/eloquent-kompact/compare/v1.0.0...HEAD
+[Unreleased]: https://github.com/jund-fauz/eloquent-kompact/compare/v1.1.0...HEAD
+[1.1.0]: https://github.com/jund-fauz/eloquent-kompact/compare/v1.0.0...v1.1.0
 [1.0.0]: https://github.com/jund-fauz/eloquent-kompact/compare/v0.101.0...v1.0.0
 [0.101.0]: https://github.com/jund-fauz/eloquent-kompact/compare/v0.100.0...v0.101.0
 [0.100.0]: https://github.com/jund-fauz/eloquent-kompact/compare/v0.99.0...v0.100.0
