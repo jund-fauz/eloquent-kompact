@@ -70,32 +70,32 @@ Most automation reads the **type of a column from its name**: a token at the end
 
 | Token | Constant | Example | Auto cast |
 |---|---|---|---|
-| `id` | `Creator::Relation` | `author_user_id` | – (used by dynamic relations) |
-| `enum` | `Creator::Enum` | `status_enum` | Enum class, see [AutoCast](#autocast) |
-| `array` | `Creator::Array` | `tags_array` | `array` |
-| `is` | `Creator::Boolean` | `active_is` | `boolean` |
-| `gram` | `Creator::Gram` | `weight_gram` | `decimal:7` |
-| `percentage` | `Creator::Percentage` | `tax_percentage` | `decimal:2` |
-| `pcs` | `Creator::Pcs` | `stock_pcs` | – |
-| `at` | `Creator::Timestamp` | `paid_at` | – |
-| `time` | `Creator::Time` | `start_time` | – |
-| `dropdown` | `Creator::Dropdown` | `size_dropdown` | – |
-| `type` | `Creator::Type` | `commentable_type` | – (morph type column) |
+| `id` | `ColumnCreator::Relation` | `author_user_id` | – (used by dynamic relations) |
+| `enum` | `ColumnCreator::Enum` | `status_enum` | Enum class, see [AutoCast](#autocast) |
+| `array` | `ColumnCreator::Array` | `tags_array` | `array` |
+| `is` | `ColumnCreator::Boolean` | `active_is` | `boolean` |
+| `gram` | `ColumnCreator::Gram` | `weight_gram` | `decimal:7` |
+| `percentage` | `ColumnCreator::Percentage` | `tax_percentage` | `decimal:2` |
+| `pcs` | `ColumnCreator::Pcs` | `stock_pcs` | – |
+| `at` | `ColumnCreator::Timestamp` | `paid_at` | – |
+| `time` | `ColumnCreator::Time` | `start_time` | – |
+| `dropdown` | `ColumnCreator::Dropdown` | `size_dropdown` | – |
+| `type` | `ColumnCreator::Type` | `commentable_type` | – (morph type column) |
 
-`JundFauz\EloquentKompact\Column\Creator` builds and reads these names, so a migration never has to spell a token by hand:
+`JundFauz\EloquentKompact\Column\ColumnCreator` builds and reads these names, so a migration never has to spell a token by hand:
 
 ```php
-use JundFauz\EloquentKompact\Column\Creator;
+use JundFauz\EloquentKompact\Column\ColumnCreator;
 
-Creator::relation('author_user');                 // author_user_id
-Creator::enum('status');                          // status_enum
-Creator::quantity();                              // ['quantity_gram', 'quantity_pcs']
+ColumnCreator::relation('author_user');                 // author_user_id
+ColumnCreator::enum('status');                          // status_enum
+ColumnCreator::quantity();                              // ['quantity_gram', 'quantity_pcs']
 
-Creator::getPlainColumnName('author_user_id');    // Str: author_user
-Creator::getColumnType('author_user_id');         // id
-Creator::getColumnType('author_user_id', true);   // _id, with the delimiter
-Creator::castOf(Creator::Gram);                   // decimal:7
-Creator::tokens();                                // Builder\Collection of every token, longest first
+ColumnCreator::getPlainColumnName('author_user_id');    // Str: author_user
+ColumnCreator::getColumnType('author_user_id');         // id
+ColumnCreator::getColumnType('author_user_id', true);   // _id, with the delimiter
+ColumnCreator::castOf(ColumnCreator::Gram);                   // decimal:7
+ColumnCreator::tokens();                                // Builder\Collection of every token, longest first
 ```
 
 ### Custom tokens
@@ -112,38 +112,38 @@ Add your own tokens in `column.custom_tokens`, as `name => token` or `name => [t
 ```
 
 ```php
-Creator::kg('weight');              // weight_kg
-Creator::perUnit('price');          // price_pu
-Creator::getColumnType('price_pu'); // pu
-Creator::castOf('pu');              // decimal:3, so AutoCast casts price_pu
-Checker::isPerUnit('price_pu');     // true
+ColumnCreator::kg('weight');              // weight_kg
+ColumnCreator::perUnit('price');          // price_pu
+ColumnCreator::getColumnType('price_pu'); // pu
+ColumnCreator::castOf('pu');              // decimal:3, so AutoCast casts price_pu
+ColumnCheck::isPerUnit('price_pu');     // true
 ```
 
-The name is written in snake case and called in camel case. A custom token is checked before a built-in one, so a custom name or token that is also built in wins. The caches of `Creator` are rebuilt when the config changes; the casts of a model are cached by `AutoCast` until `flushKompactCache()`, see [Column cache](#column-cache).
+The name is written in snake case and called in camel case. A custom token is checked before a built-in one, so a custom name or token that is also built in wins. The caches of `ColumnCreator` are rebuilt when the config changes; the casts of a model are cached by `AutoCast` until `flushKompactCache()`, see [Column cache](#column-cache).
 
 ### Delimiter
 
 The delimiter between the column name and the token is `_`. Change it once, before any model is used, e.g. in the `register()` of a service provider:
 
 ```php
-Creator::configureDelimiter('-');
+ColumnCreator::configureDelimiter('-');
 
-Creator::relation('user');         // user-id
-Creator::getColumnType('user-id'); // id
-Creator::getDelimiter();           // -
+ColumnCreator::relation('user');         // user-id
+ColumnCreator::getColumnType('user-id'); // id
+ColumnCreator::getDelimiter();           // -
 ```
 
 Only the token gets the delimiter: the name itself, with a prefix, stays snake case, e.g. `Convert::modelToColumn(User::class, 'author')` → `author_user-id`.
 
-`Checker` tells whether a column (a name or a column definition with a `name`) ends with a token. Only the last token counts:
+`ColumnCheck` tells whether a column (a name or a column definition with a `name`) ends with a token. Only the last token counts:
 
 ```php
-use JundFauz\EloquentKompact\Column\Checker;
+use JundFauz\EloquentKompact\Column\ColumnCheck;
 
-Checker::isRelation('author_user_id'); // true
-Checker::isEnum($table->string('status_enum')); // true
-Checker::isRelation('user_identity'); // false
-Checker::isRelation('user_id_enum'); // false, it is an enum column
+ColumnCheck::isRelation('author_user_id'); // true
+ColumnCheck::isEnum($table->string('status_enum')); // true
+ColumnCheck::isRelation('user_identity'); // false
+ColumnCheck::isRelation('user_id_enum'); // false, it is an enum column
 ```
 
 ## KompactModel
@@ -173,7 +173,7 @@ Model results use [`Model\Collection`](#other-helpers), unless the model has `#[
 
 ### AutoFillable
 
-`getFillable()` returns every column of the table, merged with the model's own `$fillable`. No more `$fillable` arrays to keep in sync with the migrations. Left out are the timestamp columns (`Creator::Timestamp`, e.g. `paid_at`) and the columns of `fillable.exclude_column_by`:
+`getFillable()` returns every column of the table, merged with the model's own `$fillable`. No more `$fillable` arrays to keep in sync with the migrations. Left out are the timestamp columns (`ColumnCreator::Timestamp`, e.g. `paid_at`) and the columns of `fillable.exclude_column_by`:
 
 ```php
 'fillable' => [
@@ -406,7 +406,7 @@ A payload is a modifier name, a list of them, or `[modifier => arguments]`:
 
 ```php
 use JundFauz\EloquentKompact\Column\Config;
-use JundFauz\EloquentKompact\Column\Creator;
+use JundFauz\EloquentKompact\Column\ColumnCreator;
 use JundFauz\EloquentKompact\Column\Payload;
 
 Schema::create('posts', function (Blueprint $table) {
@@ -414,8 +414,8 @@ Schema::create('posts', function (Blueprint $table) {
 
     Config::apply([
         $table->string('title'),
-        $table->string(Creator::enum('status')),
-        $table->foreignId(Creator::relation('author_user')),
+        $table->string(ColumnCreator::enum('status')),
+        $table->foreignId(ColumnCreator::relation('author_user')),
         $table->text('body'),
     ], Payload::build(
         ['title' => ['unique', 'comment' => 'Shown in the list']],
@@ -681,7 +681,7 @@ RawQuery::create('paid')->sum()->divide(RawQuery::create('total')->sum())->as('p
 | `emptyIfFalse($condition)` | The value, or `''` if `$condition` is falsy |
 | `relation()` | The value with the relation token, e.g. `user_id` |
 | `addConstant($constant)` / `addConstantAtStart($class)` | `Class::Constant`, with the value as the class / the constant |
-| `isDefined()` | PHP's `defined()` of the value, e.g. `Str::of('Relation')->addConstantAtStart(Creator::class)->isDefined()` |
+| `isDefined()` | PHP's `defined()` of the value, e.g. `Str::of('Relation')->addConstantAtStart(ColumnCreator::class)->isDefined()` |
 | `asRawQuery()` | A [`RawQuery`](#rawquery) started with the value |
 | `asRegex()` | A [`Regex`](#regex) started with the value, e.g. `Str::of('_id')->asRegex()->endsWith()` → `/_id$/` |
 | `sameWith($value)` / `notSameWith($value)` | Strict `===` / `!==`, a Laravel `Stringable` is compared by its value |
