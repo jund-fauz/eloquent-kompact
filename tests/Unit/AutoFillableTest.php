@@ -68,6 +68,22 @@ class AutoFillableTest extends TestCase
     }
 
     #[Test]
+    public function it_works_without_every_key_of_the_config(): void
+    {
+        config(['eloquent-kompact.fillable.exclude_column_by' => ['exact' => ['id']]]);
+
+        $this->assertSame(['name', 'secret_note', 'user_id'], (new AutoFillableItem)->getFillable());
+    }
+
+    #[Test]
+    public function it_works_with_the_config_of_an_older_version(): void
+    {
+        config(['eloquent-kompact.fillable' => ['excluded_columns_by_regex' => []]]);
+
+        $this->assertSame(['id', 'name', 'secret_note', 'user_id'], (new AutoFillableItem)->getFillable());
+    }
+
+    #[Test]
     public function it_includes_the_timestamps_when_asked(): void
     {
         $this->assertSame(

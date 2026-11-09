@@ -18,6 +18,7 @@ use function JundFauz\EloquentKompact\array_key_values;
 use function JundFauz\EloquentKompact\array_normalize;
 use function JundFauz\EloquentKompact\assign_as;
 use function JundFauz\EloquentKompact\array_flat;
+use function JundFauz\EloquentKompact\array_get;
 use function JundFauz\EloquentKompact\array_get_or;
 use function JundFauz\EloquentKompact\array_pull;
 use function JundFauz\EloquentKompact\array_pull_list;
@@ -652,6 +653,21 @@ class FunctionsTest extends TestCase
 
         $this->assertSame(0, null_coalescing(0, 'b'));
         $this->assertSame('b', null_coalescing(null, 'b'));
+    }
+
+    #[Test]
+    public function it_gets_a_value_or_a_default_without_a_warning(): void
+    {
+        $array = ['a' => 1, 'empty' => null, 'zero' => 0];
+
+        $this->assertSame(1, array_get($array['a'], 'x'));
+        $this->assertSame(0, array_get($array['zero'], 'x'));
+        $this->assertSame('x', array_get($array['empty'], 'x'));
+        $this->assertSame('x', array_get($array['missing'], 'x'));
+        $this->assertSame([], array_get($array['missing']['nested'], []));
+
+        $null = null;
+        $this->assertSame('x', array_get($null['key'], 'x'));
     }
 
     #[Test]

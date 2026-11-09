@@ -152,6 +152,11 @@ function array_cast(mixed $data): array
     };
 }
 
+function array_get(mixed &$data, mixed $defaultValue)
+{
+    return $data ?? $defaultValue;
+}
+
 function assign_as(mixed $data, string ...$keys): array
 {
     $result = [];
