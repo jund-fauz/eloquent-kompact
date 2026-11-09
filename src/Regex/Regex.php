@@ -35,6 +35,11 @@ class Regex extends Builder
         return $this->set(str_concat($this->withResult(...$sentenceOrWord), '$'));
     }
 
+    public function group(string|self ...$regex): static
+    {
+        return $this->set(str_concat('(', $this->withResult(...$regex), ')'));
+    }
+
     public function exceptWord(string|self $word): static
     {
         return $this->set(str_concat($this->withResult(str_concat('(?!', static::raw($word), ')'))));

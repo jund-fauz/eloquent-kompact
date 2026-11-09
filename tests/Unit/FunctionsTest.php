@@ -42,7 +42,15 @@ use function JundFauz\EloquentKompact\lower_than_or_same_with;
 use function JundFauz\EloquentKompact\merge_as_array;
 use function JundFauz\EloquentKompact\model_compact;
 use function JundFauz\EloquentKompact\namespace_concat;
+use function JundFauz\EloquentKompact\array_cast;
+use function JundFauz\EloquentKompact\elvis;
 use function JundFauz\EloquentKompact\not;
+use function JundFauz\EloquentKompact\not_defined;
+use function JundFauz\EloquentKompact\not_in;
+use function JundFauz\EloquentKompact\not_in_array;
+use function JundFauz\EloquentKompact\null_coalescing;
+use function JundFauz\EloquentKompact\str_constant;
+use function JundFauz\EloquentKompact\ternary;
 use function JundFauz\EloquentKompact\not_same_with;
 use function JundFauz\EloquentKompact\path_concat;
 use function JundFauz\EloquentKompact\relation_concat;
@@ -586,6 +594,59 @@ class FunctionsTest extends TestCase
         $model->setRelation('owner', self::model(['name' => 'b']));
 
         $this->assertSame(['owner' => ['name' => 'b']], model_compact($model, 'owner'));
+    }
+
+    #[Test]
+    public function it_checks_a_value_is_not_in_a_list(): void
+    {
+        $this->assertTrue(not_in_array('c', ['a', 'b']));
+        $this->assertFalse(not_in_array('a', ['a', 'b']));
+        $this->assertFalse(not_in_array('1', [1]));
+        $this->assertTrue(not_in_array('1', [1], true));
+
+        $this->assertTrue(not_in('c', collect(['a', 'b'])));
+        $this->assertFalse(not_in('a', new SupportCollection(['a'])));
+        $this->assertFalse(not_in('a', ['a']));
+        $this->assertTrue(not_in('1', collect([1]), true));
+    }
+
+    #[Test]
+    public function it_casts_a_value_to_an_array(): void
+    {
+        $this->assertSame(['a', 'b'], array_cast(collect(['a', 'b'])));
+        $this->assertSame(['a' => 1], array_cast(new SupportCollection(['a' => 1])));
+        $this->assertSame(['a'], array_cast('a'));
+        $this->assertSame([], array_cast(null));
+        $this->assertSame([1, 2], array_cast([1, 2]));
+    }
+
+    #[Test]
+    public function it_builds_and_checks_a_constant_name(): void
+    {
+        $this->assertSame('Foo\Bar::Baz', str_constant('Foo\Bar', 'Baz'));
+        $this->assertFalse(not_defined(str_constant(\JundFauz\EloquentKompact\Column\Creator::class, 'Relation')));
+        $this->assertTrue(not_defined(str_constant(\JundFauz\EloquentKompact\Column\Creator::class, 'Unknown')));
+    }
+
+    #[Test]
+    public function it_picks_a_value_like_the_operators(): void
+    {
+        $this->assertSame('yes', ternary(1, 'yes', 'no'));
+        $this->assertSame('no', ternary('', 'yes', 'no'));
+
+        $this->assertSame('a', elvis('a', 'b'));
+        $this->assertSame('b', elvis(0, 'b'));
+        $this->assertSame('b', elvis(null, 'b'));
+
+        $this->assertSame(0, null_coalescing(0, 'b'));
+        $this->assertSame('b', null_coalescing(null, 'b'));
+    }
+
+    #[Test]
+    public function it_concatenates_collections(): void
+    {
+        $this->assertSame('abcd', str_concat('a', collect(['b', 'c']), new SupportCollection(['d'])));
+        $this->assertSame('abc', str_concat('a', [collect(['b']), ['c']]));
     }
 
     #[Test]

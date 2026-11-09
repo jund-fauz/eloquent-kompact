@@ -192,18 +192,6 @@ class KompactTest extends TestCase
     }
 
     #[Test]
-    public function it_counts_for_a_filter_on_the_model_and_the_user(): void
-    {
-        $parent = KompactTestParent::getCountForFilter('name');
-        $user = KompactTestUser::getCountForFilter('name');
-
-        $this->assertInstanceOf(KompactTestParent::class, $parent);
-        $this->assertSame(2, (int) $parent->name_count);
-        $this->assertInstanceOf(KompactTestUser::class, $user);
-        $this->assertSame(2, (int) $user->name_count);
-    }
-
-    #[Test]
     public function it_flushes_the_cache_of_the_user_after_migrating(): void
     {
         Schema::create('kompact_flush_users', function (Blueprint $table) {

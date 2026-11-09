@@ -3,6 +3,7 @@
 namespace JundFauz\EloquentKompact\Tests\Unit;
 
 use BadMethodCallException;
+use JundFauz\EloquentKompact\Builder\Collection;
 use JundFauz\EloquentKompact\Builder\Str;
 use JundFauz\EloquentKompact\Column\Creator;
 use JundFauz\EloquentKompact\Tests\TestCase;
@@ -58,7 +59,10 @@ class CreatorTest extends TestCase
     #[Test]
     public function it_lists_the_longest_tokens_first(): void
     {
-        $lengths = array_map(strlen(...), Creator::tokens());
+        $this->assertInstanceOf(Collection::class, Creator::tokens());
+        $this->assertTrue(array_is_list(Creator::tokens()->all()));
+
+        $lengths = Creator::tokens()->map(strlen(...))->all();
         $sorted = $lengths;
         rsort($sorted);
 
@@ -99,6 +103,8 @@ class CreatorTest extends TestCase
         yield 'type clean' => ['commentable_type', true, 'type'];
         yield 'plain' => ['name', false, ''];
         yield 'plain clean' => ['name', true, ''];
+        yield 'token not at the end' => ['user_identity', false, ''];
+        yield 'only the last token' => ['user_id_enum', true, 'enum'];
     }
 
     #[Test]

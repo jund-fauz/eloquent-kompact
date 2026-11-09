@@ -28,6 +28,10 @@ class RegexTest extends TestCase
         yield 'endsWith' => [Regex::create()->endsWith('_at'), '/_at$/'];
         yield 'endsWith empty' => [Regex::create()->endsWith(), '/$/'];
 
+        yield 'group' => [Regex::create('a|b')->group(), '/(a|b)/'];
+        yield 'group with parts' => [Regex::create()->group('a', '|b'), '/(a|b)/'];
+        yield 'group then endsWith' => [Regex::create('_id|_at')->group()->endsWith(), '/(_id|_at)$/'];
+
         yield 'exceptWord' => [Regex::create()->exceptWord('id'), '/(?!id)/'];
         yield 'contain' => [Regex::create()->contain(Quantifier::oneOrMore, Regex::create()->range('a', 'z')), '/[a-z]+/'];
         yield 'contain string quantifier' => [Regex::create()->contain('{2}', '0-9'), '/[0-9]{2}/'];

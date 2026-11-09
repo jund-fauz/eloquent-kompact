@@ -46,6 +46,25 @@ class CollectionTest extends TestCase
     }
 
     #[Test]
+    public function it_filters_with_a_callback_that_only_takes_the_value(): void
+    {
+        $collection = new Collection(['a', 1, 'k' => 'b', 'n' => null]);
+
+        $this->assertSame([0 => 'a', 'k' => 'b'], $collection->normalFilter('is_string')->all());
+        $this->assertSame([0 => 'a', 1 => 1, 'k' => 'b'], $collection->normalFilter()->all());
+        $this->assertInstanceOf(Collection::class, $collection->normalFilter());
+    }
+
+    #[Test]
+    public function it_keeps_the_key_in_laravel_filter_and_reject(): void
+    {
+        $collection = new Collection(['a' => 1, 'b' => 2]);
+
+        $this->assertSame(['b' => 2], $collection->filter(fn ($value, $key) => $key === 'b')->all());
+        $this->assertSame(['a' => 1], $collection->reject(fn ($value) => $value === 2)->all());
+    }
+
+    #[Test]
     public function it_deletes_nothing_from_an_empty_collection(): void
     {
         $this->assertSame([], (new Collection)->deleteNull()->all());

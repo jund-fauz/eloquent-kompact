@@ -27,10 +27,9 @@ function is_not_array($value): bool
     return ! is_array($value);
 }
 
-function str_concat(string|array ...$values): string
+function str_concat(string|array|Collection|SupportCollection ...$values): string
 {
-    array_flat($values);
-    return join('', $values);
+    return join('', collect($values)->map(fn ($value) => $value instanceof SupportCollection ? $value->toArray() : $value)->flatten()->toArray());
 }
 
 function word_concat(string|array ...$values): string
@@ -145,6 +144,14 @@ function array_normalize(array $data): mixed
     return count($data) === 1 ? $data[0] : $data;
 }
 
+function array_cast(mixed $data): array
+{
+    return match (true) {
+        $data instanceof SupportCollection => $data->toArray(),
+        default => array_wrap($data)
+    };
+}
+
 function assign_as(mixed $data, string ...$keys): array
 {
     $result = [];
@@ -194,6 +201,11 @@ function str_empty_if_false(mixed $condition, string $value): string
     return $condition ? $value : '';
 }
 
+function str_constant(string $className, string $constantName): string
+{
+    return "$className::$constantName";
+}
+
 function same_with(mixed $firstValue, mixed $secondValue): bool
 {
     return $firstValue === $secondValue;
@@ -232,6 +244,38 @@ function lower_than_or_same_with(int|float|string $firstNumber, int|float|string
 function not(bool $condition): bool
 {
     return ! $condition;
+}
+
+function not_in(mixed $needle, array|SupportCollection|Collection $haystack, bool $strict = false): bool
+{
+    return not_in_array($needle, array_cast($haystack), $strict);
+}
+
+function not_in_array(mixed $needle, array $haystack, bool $strict = false): bool
+{
+    return ! in_array($needle, $haystack, $strict);
+}
+
+function not_defined(string $constant_name): bool
+{
+    return ! defined($constant_name);
+}
+
+function ternary(mixed $condition, mixed $trueValue, mixed $falseValue)
+{
+    return $condition
+        ? $trueValue
+        : $falseValue;
+}
+
+function elvis(mixed $firstValue, mixed $defaultValue)
+{
+    return $firstValue ?: $defaultValue;
+}
+
+function null_coalescing(mixed $firstValue, mixed $defaultValue)
+{
+    return $firstValue ?? $defaultValue;
 }
 
 function model_compact(Model $model, string ...$columns): array

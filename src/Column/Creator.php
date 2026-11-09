@@ -2,11 +2,16 @@
 
 namespace JundFauz\EloquentKompact\Column;
 
+use JundFauz\EloquentKompact\Builder\Collection;
 use JundFauz\EloquentKompact\Builder\Str;
 use JundFauz\EloquentKompact\Helper\Error\ErrorThrow;
 use JundFauz\EloquentKompact\Regex\Regex;
 use ReflectionClass;
 use ReflectionClassConstant;
+use function JundFauz\EloquentKompact\collect;
+use function JundFauz\EloquentKompact\not_defined;
+use function JundFauz\EloquentKompact\not_in;
+use function JundFauz\EloquentKompact\str_concat;
 
 /**
  * @method static string enum(string $column)
@@ -52,25 +57,20 @@ final class Creator
         self::Percentage => 'decimal:2'
     ];
 
-    /** @var list<string>|null */
-    protected static ?array $tokens = null;
+    /** @var Collection<int, string>|null */
+    protected static ?Collection $tokens = null;
 
     protected static ?string $matcher = null;
 
-    private static function toBeReplaced()
-    {
-        return Regex::create()->endsWith();
-    }
-
     public static function __callStatic(string $method, array $parameters): string
     {
-        $constant = (string) Str::of($method)->pascal()->addAtStart(self::class, '::');
+        $constant = (string)Str::of($method)->pascal()->addAtStart(self::class, '::');
 
-        if (! defined($constant) || ! in_array(constant($constant), self::tokens(), true)) {
+        if (not_defined($constant) || not_in(constant($constant), self::tokens(), true)) {
             self::methodNotFound($method);
         }
 
-        return preg_replace(self::toBeReplaced(), constant($constant), $parameters[0]);
+        return str_concat($parameters[0], constant($constant));
     }
 
     public static function quantity(): array
@@ -85,22 +85,15 @@ final class Creator
      * All column-type tokens, with the longest one first, so that
      * tokens that happen to be the suffixes of other tokens do not win first.
      *
-     * @return list<string>
+     * @return Collection<int, string>
      */
-    public static function tokens(): array
+    public static function tokens(): Collection
     {
-        return self::$tokens ??= (static function (): array {
-            $values = array_map(
-                static fn (ReflectionClassConstant $constant) => $constant->getValue(),
-                (new ReflectionClass(self::class))->getReflectionConstants(ReflectionClassConstant::IS_PUBLIC)
-            );
-
-            $tokens = array_values(array_filter($values, is_string(...)));
-
-            usort($tokens, static fn (string $a, string $b): int => strlen($b) <=> strlen($a));
-
-            return $tokens;
-        })();
+        return self::$tokens ??= collect((new ReflectionClass(self::class))->getReflectionConstants(ReflectionClassConstant::IS_PUBLIC))
+            ->map(static fn (ReflectionClassConstant $constant) => $constant->getValue())
+            ->normalFilter('is_string')
+            ->sort(static fn (string $a, string $b): int => strlen($b) <=> strlen($a))
+            ->values();
     }
 
     /**
@@ -108,22 +101,14 @@ final class Creator
      */
     protected static function matcher(): string
     {
-        return self::$matcher ??= (static function (): string {
-            $alternation = implode('|', array_map(
-                static fn (string $token): string => preg_quote($token, '/'),
-                self::tokens()
-            ));
-
-            $toBeReplaceRegex = self::toBeReplaced();
-
-            $anchor = trim($toBeReplaceRegex, '/');
-
-            // “ToBeReplaced” is a zero-width character, so insert a test marker once
-            // to determine on which side it places the token.
-            return Str::of('a')->replaceByRegex($toBeReplaceRegex, 'X')->startsWith('X')
-                ? "/$anchor($alternation)/"  // skema prefix  → /^(enum_|array_|…)/
-                : "/($alternation)$anchor/"; // skema suffix  → /(_enum|_array|…)$/
-        })();
+        return self::$matcher ??= Regex::create(
+            self::tokens()
+            ->map(static fn (string $token) => preg_quote($token, '/'))
+            ->implode('|')
+        )
+            ->group()
+            ->endsWith()
+            ->build();
     }
 
     public static function getPlainColumnName(string $column): Str
@@ -138,10 +123,10 @@ final class Creator
     {
         $result = Str::of($column)->match(self::matcher());
         if ($clean) {
-            $result = $result->remove('_');
+            $result = $result->removeStart('_');
         }
 
-        return (string) $result;
+        return (string)$result;
     }
 
     /**

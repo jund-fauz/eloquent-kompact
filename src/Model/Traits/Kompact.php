@@ -6,7 +6,7 @@ use Illuminate\Database\Eloquent\SoftDeletes;
 
 trait Kompact
 {
-    use AdditionalQueries, AutoCast, AutoFillable, AutoRelation, Filterable, StaticH, SoftDeletes {
+    use AdditionalQueries, AutoCast, AutoFillable, AutoRelation, StaticH, SoftDeletes {
         SoftDeletes::bootSoftDeletes as traitBootSoftDeletes;
         SoftDeletes::performDeleteOnModel as traitPerformDeleteOnModel;
     }

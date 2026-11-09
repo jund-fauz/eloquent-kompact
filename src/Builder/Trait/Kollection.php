@@ -9,6 +9,11 @@ use function JundFauz\EloquentKompact\is_not_null;
 
 trait Kollection
 {
+    public function normalFilter(?callable $callback = null): static
+    {
+        return $this->newInstance(array_filter($this->items, $callback));
+    }
+
     public function filterFilled(): static
     {
         return $this->newInstance(array_filter_filled($this->items));
@@ -16,7 +21,7 @@ trait Kollection
 
     public function deleteNull(): static
     {
-        return $this->filter(fn ($value) => is_not_null($value));
+        return $this->normalFilter(is_not_null(...));
     }
 
     public function get($key, $default = null)
