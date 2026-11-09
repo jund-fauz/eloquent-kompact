@@ -13,9 +13,9 @@ The first stable release: from now on, breaking changes only come in a major rel
 
 ### Added
 
-- Custom column tokens in `column.custom_tokens`, as `name => token` or `name => [token, cast]`. They get a `Creator` method (`Creator::kg()`), a `Checker` method (`Checker::isKg()`), are read by `getColumnType()` and `getPlainColumnName()`, and their cast is used by `castOf()` and `AutoCast`. A custom token is checked before a built-in one. The caches of `Creator` are rebuilt when the config changes.
-- `Creator::configureDelimiter()` and `Creator::getDelimiter()`: the delimiter between the column name and the token, `_` by default.
-- `Creator::getCustomToken()`: the token of a custom token name.
+- Custom column tokens in `column.custom_tokens`, as `name => token` or `name => [token, cast]`. They get a `ColumnCreator` method (`ColumnCreator::kg()`), a `ColumnCheck` method (`ColumnCheck::isKg()`), are read by `getColumnType()` and `getPlainColumnName()`, and their cast is used by `castOf()` and `AutoCast`. A custom token is checked before a built-in one. The caches of `ColumnCreator` are rebuilt when the config changes.
+- `ColumnCreator::configureDelimiter()` and `ColumnCreator::getDelimiter()`: the delimiter between the column name and the token, `_` by default.
+- `ColumnCreator::getCustomToken()`: the token of a custom token name.
 - `fillable.exclude_column_by` with `exact`, `token` and `regex`, and `protected static bool $includeTimestampColumn` on a model to fill its timestamp columns.
 - `Regex::before()`: puts the given parts in front of the pattern. `Regex::asStr()`: `build()` as a `Str`.
 - `Str::addConstant()`, `Str::addConstantAtStart()` and `Str::isDefined()`.
@@ -23,8 +23,9 @@ The first stable release: from now on, breaking changes only come in a major rel
 
 ### Changed
 
-- **Breaking:** the `Creator` token constants no longer start with `_`: `Creator::Relation` is `'id'`, `Creator::Timestamp` is `'at'`, and so on. `Creator::tokens()` and `Creator::castOf()` use these tokens, so `castOf('_gram')` becomes `castOf('gram')`.
-- **Breaking:** `Creator::getColumnType()` returns the token without the delimiter (`'id'`). Its second parameter is now `$withDelimiter`: `getColumnType('user_id', true)` gives `'_id'`. Before, it gave `'_id'` by default and `'id'` with `true`.
+- **Breaking:** `Column\Creator` is renamed to `Column\ColumnCreator`, and `Column\Checker` to `Column\ColumnCheck`.
+- **Breaking:** the `ColumnCreator` token constants no longer start with `_`: `ColumnCreator::Relation` is `'id'`, `ColumnCreator::Timestamp` is `'at'`, and so on. `ColumnCreator::tokens()` and `ColumnCreator::castOf()` use these tokens, so `castOf('_gram')` becomes `castOf('gram')`.
+- **Breaking:** `ColumnCreator::getColumnType()` returns the token without the delimiter (`'id'`). Its second parameter is now `$withDelimiter`: `getColumnType('user_id', true)` gives `'_id'`. Before, it gave `'_id'` by default and `'id'` with `true`.
 - **Breaking:** `fillable.excluded_columns_by_regex` is replaced by `fillable.exclude_column_by` (`exact`, `token`, `regex`). Timestamp columns are left out of the fillable list by their token instead of a regex. Republish the config, or rename the key in a published config: since the config is merged on the top-level keys only, an old `fillable` key leaves `exclude_column_by` empty and `getFillable()` fails.
 - A token only counts after the delimiter, so `paid` is no longer read as a column with the `id` token.
 - `collect()` without a value returns an empty collection instead of throwing a `BadMethodCallException`.
