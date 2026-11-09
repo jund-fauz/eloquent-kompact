@@ -7,6 +7,34 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [1.0.0] - 2026-11-09
+
+The first stable release: from now on, breaking changes only come in a major release.
+
+### Added
+
+- Custom column tokens in `column.custom_tokens`, as `name => token` or `name => [token, cast]`. They get a `Creator` method (`Creator::kg()`), a `Checker` method (`Checker::isKg()`), are read by `getColumnType()` and `getPlainColumnName()`, and their cast is used by `castOf()` and `AutoCast`. A custom token is checked before a built-in one. The caches of `Creator` are rebuilt when the config changes.
+- `Creator::configureDelimiter()` and `Creator::getDelimiter()`: the delimiter between the column name and the token, `_` by default.
+- `Creator::getCustomToken()`: the token of a custom token name.
+- `fillable.exclude_column_by` with `exact`, `token` and `regex`, and `protected static bool $includeTimestampColumn` on a model to fill its timestamp columns.
+- `Regex::before()`: puts the given parts in front of the pattern. `Regex::asStr()`: `build()` as a `Str`.
+- `Str::addConstant()`, `Str::addConstantAtStart()` and `Str::isDefined()`.
+- Helper `in()`: `in_array()` for an array or a collection.
+
+### Changed
+
+- **Breaking:** the `Creator` token constants no longer start with `_`: `Creator::Relation` is `'id'`, `Creator::Timestamp` is `'at'`, and so on. `Creator::tokens()` and `Creator::castOf()` use these tokens, so `castOf('_gram')` becomes `castOf('gram')`.
+- **Breaking:** `Creator::getColumnType()` returns the token without the delimiter (`'id'`). Its second parameter is now `$withDelimiter`: `getColumnType('user_id', true)` gives `'_id'`. Before, it gave `'_id'` by default and `'id'` with `true`.
+- **Breaking:** `fillable.excluded_columns_by_regex` is replaced by `fillable.exclude_column_by` (`exact`, `token`, `regex`). Timestamp columns are left out of the fillable list by their token instead of a regex. Republish the config, or rename the key in a published config: since the config is merged on the top-level keys only, an old `fillable` key leaves `exclude_column_by` empty and `getFillable()` fails.
+- A token only counts after the delimiter, so `paid` is no longer read as a column with the `id` token.
+- `collect()` without a value returns an empty collection instead of throwing a `BadMethodCallException`.
+- The `$value` of `implodeAsStr()` is optional (`''`).
+- `assignIfBlankFrom()`, `isBlank()` and `isBlankAndDirty()` are marked `@experimental`.
+
+### Tests
+
+- Added tests for the custom tokens, the delimiter, `AutoFillable`, `Regex::before()`, `Regex::asStr()`, the `Str` constant methods, `in()` and `implodeAsStr()` without a value.
+
 ## [0.101.0] - 2026-11-09
 
 ### Added
@@ -1998,7 +2026,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - `RawQuery` static helpers for raw SQL expressions.
 - Translations for `en` and `id`.
 
-[Unreleased]: https://github.com/jund-fauz/eloquent-kompact/compare/v0.101.0...HEAD
+[Unreleased]: https://github.com/jund-fauz/eloquent-kompact/compare/v1.0.0...HEAD
+[1.0.0]: https://github.com/jund-fauz/eloquent-kompact/compare/v0.101.0...v1.0.0
 [0.101.0]: https://github.com/jund-fauz/eloquent-kompact/compare/v0.100.0...v0.101.0
 [0.100.0]: https://github.com/jund-fauz/eloquent-kompact/compare/v0.99.0...v0.100.0
 [0.99.0]: https://github.com/jund-fauz/eloquent-kompact/compare/v0.98.0...v0.99.0
