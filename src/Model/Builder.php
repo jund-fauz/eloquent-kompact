@@ -6,7 +6,7 @@ use Illuminate\Database\Eloquent\Builder as LBuilder;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\Relation;
 use JundFauz\EloquentKompact\Builder\Collection;
-use JundFauz\EloquentKompact\Column\Creator;
+use JundFauz\EloquentKompact\Column\ColumnCreator;
 
 class Builder extends LBuilder
 {
@@ -21,12 +21,12 @@ class Builder extends LBuilder
 
     public function whereMorphType(string $morphName, string $modelClass): static
     {
-        return $this->callScope(fn (LBuilder $query) => $query->where(Creator::type($morphName), Relation::getMorphAlias($modelClass)));
+        return $this->callScope(fn (LBuilder $query) => $query->where(ColumnCreator::type($morphName), Relation::getMorphAlias($modelClass)));
     }
 
     public function whereMorphTypeNot(string $morphName, string $modelClass): static
     {
-        return $this->callScope(fn (LBuilder $query) => $query->whereNot(Creator::type($morphName), Relation::getMorphAlias($modelClass)));
+        return $this->callScope(fn (LBuilder $query) => $query->whereNot(ColumnCreator::type($morphName), Relation::getMorphAlias($modelClass)));
     }
 
     public function whereInRelation(string $relation, string $columnName, array $valuesToCompare): static

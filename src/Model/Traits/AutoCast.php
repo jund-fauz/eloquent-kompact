@@ -3,7 +3,7 @@
 namespace JundFauz\EloquentKompact\Model\Traits;
 
 use JundFauz\EloquentKompact\Builder\Str;
-use JundFauz\EloquentKompact\Column\Creator;
+use JundFauz\EloquentKompact\Column\ColumnCreator;
 
 trait AutoCast
 {
@@ -25,11 +25,11 @@ trait AutoCast
         $casts = [];
 
         foreach ($this->getFillable() as $column) {
-            $token = Creator::getColumnType($column);
+            $token = ColumnCreator::getColumnType($column);
 
-            $cast = $token === Creator::Enum
+            $cast = $token === ColumnCreator::Enum
                 ? $this->resolveEnumCast($column)
-                : Creator::castOf($token);
+                : ColumnCreator::castOf($token);
 
             if ($cast !== null) {
                 $casts[$column] = $cast;
@@ -44,7 +44,7 @@ trait AutoCast
         $enum = (string) Str::of($this->getTable())
             ->singular()
             ->pascal()
-            ->add(Creator::getPlainColumnName($column)->pascal())
+            ->add(ColumnCreator::getPlainColumnName($column)->pascal())
             ->addNamespaceAtStart(config('eloquent-kompact.path.database_enum'));
 
         return class_exists($enum) ? $enum : 'string';

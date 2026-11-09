@@ -16,7 +16,7 @@ use Illuminate\Database\Eloquent\Relations\Relation;
 use JsonException;
 use JundFauz\EloquentKompact\Builder\Str;
 use JundFauz\EloquentKompact\Column\ColumnListing;
-use JundFauz\EloquentKompact\Column\Creator;
+use JundFauz\EloquentKompact\Column\ColumnCreator;
 use JundFauz\EloquentKompact\Model\Traits\AutoRelation;
 use ReflectionClass;
 use ReflectionException;
@@ -153,12 +153,12 @@ final class IdeHelperCommand extends Command
     {
         $relationColumns = static fn (string $table): array => array_filter(
             ColumnListing::of($table),
-            static fn (string $column): bool => Creator::getColumnType($column) === Creator::Relation
+            static fn (string $column): bool => ColumnCreator::getColumnType($column) === ColumnCreator::Relation
         );
 
         // belongsTo: author_user_id in its own table → authorUser
         foreach ($relationColumns((new $parent)->getTable()) as $column) {
-            yield (string) Creator::getPlainColumnName($column)->camel() => null;
+            yield (string) ColumnCreator::getPlainColumnName($column)->camel() => null;
         }
 
         $parentName = Str::of($parent)->classBasename()->snake();
@@ -170,7 +170,7 @@ final class IdeHelperCommand extends Command
 
             // hasMany: author_user_id in the posts table → User::authorPosts
             foreach ($relationColumns($table) as $column) {
-                $plain = Creator::getPlainColumnName($column);
+                $plain = ColumnCreator::getPlainColumnName($column);
 
                 if ($plain->value() === $parentName->value() || $plain->endsWith("_$parentName")) {
                     yield (string) $plain->beforeLast($parentName)->add($plural)->camel() => $model;

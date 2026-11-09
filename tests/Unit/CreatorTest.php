@@ -5,7 +5,7 @@ namespace JundFauz\EloquentKompact\Tests\Unit;
 use BadMethodCallException;
 use JundFauz\EloquentKompact\Builder\Collection;
 use JundFauz\EloquentKompact\Builder\Str;
-use JundFauz\EloquentKompact\Column\Creator;
+use JundFauz\EloquentKompact\Column\ColumnCreator;
 use JundFauz\EloquentKompact\Tests\TestCase;
 use PHPUnit\Framework\Attributes\DataProvider;
 use PHPUnit\Framework\Attributes\Test;
@@ -14,7 +14,7 @@ class CreatorTest extends TestCase
 {
     protected function tearDown(): void
     {
-        Creator::configureDelimiter('_');
+        ColumnCreator::configureDelimiter('_');
 
         parent::tearDown();
     }
@@ -38,13 +38,13 @@ class CreatorTest extends TestCase
     #[DataProvider('tokenMethodProvider')]
     public function it_appends_the_token(string $method, string $expected): void
     {
-        $this->assertSame($expected, Creator::{$method}('status'));
+        $this->assertSame($expected, ColumnCreator::{$method}('status'));
     }
 
     #[Test]
     public function it_creates_quantity_columns(): void
     {
-        $this->assertSame(['quantity_gram', 'quantity_pcs'], Creator::quantity());
+        $this->assertSame(['quantity_gram', 'quantity_pcs'], ColumnCreator::quantity());
     }
 
     #[Test]
@@ -52,7 +52,7 @@ class CreatorTest extends TestCase
     {
         $this->expectException(BadMethodCallException::class);
 
-        Creator::unknown('status');
+        ColumnCreator::unknown('status');
     }
 
     #[Test]
@@ -60,22 +60,22 @@ class CreatorTest extends TestCase
     {
         $this->expectException(BadMethodCallException::class);
 
-        Creator::casts('status');
+        ColumnCreator::casts('status');
     }
 
     #[Test]
     public function it_lists_the_longest_tokens_first(): void
     {
-        $this->assertInstanceOf(Collection::class, Creator::tokens());
-        $this->assertTrue(array_is_list(Creator::tokens()->all()));
+        $this->assertInstanceOf(Collection::class, ColumnCreator::tokens());
+        $this->assertTrue(array_is_list(ColumnCreator::tokens()->all()));
 
-        $lengths = Creator::tokens()->map(strlen(...))->all();
+        $lengths = ColumnCreator::tokens()->map(strlen(...))->all();
         $sorted = $lengths;
         rsort($sorted);
 
         $this->assertSame($sorted, $lengths);
-        $this->assertContains('id', Creator::tokens());
-        $this->assertNotContains('decimal:7', Creator::tokens());
+        $this->assertContains('id', ColumnCreator::tokens());
+        $this->assertNotContains('decimal:7', ColumnCreator::tokens());
     }
 
     public static function plainColumnProvider(): iterable
@@ -94,7 +94,7 @@ class CreatorTest extends TestCase
     #[DataProvider('plainColumnProvider')]
     public function it_removes_the_token(string $column, string $expected): void
     {
-        $plain = Creator::getPlainColumnName($column);
+        $plain = ColumnCreator::getPlainColumnName($column);
 
         $this->assertInstanceOf(Str::class, $plain);
         $this->assertSame($expected, $plain->toString());
@@ -120,18 +120,18 @@ class CreatorTest extends TestCase
     #[DataProvider('columnTypeProvider')]
     public function it_reads_the_column_type(string $column, bool $clean, string $expected): void
     {
-        $this->assertSame($expected, Creator::getColumnType($column, $clean));
+        $this->assertSame($expected, ColumnCreator::getColumnType($column, $clean));
     }
 
     public static function castProvider(): iterable
     {
-        yield 'array' => [Creator::Array, 'array'];
-        yield 'boolean' => [Creator::Boolean, 'boolean'];
-        yield 'gram' => [Creator::Gram, 'decimal:7'];
-        yield 'percentage' => [Creator::Percentage, 'decimal:2'];
-        yield 'enum has no cast' => [Creator::Enum, null];
-        yield 'relation has no cast' => [Creator::Relation, null];
-        yield 'type has no cast' => [Creator::Type, null];
+        yield 'array' => [ColumnCreator::Array, 'array'];
+        yield 'boolean' => [ColumnCreator::Boolean, 'boolean'];
+        yield 'gram' => [ColumnCreator::Gram, 'decimal:7'];
+        yield 'percentage' => [ColumnCreator::Percentage, 'decimal:2'];
+        yield 'enum has no cast' => [ColumnCreator::Enum, null];
+        yield 'relation has no cast' => [ColumnCreator::Relation, null];
+        yield 'type has no cast' => [ColumnCreator::Type, null];
         yield 'unknown' => ['_unknown', null];
     }
 
@@ -139,15 +139,15 @@ class CreatorTest extends TestCase
     #[DataProvider('castProvider')]
     public function it_returns_the_cast_of_a_token(string $token, ?string $expected): void
     {
-        $this->assertSame($expected, Creator::castOf($token));
+        $this->assertSame($expected, ColumnCreator::castOf($token));
     }
 
     #[Test]
     public function it_always_uses_the_suffix_scheme(): void
     {
-        $this->assertSame('user_id', Creator::relation('user'));
-        $this->assertSame('user', Creator::getPlainColumnName('user_id')->toString());
-        $this->assertSame('', Creator::getColumnType('id_user'));
+        $this->assertSame('user_id', ColumnCreator::relation('user'));
+        $this->assertSame('user', ColumnCreator::getPlainColumnName('user_id')->toString());
+        $this->assertSame('', ColumnCreator::getColumnType('id_user'));
     }
 
     #[Test]
@@ -155,12 +155,12 @@ class CreatorTest extends TestCase
     {
         config(['eloquent-kompact.column.custom_tokens' => ['kg' => 'kg', 'lb' => ['lb'], 'per_unit' => ['pu', 'decimal:3']]]);
 
-        $this->assertSame('weight_kg', Creator::kg('weight'));
-        $this->assertSame('weight_lb', Creator::lb('weight'));
-        $this->assertSame('price_pu', Creator::perUnit('price'));
-        $this->assertSame('kg', Creator::getCustomToken('kg'));
-        $this->assertSame('pu', Creator::getCustomToken('perUnit'));
-        $this->assertNull(Creator::getCustomToken('unknown'));
+        $this->assertSame('weight_kg', ColumnCreator::kg('weight'));
+        $this->assertSame('weight_lb', ColumnCreator::lb('weight'));
+        $this->assertSame('price_pu', ColumnCreator::perUnit('price'));
+        $this->assertSame('kg', ColumnCreator::getCustomToken('kg'));
+        $this->assertSame('pu', ColumnCreator::getCustomToken('perUnit'));
+        $this->assertNull(ColumnCreator::getCustomToken('unknown'));
     }
 
     #[Test]
@@ -168,9 +168,9 @@ class CreatorTest extends TestCase
     {
         config(['eloquent-kompact.column.custom_tokens' => ['kg' => 'kg']]);
 
-        $this->assertContains('kg', Creator::tokens());
-        $this->assertSame('kg', Creator::getColumnType('weight_kg'));
-        $this->assertSame('weight', Creator::getPlainColumnName('weight_kg')->toString());
+        $this->assertContains('kg', ColumnCreator::tokens());
+        $this->assertSame('kg', ColumnCreator::getColumnType('weight_kg'));
+        $this->assertSame('weight', ColumnCreator::getPlainColumnName('weight_kg')->toString());
     }
 
     #[Test]
@@ -178,10 +178,10 @@ class CreatorTest extends TestCase
     {
         config(['eloquent-kompact.column.custom_tokens' => ['kg' => 'kg', 'lb' => ['lb'], 'weight' => ['ton', 'decimal:1']]]);
 
-        $this->assertNull(Creator::castOf('kg'));
-        $this->assertNull(Creator::castOf('lb'));
-        $this->assertSame('decimal:1', Creator::castOf('ton'));
-        $this->assertSame('decimal:7', Creator::castOf(Creator::Gram));
+        $this->assertNull(ColumnCreator::castOf('kg'));
+        $this->assertNull(ColumnCreator::castOf('lb'));
+        $this->assertSame('decimal:1', ColumnCreator::castOf('ton'));
+        $this->assertSame('decimal:7', ColumnCreator::castOf(ColumnCreator::Gram));
     }
 
     #[Test]
@@ -189,7 +189,7 @@ class CreatorTest extends TestCase
     {
         config(['eloquent-kompact.column.custom_tokens' => ['gram' => ['gram', 'decimal:3']]]);
 
-        $this->assertSame('decimal:3', Creator::castOf(Creator::Gram));
+        $this->assertSame('decimal:3', ColumnCreator::castOf(ColumnCreator::Gram));
     }
 
     #[Test]
@@ -197,41 +197,41 @@ class CreatorTest extends TestCase
     {
         config(['eloquent-kompact.column.custom_tokens' => ['kg' => ['kg', 'decimal:3']]]);
 
-        $this->assertSame('decimal:3', Creator::castOf('kg'));
-        $this->assertSame('kg', Creator::getColumnType('weight_kg'));
+        $this->assertSame('decimal:3', ColumnCreator::castOf('kg'));
+        $this->assertSame('kg', ColumnCreator::getColumnType('weight_kg'));
 
         config(['eloquent-kompact.column.custom_tokens' => ['lb' => ['lb', 'decimal:5']]]);
 
-        $this->assertNull(Creator::castOf('kg'));
-        $this->assertSame('decimal:5', Creator::castOf('lb'));
-        $this->assertSame('', Creator::getColumnType('weight_kg'));
-        $this->assertNotContains('kg', Creator::tokens());
+        $this->assertNull(ColumnCreator::castOf('kg'));
+        $this->assertSame('decimal:5', ColumnCreator::castOf('lb'));
+        $this->assertSame('', ColumnCreator::getColumnType('weight_kg'));
+        $this->assertNotContains('kg', ColumnCreator::tokens());
     }
 
     #[Test]
     public function it_drops_a_removed_custom_token_method(): void
     {
         config(['eloquent-kompact.column.custom_tokens' => ['kg' => 'kg']]);
-        Creator::kg('weight');
+        ColumnCreator::kg('weight');
 
         config(['eloquent-kompact.column.custom_tokens' => []]);
 
         $this->expectException(BadMethodCallException::class);
 
-        Creator::kg('weight');
+        ColumnCreator::kg('weight');
     }
 
     #[Test]
     public function it_uses_a_custom_delimiter(): void
     {
-        Creator::configureDelimiter('-');
+        ColumnCreator::configureDelimiter('-');
 
-        $this->assertSame('-', Creator::getDelimiter());
-        $this->assertSame('user-id', Creator::relation('user'));
-        $this->assertSame('id', Creator::getColumnType('user-id'));
-        $this->assertSame('-id', Creator::getColumnType('user-id', true));
-        $this->assertSame('user', Creator::getPlainColumnName('user-id')->toString());
-        $this->assertSame('', Creator::getColumnType('user_id'));
+        $this->assertSame('-', ColumnCreator::getDelimiter());
+        $this->assertSame('user-id', ColumnCreator::relation('user'));
+        $this->assertSame('id', ColumnCreator::getColumnType('user-id'));
+        $this->assertSame('-id', ColumnCreator::getColumnType('user-id', true));
+        $this->assertSame('user', ColumnCreator::getPlainColumnName('user-id')->toString());
+        $this->assertSame('', ColumnCreator::getColumnType('user_id'));
 
         // Only the token gets the delimiter; the prefix stays snake case
         $this->assertSame('author_user-id', \JundFauz\EloquentKompact\Column\Convert::modelToColumn('App\Models\User', 'author'));
@@ -240,9 +240,9 @@ class CreatorTest extends TestCase
     #[Test]
     public function it_quotes_the_delimiter_in_the_matcher(): void
     {
-        Creator::configureDelimiter('.');
+        ColumnCreator::configureDelimiter('.');
 
-        $this->assertSame('id', Creator::getColumnType('user.id'));
-        $this->assertSame('', Creator::getColumnType('user_id'));
+        $this->assertSame('id', ColumnCreator::getColumnType('user.id'));
+        $this->assertSame('', ColumnCreator::getColumnType('user_id'));
     }
 }

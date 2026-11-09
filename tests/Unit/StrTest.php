@@ -241,8 +241,8 @@ b"];
         $this->assertSame('App\Foo::Bar', Str::of('App\Foo')->addConstant('Bar')->toString());
         $this->assertSame('App\Foo::Bar', Str::of('Bar')->addConstantAtStart('App\Foo')->toString());
 
-        $this->assertTrue(Str::of('Relation')->addConstantAtStart(\JundFauz\EloquentKompact\Column\Creator::class)->isDefined());
-        $this->assertFalse(Str::of('Unknown')->addConstantAtStart(\JundFauz\EloquentKompact\Column\Creator::class)->isDefined());
+        $this->assertTrue(Str::of('Relation')->addConstantAtStart(\JundFauz\EloquentKompact\Column\ColumnCreator::class)->isDefined());
+        $this->assertFalse(Str::of('Unknown')->addConstantAtStart(\JundFauz\EloquentKompact\Column\ColumnCreator::class)->isDefined());
         $this->assertTrue(Str::of('PHP_EOL')->isDefined());
     }
 

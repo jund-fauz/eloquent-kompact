@@ -5,7 +5,7 @@ namespace JundFauz\EloquentKompact\Model\Traits;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\Relation;
 use JundFauz\EloquentKompact\Column\Convert;
-use JundFauz\EloquentKompact\Column\Creator;
+use JundFauz\EloquentKompact\Column\ColumnCreator;
 use function JundFauz\EloquentKompact\array_filter_filled;
 use function JundFauz\EloquentKompact\is_not_array;
 use function JundFauz\EloquentKompact\is_not_null;
@@ -211,12 +211,12 @@ trait AdditionalQueries
 
     public function isMorphModelSame(string $morphName, string $modelClass): bool
     {
-        return $this->sameWith(Creator::type($morphName), Relation::getMorphAlias($modelClass));
+        return $this->sameWith(ColumnCreator::type($morphName), Relation::getMorphAlias($modelClass));
     }
 
     public function isMorphModelSameAndDirty(string $morphName, string $modelClass): bool
     {
-        return $this->sameWithAndDirty(Creator::type($morphName), Relation::getMorphAlias($modelClass));
+        return $this->sameWithAndDirty(ColumnCreator::type($morphName), Relation::getMorphAlias($modelClass));
     }
 
     public function getMany(string ...$columns): array

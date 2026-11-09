@@ -20,7 +20,7 @@ use function JundFauz\EloquentKompact\str_constant;
  * @method static bool isTime(mixed $column)
  * @method static bool isType(mixed $column)
  */
-final class Checker
+final class ColumnChecker
 {
     use ErrorThrow;
 
@@ -29,12 +29,12 @@ final class Checker
         $method = Str::of($method);
         if ($method->startsWith('is')) {
             $constantName = $method->substr(2);
-            $customToken = Creator::getCustomToken($constantName);
+            $customToken = ColumnCreator::getCustomToken($constantName);
 
             [$column] = $parameters;
-            return same_with(Creator::getColumnType($column?->name ?? $column), match (true) {
+            return same_with(ColumnCreator::getColumnType($column?->name ?? $column), match (true) {
                 (bool) $customToken => $customToken,
-                $constantName->addConstantAtStart(Creator::class)->isDefined() => Creator::{$constantName->value()},
+                $constantName->addConstantAtStart(ColumnCreator::class)->isDefined() => ColumnCreator::{$constantName->value()},
                 default => self::methodNotFound($method)
             });
         }

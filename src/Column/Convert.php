@@ -10,7 +10,7 @@ final class Convert
 {
     public static function booleanToString(string $columnName): array
     {
-        $trueValue = __((string) Creator::getPlainColumnName($columnName)->ucfirst());
+        $trueValue = __((string) ColumnCreator::getPlainColumnName($columnName)->ucfirst());
         $falseValue = __('Not :value', ['value' => (string) Str::of($trueValue)->lower()]);
 
         return [$falseValue, $trueValue];

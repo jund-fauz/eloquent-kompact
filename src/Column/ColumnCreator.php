@@ -25,7 +25,7 @@ use function JundFauz\EloquentKompact\str_concat;
  * @method static string relation(string $column)
  * @method static string type(string $column)
  */
-final class Creator
+final class ColumnCreator
 {
     use ErrorThrow;
 
@@ -127,8 +127,8 @@ final class Creator
     public static function quantity(): array
     {
         return [
-            Creator::gram('quantity'),
-            Creator::pcs('quantity'),
+            ColumnCreator::gram('quantity'),
+            ColumnCreator::pcs('quantity'),
         ];
     }
 

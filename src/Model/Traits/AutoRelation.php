@@ -8,7 +8,7 @@ use Illuminate\Database\Eloquent\Relations\MorphTo;
 use Illuminate\Database\Eloquent\Relations\Relation;
 use Illuminate\Support\Str;
 use JundFauz\EloquentKompact\Column\ColumnListing;
-use JundFauz\EloquentKompact\Column\Creator;
+use JundFauz\EloquentKompact\Column\ColumnCreator;
 use ReflectionClass;
 use ReflectionException;
 use ReflectionMethod;
@@ -62,7 +62,7 @@ trait AutoRelation
 
                 if ($isPlural) {
                     $parentModelName = Str::snake(class_basename(static::class));
-                    $foreignKey = Creator::relation($prefix ? "{$prefix}_$parentModelName" : $parentModelName);
+                    $foreignKey = ColumnCreator::relation($prefix ? "{$prefix}_$parentModelName" : $parentModelName);
                     $table = (new $className)->getTable();
 
                     if (ColumnListing::has($table, $foreignKey)) {
@@ -80,7 +80,7 @@ trait AutoRelation
                         ]));
                     }
                 } else {
-                    $foreignKey = Creator::relation(Str::snake($relationName));
+                    $foreignKey = ColumnCreator::relation(Str::snake($relationName));
                     $type = 'belongsTo';
                 }
 

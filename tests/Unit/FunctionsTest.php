@@ -636,8 +636,8 @@ class FunctionsTest extends TestCase
     public function it_builds_and_checks_a_constant_name(): void
     {
         $this->assertSame('Foo\Bar::Baz', str_constant('Foo\Bar', 'Baz'));
-        $this->assertFalse(not_defined(str_constant(\JundFauz\EloquentKompact\Column\Creator::class, 'Relation')));
-        $this->assertTrue(not_defined(str_constant(\JundFauz\EloquentKompact\Column\Creator::class, 'Unknown')));
+        $this->assertFalse(not_defined(str_constant(\JundFauz\EloquentKompact\Column\ColumnCreator::class, 'Relation')));
+        $this->assertTrue(not_defined(str_constant(\JundFauz\EloquentKompact\Column\ColumnCreator::class, 'Unknown')));
     }
 
     #[Test]

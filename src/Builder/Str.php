@@ -3,7 +3,7 @@
 namespace JundFauz\EloquentKompact\Builder;
 
 use Illuminate\Support\Stringable;
-use JundFauz\EloquentKompact\Column\Creator;
+use JundFauz\EloquentKompact\Column\ColumnCreator;
 use JundFauz\EloquentKompact\Query\RawQuery;
 use JundFauz\EloquentKompact\Regex\Regex;
 use function JundFauz\EloquentKompact\namespace_concat;
@@ -132,7 +132,7 @@ class Str extends Stringable
 
     public function relation(): static
     {
-        return new static(Creator::relation($this->value));
+        return new static(ColumnCreator::relation($this->value));
     }
 
     public function removeStart(string $toRemoved): static

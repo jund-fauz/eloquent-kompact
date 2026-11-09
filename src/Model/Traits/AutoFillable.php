@@ -3,7 +3,7 @@
 namespace JundFauz\EloquentKompact\Model\Traits;
 
 use Illuminate\Support\Str;
-use JundFauz\EloquentKompact\Column\Checker;
+use JundFauz\EloquentKompact\Column\ColumnChecker;
 use JundFauz\EloquentKompact\Column\ColumnListing;
 use function JundFauz\EloquentKompact\same_with;
 use function JundFauz\EloquentKompact\str_concat;
@@ -27,7 +27,7 @@ trait AutoFillable
                     }
 
                     foreach ($config['token'] as $token) {
-                        if (Checker::{str_concat('is', Str::pascal($token))}($column)) {
+                        if (ColumnChecker::{str_concat('is', Str::pascal($token))}($column)) {
                             return true;
                         }
                     }
@@ -38,7 +38,7 @@ trait AutoFillable
                         }
                     }
 
-                    if (! static::$includeTimestampColumn && Checker::isTimestamp($column)) {
+                    if (! static::$includeTimestampColumn && ColumnChecker::isTimestamp($column)) {
                         return true;
                     }
 
