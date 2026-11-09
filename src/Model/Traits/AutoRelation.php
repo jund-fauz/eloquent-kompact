@@ -15,7 +15,6 @@ use ReflectionMethod;
 use function array_key_exists;
 use function count;
 use function JundFauz\EloquentKompact\namespace_concat;
-use function sprintf;
 
 trait AutoRelation
 {
@@ -72,10 +71,13 @@ trait AutoRelation
                         $type = 'morphMany';
                         $foreignKey = $morphName;
                     } else {
-                        throw new BadMethodCallException(sprintf(
-                            'Relasi %s::%s tidak bisa ditebak: kolom %s.%s tidak ada dan %s tidak punya morphTo tunggal.',
-                            static::class, $relationName, $table, $foreignKey, $className
-                        ));
+                        throw new BadMethodCallException(__('eloquent-kompact::messages.relation_not_resolvable', [
+                            'class' => static::class,
+                            'relation' => $relationName,
+                            'table' => $table,
+                            'column' => $foreignKey,
+                            'related' => $className,
+                        ]));
                     }
                 } else {
                     $foreignKey = Creator::relation(Str::snake($relationName));

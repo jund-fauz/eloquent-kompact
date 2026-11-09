@@ -101,14 +101,14 @@ final class Creator
      */
     protected static function matcher(): string
     {
-        return self::$matcher ??= Regex::create(
+        return self::$matcher ??=
             self::tokens()
-            ->map(static fn (string $token) => preg_quote($token, '/'))
-            ->implode('|')
-        )
-            ->group()
-            ->endsWith()
-            ->build();
+                ->map(static fn (string $token) => preg_quote($token, '/'))
+                ->implodeAsStr('|')
+                ->asRegex()
+                ->group()
+                ->endsWith()
+                ->build();
     }
 
     public static function getPlainColumnName(string $column): Str

@@ -208,6 +208,14 @@ class CollectionTest extends TestCase
         $this->assertInstanceOf(Collection::class, (new Collection([1, 2]))->map(fn (int $value) => $value * 2));
     }
 
+    #[Test]
+    public function it_implodes_as_a_str(): void
+    {
+        $this->assertStr('a, b', (new Collection(['a', 'b']))->implodeAsStr(', '));
+        $this->assertStr('x-y', (new Collection([['n' => 'x'], ['n' => 'y']]))->implodeAsStr('n', '-'));
+        $this->assertStr('', (new Collection)->implodeAsStr(''));
+    }
+
     private function assertStr(string $expected, mixed $actual): void
     {
         $this->assertInstanceOf(Str::class, $actual);

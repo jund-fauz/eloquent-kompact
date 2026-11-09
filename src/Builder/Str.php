@@ -5,6 +5,7 @@ namespace JundFauz\EloquentKompact\Builder;
 use Illuminate\Support\Stringable;
 use JundFauz\EloquentKompact\Column\Creator;
 use JundFauz\EloquentKompact\Query\RawQuery;
+use JundFauz\EloquentKompact\Regex\Regex;
 use function JundFauz\EloquentKompact\namespace_concat;
 use function JundFauz\EloquentKompact\not_same_with;
 use function JundFauz\EloquentKompact\path_concat;
@@ -141,6 +142,11 @@ class Str extends Stringable
     public function asRawQuery(): RawQuery
     {
         return RawQuery::create($this->value);
+    }
+
+    public function asRegex(): Regex
+    {
+        return Regex::create($this->value);
     }
 
     public function sameWith(mixed $otherValue): bool

@@ -64,4 +64,24 @@ class RegexTest extends TestCase
         $this->assertSame('/a/', $regex->build());
         $this->assertSame('/^a/', $started->build());
     }
+
+    #[Test]
+    public function it_is_restored_from_var_export(): void
+    {
+        $regex = Regex::create('a')->endsWith();
+        $restored = eval('return '.var_export($regex, true).';');
+
+        $this->assertInstanceOf(Regex::class, $restored);
+        $this->assertSame('/a$/', $restored->build());
+        $this->assertSame('//', Regex::__set_state([])->build());
+    }
+
+    #[Test]
+    public function it_is_created_from_a_str(): void
+    {
+        $regex = \JundFauz\EloquentKompact\Builder\Str::of('_id')->asRegex()->endsWith();
+
+        $this->assertInstanceOf(Regex::class, $regex);
+        $this->assertSame('/_id$/', $regex->build());
+    }
 }
