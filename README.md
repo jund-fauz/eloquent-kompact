@@ -63,7 +63,7 @@ Long-running processes (queue workers, Octane) keep their in-memory copy until t
 
 ## Column naming convention
 
-Most automation reads the **type of a column from its name**: a token at the end of the column name.
+Most automation reads the **type of a column from its name**: a token at the end of the column name. A token is always a suffix that starts with `_`, so a token elsewhere in the name (`user_identity`, `created_at_backup`) does not count.
 
 | Token | Constant | Example | Auto cast |
 |---|---|---|---|
@@ -92,16 +92,18 @@ Creator::getPlainColumnName('author_user_id');    // Str: author_user
 Creator::getColumnType('author_user_id');         // _id
 Creator::getColumnType('author_user_id', true);   // id
 Creator::castOf(Creator::Gram);                   // decimal:7
-Creator::tokens();                                // every token, longest first
+Creator::tokens();                                // Builder\Collection of every token, longest first
 ```
 
-`Checker` tells whether a column (a name or a column definition with a `name`) contains a token:
+`Checker` tells whether a column (a name or a column definition with a `name`) ends with a token. Only the last token counts:
 
 ```php
 use JundFauz\EloquentKompact\Column\Checker;
 
 Checker::isRelation('author_user_id'); // true
 Checker::isEnum($table->string('status_enum')); // true
+Checker::isRelation('user_identity'); // false
+Checker::isRelation('user_id_enum'); // false, it is an enum column
 ```
 
 ## KompactModel
@@ -278,16 +280,6 @@ Like a scope, these methods put the earlier conditions in a group if they contai
 `whereInRelation()` uses the column as given, so on a `belongsToMany` relation, a column that is also on the pivot table has to be written with its table (`'tags.id'`), or the query fails with an ambiguous column error. An empty list of values finds nothing.
 
 These methods are not scopes, so a scope of the same name on a model is never called, `hasNamedScope()` returns `false` for them, and they cannot be passed to `scopes()`.
-
-### Filterable
-
-Counts the non-empty values of each column, e.g. to show which filters have data:
-
-```php
-$counts = Order::getCountForFilter('email', 'phone', 'user.name');
-$counts->email_count;          // COUNT(NULLIF(email, ''))
-$counts->{'user.name_count'}; // relational columns are always 1
-```
 
 ### StaticH
 
@@ -696,6 +688,7 @@ Regex::create()->contain(Quantifier::oneOrMore, Regex::create()->range('a', 'z')
 | `exact(...$parts)` | `^…$` |
 | `startsWith(...$parts)` | `^…` |
 | `endsWith(...$parts)` | `…$` |
+| `group(...$parts)` | `(…)` around the pattern and the parts |
 | `exceptWord($word)` | `(?!word)` |
 | `contain($quantifier, ...$parts)` | `[…]` followed by the quantifier (`Quantifier::zeroOrMore`, `oneOrMore`, `zeroOrOne` or a string) |
 | `range($from, $until)` | `from-until` |
@@ -724,6 +717,13 @@ use const JundFauz\EloquentKompact\NEW_LINE;
 | `is_count_zero($value)` / `is_count_one($value)` / `is_count_many($value)` | Whether the array or `Countable` has no item / one item / more than one item |
 | `is_app_local_or_test()` | Whether the app runs in the `local` or `testing` environment |
 | `not($condition)` | `! $condition` |
+| `not_in_array($needle, $haystack, $strict = false)` | `! in_array()` |
+| `not_in($needle, $haystack, $strict = false)` | `not_in_array()` for an array or a collection |
+| `not_defined($constant)` | `! defined()` |
+| `str_constant($class, $constant)` | `Class::Constant`, e.g. for `defined()` or `constant()` |
+| `ternary($condition, $trueValue, $falseValue)` | `$condition ? $trueValue : $falseValue` |
+| `elvis($value, $default)` | `$value ?: $default` |
+| `null_coalescing($value, $default)` | `$value ?? $default` |
 | `str_concat(...$values)` | Joined without a delimiter |
 | `word_concat(...$values)` | Joined with a space |
 | `schema_concat(...$values)` | Joined with `:` |
@@ -737,6 +737,7 @@ use const JundFauz\EloquentKompact\NEW_LINE;
 | `array_flat(&$array)` | Flattens the array in place |
 | `collect(...$values)` | A [`Builder\Collection`](#other-helpers) of one value, like Laravel's `collect()`, or of several values as its items: `collect(1, 2)` → `[1, 2]`. Without a value it throws a `BadMethodCallException`, unlike Laravel's. Import it to use it instead of Laravel's |
 | `array_wrap($value)` | Laravel's `Arr::wrap()`: the value as an array, `[]` for `null` |
+| `array_cast($value)` | The items of a collection, or `array_wrap()` of any other value |
 | `array_get_or($array, ...$keys)` | The first value that is not `null`, in the order of the keys; dot notation is supported and missing keys are skipped |
 | `array_filter_filled($array)` | The values that are Laravel's `filled()`, keeping the keys: `null`, blank strings and empty arrays or collections are removed; `0`, `'0'` and `false` are kept |
 | `array_key_change(&$array, $oldKey, $newKey)` | Renames a key in place. The key moves to the end of the array, an existing `$newKey` is replaced, and a missing `$oldKey` gives PHP's `Undefined array key` warning |
@@ -751,7 +752,7 @@ use const JundFauz\EloquentKompact\NEW_LINE;
 | `str_before_last()`, `str_lower()`, `str_upper()` | Laravel's `Str::beforeLast()`, `lower()`, `upper()` |
 | `str_empty_if_false($condition, $value)` | `$value`, or `''` if `$condition` is falsy, like [`Str::emptyIfFalse()`](#str) |
 
-The joining functions accept arrays too, which are flattened: `str_concat('a', ['b', ['c']])` → `abc`.
+The joining functions accept arrays too, which are flattened: `str_concat('a', ['b', ['c']])` → `abc`. `str_concat()` also accepts collections: `str_concat('a', collect(['b', 'c']))` → `abc`.
 
 Constants: `NEW_LINE` (`"\n"`), `DISTANCE_LINE` (`"\n\n"`), `NAMESPACE_DELIMITER` (`\`), `PATH_DELIMITER` (`/`) and `TAB` (4 spaces).
 
@@ -793,6 +794,8 @@ Constants: `NEW_LINE` (`"\n"`), `DISTANCE_LINE` (`"\n\n"`), `NAMESPACE_DELIMITER
   $data->getOrWithDefault('Guest', 'nickname');              // Str 'Guest'
   $data->getOrWithDefaultAsCollection('Guest', 'nickname');  // Collection ['Guest']
   ```
+
+  `normalFilter($callback)` is `array_filter()` with the value only, so a PHP function such as `'is_string'` can be the callback; Laravel's `filter()` also passes the key, which a PHP function rejects with an `ArgumentCountError`.
 
   `deleteNull()` only removes `null`, keeping the keys, while `filterFilled()` also removes blank strings and empty arrays or collections. Both return a new collection and leave the original as it is.
 
