@@ -7,6 +7,21 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [1.2.0] - 2026-11-10
+
+### Added
+
+- `Validation` trait, used by `KompactModel`, `KompactUser` and `KompactPivot`: `Model::rules($record = null)` gives the rules of every fillable column, with default rules for the `id`, `gram`, `pcs`, `percentage` and `is` tokens. `defineRules()` of the model and of each parent class are merged without overriding each other, and `uniqueRule()`, `defaultRules()`, `gramMaxRule()` and `pcsMaxRule()` can be overridden.
+- `KompactPivot` uses `AutoFillable`.
+
+### Changed
+
+- `KompactPivot` gets a dynamic fillable list, so `id`, the timestamp columns and the columns of `fillable.exclude_column_by` are no longer mass assignable on a pivot. `attach()` is not affected.
+
+### Tests
+
+- Added tests for `Validation` and the fillable list of `KompactPivot`.
+
 ## [1.1.0] - 2026-11-09
 
 ### Added
@@ -2045,7 +2060,8 @@ The first stable release: from now on, breaking changes only come in a major rel
 - `RawQuery` static helpers for raw SQL expressions.
 - Translations for `en` and `id`.
 
-[Unreleased]: https://github.com/jund-fauz/eloquent-kompact/compare/v1.1.0...HEAD
+[Unreleased]: https://github.com/jund-fauz/eloquent-kompact/compare/v1.2.0...HEAD
+[1.2.0]: https://github.com/jund-fauz/eloquent-kompact/compare/v1.1.0...v1.2.0
 [1.1.0]: https://github.com/jund-fauz/eloquent-kompact/compare/v1.0.0...v1.1.0
 [1.0.0]: https://github.com/jund-fauz/eloquent-kompact/compare/v0.101.0...v1.0.0
 [0.101.0]: https://github.com/jund-fauz/eloquent-kompact/compare/v0.100.0...v0.101.0
