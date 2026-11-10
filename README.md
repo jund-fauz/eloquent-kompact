@@ -148,7 +148,7 @@ ColumnCheck::isRelation('user_id_enum'); // false, it is an enum column
 
 ## KompactModel
 
-Extend `JundFauz\EloquentKompact\Model\KompactModel` instead of Eloquent's `Model` to get every trait below at once. `KompactUser` does the same for the user model, on top of Laravel's `Illuminate\Foundation\Auth\User`. Both only use the `Kompact` trait, which a model with another parent class can use too; such a model has to set `$collectionClass` and `$builder` itself to get [`Model\Collection`](#other-helpers) and [`Model\Builder`](#builder). `KompactUser` is abstract. `KompactPivot` does the same for pivot models, with `AdditionalQueries`, `AutoRelation`, `StaticH` and soft deletes.
+Extend `JundFauz\EloquentKompact\Model\KompactModel` instead of Eloquent's `Model` to get every trait below at once. `KompactUser` does the same for the user model, on top of Laravel's `Illuminate\Foundation\Auth\User`. Both only use the `Kompact` trait, which a model with another parent class can use too; such a model has to set `$collectionClass` and `$builder` itself to get [`Model\Collection`](#other-helpers) and [`Model\Builder`](#builder). `KompactUser` is abstract. `KompactPivot` does the same for pivot models, with `AdditionalQueries`, `AutoFillable`, `AutoRelation`, `StaticH`, `Validation` and soft deletes.
 
 ```php
 use JundFauz\EloquentKompact\Model\KompactModel;
@@ -194,6 +194,58 @@ protected static bool $includeTimestampColumn = true;
 ```
 
 > **Note:** this includes columns such as `password` and `remember_token` on a `KompactUser`. Add the columns that should not be mass assigned to `fillable.exclude_column_by`, and never pass unfiltered input to `create()` or `fill()`.
+
+### Validation
+
+`Model::rules($record = null)` returns the validation rules of every fillable column, so a column does not have to be declared to get them. Columns with a token get default rules:
+
+| Token | Default rules |
+|---|---|
+| `id` | `integer` |
+| `gram` | `numeric`, `min:0.001`, `decimal:0,3`, `max:` `gramMaxRule()` (`99999.9999999`) |
+| `pcs` | `integer`, `min:0`, `max:` `pcsMaxRule()` (`4294967295`) |
+| `percentage` | `numeric`, `min:0`, `max:100` |
+| `is` | `boolean` |
+
+A column with `string` and no `max` also gets `max:255`.
+
+Add rules in `defineRules()`, an instance method, on the model and on any of its parent classes. Every `defineRules()` in the hierarchy is merged, without calling `parent::`: the model first, then its parents, then the defaults. A rule is only added when a more specific layer has no rule with the same name, so a `max:15` of the model wins over the `max:255` of the defaults, while the other rules add up:
+
+```php
+use Illuminate\Database\Eloquent\Model;
+
+abstract class BaseModel extends KompactModel
+{
+    protected function defineRules(?Model $record = null): array
+    {
+        return [
+            'name' => ['string', 'min:3'],
+            'phone' => ['nullable', 'string', static::uniqueRule('phone', $record)],
+        ];
+    }
+}
+
+class Customer extends BaseModel
+{
+    protected static function pcsMaxRule(): int
+    {
+        return 1_000;
+    }
+
+    protected function defineRules(?Model $record = null): array
+    {
+        return [
+            'name' => 'required|string|max:50',
+            'password' => ['required', 'confirmed'],
+        ];
+    }
+}
+
+Customer::rules($customer);
+// ['name' => ['required', 'string', 'max:50', 'min:3'], 'phone' => [..., Unique], 'password' => [...], ...]
+```
+
+The rules of a parent class are only applied to the columns of the model, so `phone` is left out of a model without a `phone` column. The rules declared by the model itself are always applied, also for a field that is not a column, such as `password`. `uniqueRule($column, $record)` is `Rule::unique()` on the table of the model, ignoring `$record`. To change the defaults, override `defaultRules($column, $record)`, `gramMaxRule()` or `pcsMaxRule()`.
 
 ### AutoCast
 
