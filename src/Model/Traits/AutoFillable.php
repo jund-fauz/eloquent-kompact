@@ -29,6 +29,12 @@ trait AutoFillable
                         }
                     }
 
+                    foreach (array_get($config['contain'], []) as $value) {
+                        if (Str::contains($column, $value)) {
+                            return true;
+                        }
+                    }
+
                     foreach (array_get($config['token'], []) as $token) {
                         if (ColumnCheck::{str_concat('is', Str::pascal($token))}($column)) {
                             return true;

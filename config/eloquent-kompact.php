@@ -9,6 +9,7 @@ return [
     'fillable' => [
         'exclude_column_by' => [
             'exact' => ['id'],
+            'contain' => [],
             'token' => [],
             'regex' => []
         ]
