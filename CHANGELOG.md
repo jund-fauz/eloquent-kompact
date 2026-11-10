@@ -7,6 +7,16 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [1.3.0] - 2026-11-10
+
+### Added
+
+- `fillable.exclude_column_by.contain`: a column whose name contains one of the given values is left out of the dynamic fillable list, e.g. `'contain' => ['password']`.
+
+### Tests
+
+- Added a test for `fillable.exclude_column_by.contain`.
+
 ## [1.2.0] - 2026-11-10
 
 ### Added
@@ -2060,7 +2070,8 @@ The first stable release: from now on, breaking changes only come in a major rel
 - `RawQuery` static helpers for raw SQL expressions.
 - Translations for `en` and `id`.
 
-[Unreleased]: https://github.com/jund-fauz/eloquent-kompact/compare/v1.2.0...HEAD
+[Unreleased]: https://github.com/jund-fauz/eloquent-kompact/compare/v1.3.0...HEAD
+[1.3.0]: https://github.com/jund-fauz/eloquent-kompact/compare/v1.2.0...v1.3.0
 [1.2.0]: https://github.com/jund-fauz/eloquent-kompact/compare/v1.1.0...v1.2.0
 [1.1.0]: https://github.com/jund-fauz/eloquent-kompact/compare/v1.0.0...v1.1.0
 [1.0.0]: https://github.com/jund-fauz/eloquent-kompact/compare/v0.101.0...v1.0.0
