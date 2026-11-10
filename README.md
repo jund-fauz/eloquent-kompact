@@ -41,6 +41,7 @@ php artisan vendor:publish --tag=eloquent-kompact-config
 | `path.database_enum` | `App\Enums` | Namespace where `AutoCast` looks for enums |
 | `column.custom_tokens` | `[]` | Your own column tokens, see [Custom tokens](#custom-tokens) |
 | `fillable.exclude_column_by.exact` | `['id']` | Column names left out of the dynamic fillable list |
+| `fillable.exclude_column_by.contain` | `[]` | Parts of column names: a column containing one of them is left out of the dynamic fillable list |
 | `fillable.exclude_column_by.token` | `[]` | Token names (`'relation'`, `'enum'`, a custom token name, …) whose columns are left out of the dynamic fillable list |
 | `fillable.exclude_column_by.regex` | `[]` | Regexes of columns left out of the dynamic fillable list |
 | `ide-helper.auto_generate` | `env('KOMPACT_IDE_HELPER', false)` | Run `kompact:ide-helper` after `php artisan migrate` in the local environment |
@@ -179,6 +180,7 @@ Model results use [`Model\Collection`](#other-helpers), unless the model has `#[
 'fillable' => [
     'exclude_column_by' => [
         'exact' => ['id', 'remember_token'],
+        'contain' => ['password'],                // password, password_hash, old_password, …
         'token' => ['relation'],                  // every column ending in _id
         'regex' => [Regex::create('secret_')->startsWith()],
     ],
