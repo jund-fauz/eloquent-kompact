@@ -347,11 +347,12 @@ protected function defineRules(?Model $record = null): array
     return [
         'price' => Rules::init()->numeric()->min(0)->max(1_000)->decimal(0, 2), // ['numeric', 'min:0', 'max:1000', 'decimal:0,2']
         'code' => Rules::init()->regex(Regex::create('[A-Z]+')->exact()),       // ['regex:/^[A-Z]+$/']
+        'email' => Rules::init()->required()->unique('email', Customer::class, $record), // ['required', Unique]
     ];
 }
 ```
 
-It has `integer()`, `numeric()`, `boolean()`, `min($number)`, `max($number)`, `decimal($min = null, $max = null)` and `regex($regex)`, and `build()` returns the rules as an array. Every method returns a new instance, so one base can be reused. `decimal()` needs at least one of its arguments, or it throws a `BadMethodCallException`.
+It has `required()`, `integer()`, `numeric()`, `boolean()`, `min($number)`, `max($number)`, `decimal($min = null, $max = null)`, `regex($regex)` and `unique($column = null, $model = null, $record = null)`, and `build()` returns the rules as an array. `unique()` with a column and a model is the `uniqueRule($column, $record)` of that model; without either of them it adds the plain `'unique'` rule. Every method returns a new instance, so one base can be reused. `decimal()` needs at least one of its arguments, or it throws a `BadMethodCallException`.
 
 ### AutoCast
 
