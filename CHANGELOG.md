@@ -7,6 +7,17 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [1.8.0] - 2026-11-11
+
+### Added
+
+- Column builders: `Column\Builder\Concerns\ColumnBuilder` (a class per token whose static methods give the column names, e.g. `Gram::netWeight()` → `net_weight_gram`) and `Column\Builder\Concerns\Morph` (`{constant or morph name}Id()` / `Model()`, e.g. `Morph::sourceableId()` → `sourceable_id`).
+- `php artisan kompact:column-builder`: generates the column builder classes with the columns of the database as their `@method`s, into the namespace given with `-o` / `--output` or asked for. Running it again updates the classes it generated to the latest columns, keeping the constants renamed in `Morph`; other classes are only overwritten with `--force`.
+
+### Tests
+
+- Added tests for the column builders and `kompact:column-builder`.
+
 ## [1.7.0] - 2026-11-11
 
 ### Added
@@ -2134,7 +2145,8 @@ The first stable release: from now on, breaking changes only come in a major rel
 - `RawQuery` static helpers for raw SQL expressions.
 - Translations for `en` and `id`.
 
-[Unreleased]: https://github.com/jund-fauz/eloquent-kompact/compare/v1.7.0...HEAD
+[Unreleased]: https://github.com/jund-fauz/eloquent-kompact/compare/v1.8.0...HEAD
+[1.8.0]: https://github.com/jund-fauz/eloquent-kompact/compare/v1.7.0...v1.8.0
 [1.7.0]: https://github.com/jund-fauz/eloquent-kompact/compare/v1.6.0...v1.7.0
 [1.6.0]: https://github.com/jund-fauz/eloquent-kompact/compare/v1.5.0...v1.6.0
 [1.5.0]: https://github.com/jund-fauz/eloquent-kompact/compare/v1.4.0...v1.5.0
