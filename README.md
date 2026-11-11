@@ -220,7 +220,7 @@ Morph::sourceableId();     // sourceable_id
 Morph::sourceableModel();  // sourceable_type
 ```
 
-A token that is a PHP keyword gets a `C` at the end of its class, like `ArrayC`, and `ColumnBuilder` drops it again to find the token. Run the command again after a migration: the classes it generated are updated to the latest columns, and a constant renamed in `Morph` (`public const string source = 'sourceable';`, then `Morph::sourceId()`) is kept. A class with the same name that the command did not generate is skipped, unless `--force` is given.
+A token that is a PHP keyword gets a `C` at the end of its class, like `ArrayC`, and `ColumnBuilder` drops it again to find the token. Once the command has run, it runs again by itself after every `php artisan migrate` in the `local` environment, for every namespace that has classes it generated (found by their docblock inside `app/`). It can also be run again by hand: the classes it generated are updated to the latest columns, and a constant renamed in `Morph` (`public const string source = 'sourceable';`, then `Morph::sourceId()`) is kept. A class with the same name that the command did not generate is skipped, unless `--force` is given.
 
 `ColumnCheck` tells whether a column (a name or a column definition with a `name`) ends with a token. Only the last token counts:
 

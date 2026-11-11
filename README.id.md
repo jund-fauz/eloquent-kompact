@@ -220,7 +220,7 @@ Morph::sourceableId();     // sourceable_id
 Morph::sourceableModel();  // sourceable_type
 ```
 
-Token yang merupakan keyword PHP mendapat `C` di akhir nama class-nya, seperti `ArrayC`, dan `ColumnBuilder` membuangnya lagi untuk menemukan token. Jalankan command lagi setelah migration: class yang di-generate-nya diperbarui ke kolom terbaru, dan konstanta yang di-rename di `Morph` (`public const string source = 'sourceable';`, lalu `Morph::sourceId()`) tetap dipertahankan. Class dengan nama yang sama yang tidak di-generate oleh command ini akan dilewati, kecuali diberi `--force`.
+Token yang merupakan keyword PHP mendapat `C` di akhir nama class-nya, seperti `ArrayC`, dan `ColumnBuilder` membuangnya lagi untuk menemukan token. Setelah command ini pernah dijalankan, command ini berjalan lagi sendiri setelah setiap `php artisan migrate` di environment `local`, untuk setiap namespace yang berisi class hasil generate-nya (dicari dari docblock-nya di dalam `app/`). Command ini juga bisa dijalankan ulang manual: class yang di-generate-nya diperbarui ke kolom terbaru, dan konstanta yang di-rename di `Morph` (`public const string source = 'sourceable';`, lalu `Morph::sourceId()`) tetap dipertahankan. Class dengan nama yang sama yang tidak di-generate oleh command ini akan dilewati, kecuali diberi `--force`.
 
 `ColumnCheck` memberi tahu apakah sebuah kolom (nama atau definisi kolom dengan `name`) diakhiri sebuah token. Hanya token terakhir yang dihitung:
 
