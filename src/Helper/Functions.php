@@ -21,6 +21,11 @@ function is_all_null(mixed ...$values): bool
     return array_all($values, fn (mixed $value) => is_null($value));
 }
 
+function is_one_of_them_null(mixed ...$values): bool
+{
+    return array_any($values, fn (mixed $value) => is_null($value));
+}
+
 function is_one_of_them_not_null(mixed ...$values): bool
 {
     return ! is_all_null($values);

@@ -31,6 +31,7 @@ use function JundFauz\EloquentKompact\higher_than_or_same_with;
 use function JundFauz\EloquentKompact\is_all_not_null;
 use function JundFauz\EloquentKompact\is_not_dir;
 use function JundFauz\EloquentKompact\is_all_null;
+use function JundFauz\EloquentKompact\is_one_of_them_null;
 use function JundFauz\EloquentKompact\is_array_or_collection;
 use function JundFauz\EloquentKompact\is_one_of_them_not_null;
 use function JundFauz\EloquentKompact\is_associative_array;
@@ -403,6 +404,8 @@ class FunctionsTest extends TestCase
         $this->assertFalse(is_all_not_null(0, [null]));
         $this->assertTrue(is_one_of_them_not_null(null, [null, 0]));
         $this->assertFalse(is_one_of_them_not_null(null, [null]));
+        $this->assertTrue(is_one_of_them_null(1, null));
+        $this->assertFalse(is_one_of_them_null(1, 0, ''));
         $this->assertTrue(is_array_or_collection([]));
         $this->assertTrue(is_array_or_collection(new SupportCollection));
         $this->assertFalse(is_array_or_collection(new ArrayObject));
