@@ -7,6 +7,16 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [1.6.0] - 2026-11-11
+
+### Added
+
+- `fillable.exclude_column_by.prefix` and `fillable.exclude_column_by.postfix`: a column whose name starts or ends with one of the given values is left out of the dynamic fillable list, e.g. `'prefix' => ['internal_']`, `'postfix' => ['_hash']`.
+
+### Tests
+
+- Added tests for `fillable.exclude_column_by.prefix` and `fillable.exclude_column_by.postfix`.
+
 ## [1.5.0] - 2026-11-11
 
 ### Added
@@ -2105,7 +2115,8 @@ The first stable release: from now on, breaking changes only come in a major rel
 - `RawQuery` static helpers for raw SQL expressions.
 - Translations for `en` and `id`.
 
-[Unreleased]: https://github.com/jund-fauz/eloquent-kompact/compare/v1.5.0...HEAD
+[Unreleased]: https://github.com/jund-fauz/eloquent-kompact/compare/v1.6.0...HEAD
+[1.6.0]: https://github.com/jund-fauz/eloquent-kompact/compare/v1.5.0...v1.6.0
 [1.5.0]: https://github.com/jund-fauz/eloquent-kompact/compare/v1.4.0...v1.5.0
 [1.4.0]: https://github.com/jund-fauz/eloquent-kompact/compare/v1.3.0...v1.4.0
 [1.3.0]: https://github.com/jund-fauz/eloquent-kompact/compare/v1.2.0...v1.3.0
