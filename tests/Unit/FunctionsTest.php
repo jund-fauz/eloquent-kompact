@@ -19,6 +19,7 @@ use function JundFauz\EloquentKompact\array_normalize;
 use function JundFauz\EloquentKompact\assign_as;
 use function JundFauz\EloquentKompact\array_flat;
 use function JundFauz\EloquentKompact\array_get;
+use function JundFauz\EloquentKompact\array_get_as_collection;
 use function JundFauz\EloquentKompact\array_get_or;
 use function JundFauz\EloquentKompact\array_pull;
 use function JundFauz\EloquentKompact\array_pull_list;
@@ -28,6 +29,7 @@ use function JundFauz\EloquentKompact\full_path_on_app;
 use function JundFauz\EloquentKompact\higher_than;
 use function JundFauz\EloquentKompact\higher_than_or_same_with;
 use function JundFauz\EloquentKompact\is_all_not_null;
+use function JundFauz\EloquentKompact\is_not_dir;
 use function JundFauz\EloquentKompact\is_all_null;
 use function JundFauz\EloquentKompact\is_array_or_collection;
 use function JundFauz\EloquentKompact\is_one_of_them_not_null;
@@ -705,5 +707,24 @@ class FunctionsTest extends TestCase
     {
         $this->assertTrue(function_exists('JundFauz\EloquentKompact\str_concat'));
         $this->assertFalse(function_exists('str_concat'));
+    }
+
+    #[Test]
+    public function it_gets_a_value_as_a_collection(): void
+    {
+        $config = ['token' => ['a', 'b']];
+
+        $this->assertInstanceOf(\JundFauz\EloquentKompact\Builder\Collection::class, array_get_as_collection($config['token'], []));
+        $this->assertSame(['a', 'b'], array_get_as_collection($config['token'], [])->all());
+        $this->assertSame([], array_get_as_collection($config['missing'], [])->all());
+        $this->assertSame(['x'], array_get_as_collection($config['other'], ['x'])->all());
+    }
+
+    #[Test]
+    public function it_checks_a_missing_directory(): void
+    {
+        $this->assertFalse(is_not_dir(__DIR__));
+        $this->assertTrue(is_not_dir(__DIR__ . '/missing'));
+        $this->assertTrue(is_not_dir(__FILE__));
     }
 }

@@ -2,7 +2,6 @@
 
 namespace JundFauz\EloquentKompact;
 
-use BadMethodCallException;
 use Countable;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Support\Collection as SupportCollection;
@@ -173,6 +172,11 @@ function array_get(mixed &$data, mixed $defaultValue)
     return $data ?? $defaultValue;
 }
 
+function array_get_as_collection(mixed &$data, mixed $defaultValue): Collection
+{
+    return collect(array_get($data, $defaultValue));
+}
+
 function assign_as(mixed $data, string ...$keys): array
 {
     $result = [];
@@ -200,6 +204,11 @@ function is_count_one(array|Countable $data): bool
 function is_count_many(array|Countable $data): bool
 {
     return higher_than(count($data), 1);
+}
+
+function is_not_dir(string $filename): bool
+{
+    return not(is_dir($filename));
 }
 
 function str_before_last(string $subject, string $search): string

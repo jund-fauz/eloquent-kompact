@@ -14,8 +14,10 @@ return [
             'postfix' => [],
             'token' => [],
             'regex' => []
-        ]
+        ],
+        'include_explicitly' => []
     ],
+    'morph_model_use' => '',
     'path' => [
         'model' => namespace_concat('App', 'Models'),
         'database_enum' => namespace_concat('App', 'Enums')

@@ -18,41 +18,43 @@ trait AutoFillable
 
     public function getFillable(): array
     {
-        $config = config('eloquent-kompact.fillable.exclude_column_by', []);
-        return static::$AFCache[static::class] ??= array_values(array_unique(array_merge(
+        $config = config('eloquent-kompact.fillable', []);
+        $includedColumnsFromConfig = array_get($config['include_explicitly'], []);
+        $excludeConfig = array_get($config['exclude_column_by'], []);
+        return static::$AFCache[static::class] ??=
             collect(ColumnListing::of($this->getTable()))
-                ->reject(function ($column) use ($config) {
-                    foreach (array_get($config['exact'], []) as $value) {
+                ->reject(function ($column) use ($excludeConfig) {
+                    foreach (array_get($excludeConfig['exact'], []) as $value) {
                         if (same_with($column, $value)) {
                             return true;
                         }
                     }
 
-                    foreach (array_get($config['contain'], []) as $value) {
+                    foreach (array_get($excludeConfig['contain'], []) as $value) {
                         if (SupportStr::contains($column, $value)) {
                             return true;
                         }
                     }
 
-                    foreach (array_get($config['prefix'], []) as $value) {
+                    foreach (array_get($excludeConfig['prefix'], []) as $value) {
                         if (SupportStr::startsWith($column, $value)) {
                             return true;
                         }
                     }
 
-                    foreach (array_get($config['postfix'], []) as $value) {
+                    foreach (array_get($excludeConfig['postfix'], []) as $value) {
                         if (SupportStr::endsWith($column, $value)) {
                             return true;
                         }
                     }
 
-                    foreach (array_get($config['token'], []) as $token) {
+                    foreach (array_get($excludeConfig['token'], []) as $token) {
                         if (ColumnCheck::{Str::of($token)->pascal()->addAtStart('is')->value()}($column)) {
                             return true;
                         }
                     }
 
-                    foreach (array_get($config['regex'], []) as $exclude) {
+                    foreach (array_get($excludeConfig['regex'], []) as $exclude) {
                         if (preg_match($exclude, $column)) {
                             return true;
                         }
@@ -65,8 +67,10 @@ trait AutoFillable
                     return false;
                 })
                 ->values()
-                ->all(),
-            parent::getFillable(),
-        )));
+                ->merge(parent::getFillable())
+                ->merge(array_intersect($includedColumnsFromConfig, ColumnListing::of($this->getTable())))
+                ->unique()
+                ->values()
+                ->all();
     }
 }
