@@ -97,6 +97,8 @@ php artisan vendor:publish --tag=eloquent-kompact-config
 | `fillable.exclude_column_by.postfix` | `[]` | Ends of column names: a column ending with one of them is left out of the dynamic fillable list |
 | `fillable.exclude_column_by.token` | `[]` | Token names (`'relation'`, `'enum'`, a custom token name, …) whose columns are left out of the dynamic fillable list |
 | `fillable.exclude_column_by.regex` | `[]` | Regexes of columns left out of the dynamic fillable list |
+| `fillable.include_explicitly` | `[]` | Columns always in the dynamic fillable list of a model whose table has them, even when `exclude_column_by` leaves them out |
+| `morph_model_use` | `''` | `'table'` or `'model'` to register a morph map of the models in `path.model`, see [Morph map](#morph-map) |
 | `ide-helper.auto_generate` | `env('KOMPACT_IDE_HELPER', false)` | Run `kompact:ide-helper` after `php artisan migrate` in the local environment |
 
 A namespace may be written with or without a trailing backslash (`App\Models` or `App\Models\`).
@@ -242,6 +244,8 @@ Model results use [`Model\Collection`](#other-helpers), unless the model has `#[
 ],
 ```
 
+`fillable.include_explicitly` lists columns that are fillable on every model whose table has them, even when `exclude_column_by` or the timestamp rule leaves them out, e.g. `'prefix' => ['shrinkage']` with `'include_explicitly' => ['shrinkage_threshold_percentage']`. A listed column that a table does not have is not added to that model.
+
 A missing key of `exclude_column_by` leaves nothing out for it, so a config published before `1.0.0`, with `excluded_columns_by_regex`, only leaves out the timestamp columns: `id` becomes fillable. Rename the key there.
 
 A model that should fill its timestamp columns too sets:
@@ -344,6 +348,17 @@ Relations are resolved from the relation name and the columns, without declaring
 A plural name without a matching column or morph throws a `BadMethodCallException`. Relations declared as methods always win. Dynamic relations respect `Model::preventLazyLoading()` and can be eager loaded (`Post::with('authorUser')`).
 
 To get autocomplete for these relations, see [IDE helper](#ide-helper).
+
+### Morph map
+
+Set `morph_model_use` to store a short alias in the `*_type` columns of morph relations instead of the full class name. The package then registers Laravel's `Relation::enforceMorphMap()` with every model directly in `path.model` (not in its subdirectories), leaving out abstract classes and classes that are not models:
+
+| `morph_model_use` | Alias | Example |
+|---|---|---|
+| `'table'` | The table of the model | `blog_posts` → `App\Models\BlogPost` |
+| `'model'` | The class name without its namespace | `BlogPost` → `App\Models\BlogPost` |
+
+Another value throws an `Exception`, and so does a `path.model` without a directory. The map is enforced, so a model outside `path.model` used in a morph relation throws Laravel's `ClassMorphViolationException`; add it with `Relation::morphMap()` in a service provider. Rows saved before keep the full class name in their `*_type` column: they still load, but `whereMorphType()` and `isMorphModelSame()` look for the alias, so update these rows when you turn the map on.
 
 ### AdditionalQueries
 
@@ -934,6 +949,8 @@ use const JundFauz\EloquentKompact\NEW_LINE;
 | `elvis($value, $default)` | `$value ?: $default` |
 | `null_coalescing($value, $default)` | `$value ?? $default`, for a value that exists: a missing array key still gives PHP's `Undefined array key` warning, use `array_get()` for that |
 | `array_get(&$value, $default)` | `$value ?? $default` without a warning for a missing array key, also nested or on `null`: `array_get($config['token'], [])`. The value is taken by reference, so it has to be a variable or an array item, and a missing key is added to the array as `null` |
+| `array_get_as_collection(&$value, $default)` | `array_get()` as a [`Builder\Collection`](#other-helpers) |
+| `is_not_dir($path)` | `! is_dir()` |
 | `str_concat(...$values)` | Joined without a delimiter |
 | `word_concat(...$values)` | Joined with a space |
 | `schema_concat(...$values)` | Joined with `:` |
