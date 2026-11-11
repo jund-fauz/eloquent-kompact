@@ -7,6 +7,21 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [1.9.0] - 2026-11-11
+
+### Added
+
+- `Column\Validation::required()`.
+- `Column\Validation::unique($column = null, $model = null, $record = null)`: the `uniqueRule($column, $record)` of the given model, or the plain `'unique'` rule when the column or the model is left out.
+
+### Changed
+
+- `Column\Validation::integer()`, `numeric()`, `boolean()` and `required()` are handled by `__call()`; any other unknown method throws a `BadMethodCallException`.
+
+### Tests
+
+- Added tests for `required()`, `unique()` and the unknown rule methods.
+
 ## [1.8.0] - 2026-11-11
 
 ### Added
@@ -2145,7 +2160,8 @@ The first stable release: from now on, breaking changes only come in a major rel
 - `RawQuery` static helpers for raw SQL expressions.
 - Translations for `en` and `id`.
 
-[Unreleased]: https://github.com/jund-fauz/eloquent-kompact/compare/v1.8.0...HEAD
+[Unreleased]: https://github.com/jund-fauz/eloquent-kompact/compare/v1.9.0...HEAD
+[1.9.0]: https://github.com/jund-fauz/eloquent-kompact/compare/v1.8.0...v1.9.0
 [1.8.0]: https://github.com/jund-fauz/eloquent-kompact/compare/v1.7.0...v1.8.0
 [1.7.0]: https://github.com/jund-fauz/eloquent-kompact/compare/v1.6.0...v1.7.0
 [1.6.0]: https://github.com/jund-fauz/eloquent-kompact/compare/v1.5.0...v1.6.0
