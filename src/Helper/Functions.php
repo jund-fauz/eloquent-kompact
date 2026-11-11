@@ -22,9 +22,25 @@ function is_all_null(mixed ...$values): bool
     return array_all($values, fn (mixed $value) => is_null($value));
 }
 
+function is_one_of_them_not_null(mixed ...$values): bool
+{
+    return ! is_all_null($values);
+}
+
+function is_all_not_null(mixed ...$values): bool
+{
+    array_flat($values);
+    return array_all($values, fn (mixed $value) => is_not_null($value));
+}
+
 function is_not_array($value): bool
 {
     return ! is_array($value);
+}
+
+function is_array_or_collection(mixed $data): bool
+{
+    return is_array($data) || $data instanceof SupportCollection;
 }
 
 function str_concat(string|array|Collection|SupportCollection ...$values): string
@@ -332,9 +348,9 @@ function is_whole_number(int $number): bool
     return $number >= 0;
 }
 
-function is_zero(float|int $data): bool
+function is_zero(mixed $data): bool
 {
-    return (float)$data === 0.0;
+    return is_numeric($data) && same_with((float) $data, 0.0);
 }
 
 function is_app_local_or_test(): bool

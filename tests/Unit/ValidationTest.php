@@ -52,7 +52,7 @@ class ValidationTest extends TestCase
             'name' => [],
             'note' => [],
             ColumnCreator::relation('user') => ['integer'],
-            ColumnCreator::gram('weight') => ['numeric', 'min:0.001', 'decimal:0,3', 'max:99999.9999999'],
+            ColumnCreator::gram('weight') => ['numeric', 'min:0.001', 'max:99999.9999999', 'decimal:0,3'],
             ColumnCreator::pcs('quantity') => ['integer', 'min:0', 'max:4294967295'],
             ColumnCreator::percentage('discount') => ['numeric', 'min:0', 'max:100'],
             ColumnCreator::boolean('active') => ['boolean'],

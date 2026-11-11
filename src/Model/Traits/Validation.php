@@ -6,6 +6,7 @@ use Illuminate\Database\Eloquent\Model;
 use Illuminate\Validation\Rule;
 use Illuminate\Validation\Rules\Unique;
 use JundFauz\EloquentKompact\Column\ColumnCheck;
+use JundFauz\EloquentKompact\Column\Validation as ValidationB;
 use ReflectionException;
 use ReflectionMethod;
 
@@ -73,7 +74,7 @@ trait Validation
     }
 
     /**
-     * @return array<string, mixed>
+     * @return array<string, string|array|ValidationB>
      */
     protected function defineRules(?Model $record = null): array
     {
@@ -81,17 +82,20 @@ trait Validation
     }
 
     /**
-     * @return array<int, mixed>
+     * @param string $column
+     * @param Model|null $record
+     * @return array<int, mixed>|ValidationB
      */
-    protected static function defaultRules(string $column, ?Model $record = null): array
+    protected static function defaultRules(string $column, ?Model $record = null): array|ValidationB
     {
+        $validation = ValidationB::init();
         return match (true) {
-            ColumnCheck::isRelation($column) => ['integer'],
-            ColumnCheck::isGram($column) => ['numeric', 'min:0.001', 'decimal:0,3', 'max:' . static::gramMaxRule()],
-            ColumnCheck::isPcs($column) => ['integer', 'min:0', 'max:' . static::pcsMaxRule()],
-            ColumnCheck::isPercentage($column) => ['numeric', 'min:0', 'max:100'],
-            ColumnCheck::isBoolean($column) => ['boolean'],
-            default => [],
+            ColumnCheck::isRelation($column) => $validation->integer(),
+            ColumnCheck::isGram($column) => $validation->numeric()->min(0.001)->max(static::gramMaxRule())->decimal(0, 3),
+            ColumnCheck::isPcs($column) => $validation->integer()->min(0)->max(static::pcsMaxRule()),
+            ColumnCheck::isPercentage($column) => $validation->numeric()->min(0)->max(100),
+            ColumnCheck::isBoolean($column) => $validation->boolean(),
+            default => $validation,
         };
     }
 
@@ -123,11 +127,13 @@ trait Validation
     }
 
     /**
-     * @return array<int, mixed>
+     * @param mixed $rules
+     * @return array<int, string>
      */
     private static function normalizeRules(mixed $rules): array
     {
         return match (true) {
+            $rules instanceof ValidationB => $rules->payload(),
             is_string($rules) => explode('|', $rules),
             is_array($rules) => $rules,
             default => [$rules],

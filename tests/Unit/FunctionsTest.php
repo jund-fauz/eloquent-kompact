@@ -27,7 +27,10 @@ use function JundFauz\EloquentKompact\comment;
 use function JundFauz\EloquentKompact\full_path_on_app;
 use function JundFauz\EloquentKompact\higher_than;
 use function JundFauz\EloquentKompact\higher_than_or_same_with;
+use function JundFauz\EloquentKompact\is_all_not_null;
 use function JundFauz\EloquentKompact\is_all_null;
+use function JundFauz\EloquentKompact\is_array_or_collection;
+use function JundFauz\EloquentKompact\is_one_of_them_not_null;
 use function JundFauz\EloquentKompact\is_associative_array;
 use function JundFauz\EloquentKompact\is_count_many;
 use function JundFauz\EloquentKompact\is_count_one;
@@ -394,6 +397,13 @@ class FunctionsTest extends TestCase
         $this->assertFalse(is_not_null(null));
         $this->assertTrue(is_all_null(null, [null, [null]]));
         $this->assertFalse(is_all_null(null, [0]));
+        $this->assertTrue(is_all_not_null(0, ['', [false]]));
+        $this->assertFalse(is_all_not_null(0, [null]));
+        $this->assertTrue(is_one_of_them_not_null(null, [null, 0]));
+        $this->assertFalse(is_one_of_them_not_null(null, [null]));
+        $this->assertTrue(is_array_or_collection([]));
+        $this->assertTrue(is_array_or_collection(new SupportCollection));
+        $this->assertFalse(is_array_or_collection(new ArrayObject));
         $this->assertTrue(is_not_array('a'));
         $this->assertFalse(is_not_array([]));
         $this->assertTrue(not(false));
@@ -467,6 +477,9 @@ class FunctionsTest extends TestCase
     {
         $this->assertTrue(is_zero(0));
         $this->assertTrue(is_zero(0.0));
+        $this->assertTrue(is_zero('0.00'));
+        $this->assertFalse(is_zero('abc'));
+        $this->assertFalse(is_zero(null));
         $this->assertTrue(is_zero(-0.0));
         $this->assertFalse(is_zero(1));
         $this->assertFalse(is_zero(0.1));
