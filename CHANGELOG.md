@@ -7,6 +7,24 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [1.5.0] - 2026-11-11
+
+### Added
+
+- Mutable `Str`: `Str::of($value, true)` (or `new Str($value, true)`) changes the `Str` itself in its own methods and in Laravel's methods that return a string, such as `upper()`, `trim()`, `append()` and `replace()`. `Str::of($value)` stays immutable.
+
+### Changed
+
+- `Column\Validation::decimal()` builds its rule with a mutable `Str`; the result is the same.
+
+### Fixed
+
+- The README lists the default rules of a `gram` column in their order since `1.4.0`: `numeric`, `min`, `max`, `decimal`.
+
+### Tests
+
+- Added tests for an immutable and a mutable `Str`, also on a subclass.
+
 ## [1.4.0] - 2026-11-11
 
 ### Added
@@ -2087,7 +2105,8 @@ The first stable release: from now on, breaking changes only come in a major rel
 - `RawQuery` static helpers for raw SQL expressions.
 - Translations for `en` and `id`.
 
-[Unreleased]: https://github.com/jund-fauz/eloquent-kompact/compare/v1.4.0...HEAD
+[Unreleased]: https://github.com/jund-fauz/eloquent-kompact/compare/v1.5.0...HEAD
+[1.5.0]: https://github.com/jund-fauz/eloquent-kompact/compare/v1.4.0...v1.5.0
 [1.4.0]: https://github.com/jund-fauz/eloquent-kompact/compare/v1.3.0...v1.4.0
 [1.3.0]: https://github.com/jund-fauz/eloquent-kompact/compare/v1.2.0...v1.3.0
 [1.2.0]: https://github.com/jund-fauz/eloquent-kompact/compare/v1.1.0...v1.2.0
