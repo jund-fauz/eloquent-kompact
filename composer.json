@@ -2,6 +2,23 @@
     "name": "jund-fauz/eloquent-kompact",
     "description": "A set of automation & helper tools to improve development experience and convenience in building app using Eloquent ORM by Laravel",
     "type": "library",
+    "keywords": [
+        "laravel",
+        "eloquent",
+        "model",
+        "fillable",
+        "casts",
+        "auto-cast",
+        "relations",
+        "naming-convention",
+        "query-builder",
+        "raw-query"
+    ],
+    "homepage": "https://github.com/jund-fauz/eloquent-kompact",
+    "support": {
+        "issues": "https://github.com/jund-fauz/eloquent-kompact/issues",
+        "source": "https://github.com/jund-fauz/eloquent-kompact"
+    },
     "license": "MIT",
     "autoload": {
         "psr-4": {
