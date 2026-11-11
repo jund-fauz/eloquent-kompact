@@ -2,12 +2,14 @@
 
 namespace JundFauz\EloquentKompact\Tests\Unit;
 
+use Illuminate\Database\Events\MigrationsEnded;
 use Illuminate\Database\Schema\Blueprint;
 use Illuminate\Support\Facades\File;
 use Illuminate\Support\Facades\Schema;
 use JundFauz\EloquentKompact\Column\Builder\Concerns\ColumnBuilder;
 use JundFauz\EloquentKompact\Column\Builder\Concerns\Morph;
 use JundFauz\EloquentKompact\Column\ColumnListing;
+use JundFauz\EloquentKompact\Console\ColumnBuilderCommand;
 use JundFauz\EloquentKompact\Tests\TestCase;
 use PHPUnit\Framework\Attributes\Test;
 
@@ -50,6 +52,7 @@ class ColumnBuilderCommandTest extends TestCase
     protected function tearDown(): void
     {
         File::deleteDirectory($this->tempPath);
+        $this->app['env'] = 'testing';
         $this->app->useAppPath($this->appPath);
         ColumnListing::flush();
 
@@ -212,5 +215,54 @@ class ColumnBuilderCommandTest extends TestCase
 
         $this->artisan('kompact:column-builder', ['-o' => 'App\Constant\Column', '--force' => true])->assertSuccessful();
         $this->assertStringContainsString('class Gram extends ColumnBuilder', $this->file('Gram'));
+    }
+
+    #[Test]
+    public function it_finds_the_namespaces_it_generated_before(): void
+    {
+        $this->assertSame([], ColumnBuilderCommand::generatedNamespaces());
+
+        $this->artisan('kompact:column-builder', ['-o' => 'App\Constant\Column'])->assertSuccessful();
+        $this->artisan('kompact:column-builder', ['-o' => 'App\Generated\Columns'])->assertSuccessful();
+        File::put($this->tempPath . '/Mine.php', "<?php
+
+namespace App;
+
+class Mine {}
+");
+
+        $this->assertSame(['App\Constant\Column', 'App\Generated\Columns'], ColumnBuilderCommand::generatedNamespaces());
+    }
+
+    #[Test]
+    public function it_regenerates_its_classes_after_migrating_locally(): void
+    {
+        $this->artisan('kompact:column-builder', ['-o' => 'App\Constant\Column'])->assertSuccessful();
+
+        Schema::table('cb_items', fn (Blueprint $table) => $table->decimal('gross_weight_gram')->nullable());
+        $this->app['env'] = 'local';
+        event(new MigrationsEnded('up'));
+
+        $this->assertStringContainsString('@method static string grossWeight()', $this->file('Gram'));
+    }
+
+    #[Test]
+    public function it_does_not_regenerate_its_classes_after_migrating_outside_local(): void
+    {
+        $this->artisan('kompact:column-builder', ['-o' => 'App\Constant\Column'])->assertSuccessful();
+
+        Schema::table('cb_items', fn (Blueprint $table) => $table->decimal('gross_weight_gram')->nullable());
+        event(new MigrationsEnded('up'));
+
+        $this->assertStringNotContainsString('grossWeight()', $this->file('Gram'));
+    }
+
+    #[Test]
+    public function it_generates_nothing_after_migrating_when_it_never_ran(): void
+    {
+        $this->app['env'] = 'local';
+        event(new MigrationsEnded('up'));
+
+        $this->assertDirectoryDoesNotExist($this->tempPath);
     }
 }

@@ -100,6 +100,12 @@ class EloquentKompactServiceProvider extends ServiceProvider
             KompactPivot::flushKompactCache();
             KompactUser::flushKompactCache();
 
+            if ($this->app->isLocal()) {
+                foreach (ColumnBuilderCommand::generatedNamespaces() as $namespace) {
+                    Artisan::call(ColumnBuilderCommand::class, ['--output' => $namespace]);
+                }
+            }
+
             if ($this->app->isLocal() && config('eloquent-kompact.ide-helper.auto_generate')) {
                 Artisan::call(IdeHelperCommand::class);
             }

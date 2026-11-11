@@ -13,8 +13,11 @@ use JundFauz\EloquentKompact\Column\ColumnCreator;
 use JundFauz\EloquentKompact\Column\ColumnListing;
 use ReflectionClass;
 use ReflectionClassConstant;
+use Symfony\Component\Finder\Finder;
+use Symfony\Component\Finder\SplFileInfo;
 use Throwable;
 use function JundFauz\EloquentKompact\full_path_on_app;
+use function JundFauz\EloquentKompact\is_not_dir;
 use function JundFauz\EloquentKompact\namespace_concat;
 use function JundFauz\EloquentKompact\path_concat;
 
@@ -79,6 +82,26 @@ final class ColumnBuilderCommand extends Command
         $this->write($directory, $namespace, 'Morph', $this->morphClass($namespace, $morphs, $this->morphNames($directory)));
 
         return self::SUCCESS;
+    }
+
+    /**
+     * Namespaces of the classes this command generated before inside app/, read from their `namespace` line.
+     *
+     * @return array<int, string>
+     */
+    public static function generatedNamespaces(): array
+    {
+        if (is_not_dir(app_path())) {
+            return [];
+        }
+
+        return collect(Finder::create()->files()->in(app_path())->name('*.php')->contains(self::Marker))
+            ->map(fn (SplFileInfo $file) => preg_match('/^namespace\s+([^;\s]+)\s*;/m', $file->getContents(), $match) ? $match[1] : null)
+            ->filter()
+            ->unique()
+            ->sort()
+            ->values()
+            ->all();
     }
 
     /**
