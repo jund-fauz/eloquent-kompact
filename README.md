@@ -204,7 +204,7 @@ protected static bool $includeTimestampColumn = true;
 | Token | Default rules |
 |---|---|
 | `id` | `integer` |
-| `gram` | `numeric`, `min:0.001`, `decimal:0,3`, `max:` `gramMaxRule()` (`99999.9999999`) |
+| `gram` | `numeric`, `min:0.001`, `max:` `gramMaxRule()` (`99999.9999999`), `decimal:0,3` |
 | `pcs` | `integer`, `min:0`, `max:` `pcsMaxRule()` (`4294967295`) |
 | `percentage` | `numeric`, `min:0`, `max:100` |
 | `is` | `boolean` |
@@ -734,7 +734,7 @@ RawQuery::create('paid')->sum()->divide(RawQuery::create('total')->sum())->as('p
 
 | Method | Result |
 |---|---|
-| `Str::of($value = '')` | A new `Str` |
+| `Str::of($value = '', $isMutable = false)` | A new `Str`, see [mutable](#mutable-str) |
 | `replaceByRegex($pattern, $replace)` | `preg_replace()` on the value |
 | `removeByRegex($pattern)` | `preg_replace()` with `''` |
 | `removeStart($search)` / `removeEnd($search)` | `$search` removed only at the start / end |
@@ -772,6 +772,23 @@ Str::of('a')->sameWith(Str::of('a'));                              // true
 ```
 
 Unlike `Stringable::replace()`, whose third argument is about case sensitivity, regexes always go through `replaceByRegex()` / `removeByRegex()`.
+
+### Mutable Str
+
+A `Str` is immutable: every method returns a new `Str`. `Str::of($value, true)` gives a mutable one instead, where the methods above and Laravel's methods that return a string (`upper()`, `trim()`, `append()`, `replace()`, `finish()`, …) change the `Str` itself and return it:
+
+```php
+$sql = Str::of('SELECT *', true);
+
+if ($table) {
+    $sql->addWord('FROM', $table);   // no need to assign the result
+}
+$sql->upper()->finish(';');
+
+$sql->value(); // SELECT * FROM POSTS;
+```
+
+Laravel's methods that return something else (`explode()`, `length()`, `contains()`, …) and `when()` / `unless()` are not changed.
 
 ## BoolB
 
