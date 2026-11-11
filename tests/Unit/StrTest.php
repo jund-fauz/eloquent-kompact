@@ -287,4 +287,39 @@ b"];
 
         Str::of('a')->unknownMethod();
     }
+
+    #[Test]
+    public function it_is_immutable_by_default(): void
+    {
+        $original = Str::of('ab');
+
+        $this->assertSame('AB!', $original->upper()->append('!')->value());
+        $this->assertSame('b', $original->removeStart('a')->value());
+        $this->assertSame('ab', $original->value());
+    }
+
+    #[Test]
+    public function it_changes_itself_when_mutable(): void
+    {
+        $string = Str::of('ab', true);
+
+        $this->assertSame($string, $string->concat('c'));
+        $string->removeStart('a')->upper()->append('!')->finish('?');
+        $string->replace('B', 'x')->removeByRegex('/!/');
+
+        $this->assertSame('xC?', $string->value());
+    }
+
+    #[Test]
+    public function it_keeps_a_mutable_subclass_mutable(): void
+    {
+        $string = StrSubclass::of('a', true);
+
+        $this->assertSame($string, $string->studly()->addWord('b'));
+        $this->assertSame('A b', $string->value());
+    }
+}
+
+class StrSubclass extends Str
+{
 }

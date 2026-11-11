@@ -11,7 +11,6 @@ use function JundFauz\EloquentKompact\collect;
 use function JundFauz\EloquentKompact\is_all_not_null;
 use function JundFauz\EloquentKompact\is_all_null;
 use function JundFauz\EloquentKompact\is_not_null;
-use function JundFauz\EloquentKompact\is_one_of_them_not_null;
 
 class Validation
 {
@@ -42,15 +41,15 @@ class Validation
         if (is_all_null($minDecimal, $maxDecimal)) {
             throw new BadMethodCallException("Function should called with at least one parameter.");
         }
-        $result = Str::of('decimal:');
+        $result = Str::of('decimal:', true);
         if (is_not_null($minDecimal)) {
-            $result = $result->concat($minDecimal);
+            $result->concat($minDecimal);
         }
         if (is_all_not_null($minDecimal, $maxDecimal)) {
-            $result = $result->concat(',');
+            $result->concat(',');
         }
         if (is_not_null($maxDecimal)) {
-            $result = $result->concat($maxDecimal);
+            $result->concat($maxDecimal);
         }
         return $this->add($result);
     }
