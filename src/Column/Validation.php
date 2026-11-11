@@ -17,15 +17,14 @@ use function JundFauz\EloquentKompact\collect;
 use function JundFauz\EloquentKompact\is_all_not_null;
 use function JundFauz\EloquentKompact\is_all_null;
 use function JundFauz\EloquentKompact\is_not_null;
-use function JundFauz\EloquentKompact\is_one_of_them_not_null;
 use function JundFauz\EloquentKompact\is_one_of_them_null;
 use function JundFauz\EloquentKompact\not_in;
 
 /**
- * @method static integer()
- * @method static numeric()
- * @method static boolean()
- * @method static required()
+ * @method $this integer()
+ * @method $this numeric()
+ * @method $this boolean()
+ * @method $this required()
  */
 class Validation
 {
@@ -45,7 +44,7 @@ class Validation
 
     public function __call(string $name, array $arguments)
     {
-        if (not_in($name, Str::of('integer, numeric, boolean, required')->explode(', '))) {
+        if (not_in($name, Str::of('integer,numeric,boolean,required')->explode(','))) {
             self::methodNotFound($name);
         }
 
