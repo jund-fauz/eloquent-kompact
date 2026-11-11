@@ -7,6 +7,17 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [1.10.0] - 2026-11-11
+
+### Added
+
+- `kompact:column-builder` runs again by itself after every `php artisan migrate` in the `local` environment, for every namespace inside `app/` that has classes it generated, so the column builders follow the latest columns.
+- `ColumnBuilderCommand::generatedNamespaces()`: the namespaces of the classes the command generated before.
+
+### Tests
+
+- Added tests for regenerating the column builders after migrating and for `generatedNamespaces()`.
+
 ## [1.9.2] - 2026-11-11
 
 ### Fixed
@@ -2180,7 +2191,8 @@ The first stable release: from now on, breaking changes only come in a major rel
 - `RawQuery` static helpers for raw SQL expressions.
 - Translations for `en` and `id`.
 
-[Unreleased]: https://github.com/jund-fauz/eloquent-kompact/compare/v1.9.2...HEAD
+[Unreleased]: https://github.com/jund-fauz/eloquent-kompact/compare/v1.10.0...HEAD
+[1.10.0]: https://github.com/jund-fauz/eloquent-kompact/compare/v1.9.2...v1.10.0
 [1.9.2]: https://github.com/jund-fauz/eloquent-kompact/compare/v1.9.1...v1.9.2
 [1.9.1]: https://github.com/jund-fauz/eloquent-kompact/compare/v1.9.0...v1.9.1
 [1.9.0]: https://github.com/jund-fauz/eloquent-kompact/compare/v1.8.0...v1.9.0
