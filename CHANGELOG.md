@@ -7,6 +7,23 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [1.4.0] - 2026-11-11
+
+### Added
+
+- `Column\Validation`: an immutable builder of validation rules (`integer()`, `numeric()`, `boolean()`, `min()`, `max()`, `decimal()`, `regex()`, `build()`), accepted by `defineRules()` and `defaultRules()`.
+- Helpers `is_all_not_null()`, `is_one_of_them_not_null()` and `is_array_or_collection()`.
+
+### Changed
+
+- `defaultRules()` may return a `Column\Validation` too (`array|Validation`), so an override returning an array keeps working.
+- The default rules of a `gram` column are in the order `numeric`, `min`, `max`, `decimal`.
+- `is_zero()` accepts any value: a numeric string such as the decimal cast `'0.00'` is zero, while `null` and a non-numeric string are not.
+
+### Tests
+
+- Added tests for `Column\Validation` and the new helpers.
+
 ## [1.3.0] - 2026-11-10
 
 ### Added
@@ -2070,7 +2087,8 @@ The first stable release: from now on, breaking changes only come in a major rel
 - `RawQuery` static helpers for raw SQL expressions.
 - Translations for `en` and `id`.
 
-[Unreleased]: https://github.com/jund-fauz/eloquent-kompact/compare/v1.3.0...HEAD
+[Unreleased]: https://github.com/jund-fauz/eloquent-kompact/compare/v1.4.0...HEAD
+[1.4.0]: https://github.com/jund-fauz/eloquent-kompact/compare/v1.3.0...v1.4.0
 [1.3.0]: https://github.com/jund-fauz/eloquent-kompact/compare/v1.2.0...v1.3.0
 [1.2.0]: https://github.com/jund-fauz/eloquent-kompact/compare/v1.1.0...v1.2.0
 [1.1.0]: https://github.com/jund-fauz/eloquent-kompact/compare/v1.0.0...v1.1.0
