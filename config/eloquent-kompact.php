@@ -10,6 +10,8 @@ return [
         'exclude_column_by' => [
             'exact' => ['id'],
             'contain' => [],
+            'prefix' => [],
+            'postfix' => [],
             'token' => [],
             'regex' => []
         ]
