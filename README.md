@@ -249,6 +249,22 @@ Customer::rules($customer);
 
 The rules of a parent class are only applied to the columns of the model, so `phone` is left out of a model without a `phone` column. The rules declared by the model itself are always applied, also for a field that is not a column, such as `password`. `uniqueRule($column, $record)` is `Rule::unique()` on the table of the model, ignoring `$record`. To change the defaults, override `defaultRules($column, $record)`, `gramMaxRule()` or `pcsMaxRule()`.
 
+The rules of a column, in `defineRules()` or `defaultRules()`, can also be built with `JundFauz\EloquentKompact\Column\Validation`:
+
+```php
+use JundFauz\EloquentKompact\Column\Validation as Rules;
+
+protected function defineRules(?Model $record = null): array
+{
+    return [
+        'price' => Rules::init()->numeric()->min(0)->max(1_000)->decimal(0, 2), // ['numeric', 'min:0', 'max:1000', 'decimal:0,2']
+        'code' => Rules::init()->regex(Regex::create('[A-Z]+')->exact()),       // ['regex:/^[A-Z]+$/']
+    ];
+}
+```
+
+It has `integer()`, `numeric()`, `boolean()`, `min($number)`, `max($number)`, `decimal($min = null, $max = null)` and `regex($regex)`, and `build()` returns the rules as an array. Every method returns a new instance, so one base can be reused. `decimal()` needs at least one of its arguments, or it throws a `BadMethodCallException`.
+
 ### AutoCast
 
 `getCasts()` adds a cast for every fillable column with a token that has one (see [the table above](#column-naming-convention)). Casts declared on the model win over the automatic ones.
@@ -824,13 +840,16 @@ use const JundFauz\EloquentKompact\NEW_LINE;
 |---|---|
 | `is_not_null($value)` / `is_not_array($value)` | Negated `is_null()` / `is_array()` |
 | `is_all_null(...$values)` | Whether every value, nested arrays included, is `null` |
+| `is_all_not_null(...$values)` | Whether no value, nested arrays included, is `null` |
+| `is_one_of_them_not_null(...$values)` | Whether at least one value, nested arrays included, is not `null` |
+| `is_array_or_collection($value)` | Whether the value is an array or a Laravel `Collection` |
 | `is_associative_array($value)` | Whether the value is an array that is not a list, so also `[5 => 'x']`; `[]` is not |
 | `same_with($a, $b)` / `not_same_with($a, $b)` | `$a === $b` / `$a !== $b` |
 | `same_with_one_of($value, ...$others)` | Whether `$value` is `===` to one of the others; `false` without others |
 | `higher_than($a, $b)` / `lower_than($a, $b)` | `$a > $b` / `$a < $b` for `int`, `float` and numeric strings, e.g. decimal casts like `'2.50'` |
 | `higher_than_or_same_with($a, $b)` / `lower_than_or_same_with($a, $b)` | `$a >= $b` / `$a <= $b`, for the same values |
 | `is_natural_number($number)` / `is_whole_number($number)` | Whether the `int` is `> 0` / `>= 0` |
-| `is_zero($number)` | Whether the `int` or `float` is `0`, also `-0.0` |
+| `is_zero($value)` | Whether the value is numeric and `0`, also `-0.0`, `'0'` and `'0.00'`; `null` and `'abc'` are not |
 | `is_count_zero($value)` / `is_count_one($value)` / `is_count_many($value)` | Whether the array or `Countable` has no item / one item / more than one item |
 | `is_app_local_or_test()` | Whether the app runs in the `local` or `testing` environment |
 | `not($condition)` | `! $condition` |
