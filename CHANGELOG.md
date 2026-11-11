@@ -7,6 +7,18 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [1.7.0] - 2026-11-11
+
+### Added
+
+- `fillable.include_explicitly`: columns that are always fillable on a model whose table has them, even when `fillable.exclude_column_by` or the timestamp rule leaves them out.
+- `morph_model_use` (`'table'` or `'model'`): registers `Relation::enforceMorphMap()` with the models directly in `path.model`, aliased by their table or class name. Off by default.
+- Helpers `array_get_as_collection()` and `is_not_dir()`.
+
+### Tests
+
+- Added tests for `fillable.include_explicitly`, the morph map and the new helpers.
+
 ### Changed
 
 - The README starts with badges (tests, latest version, PHP version, license) and a "Why" section with a before/after model.
@@ -2122,7 +2134,8 @@ The first stable release: from now on, breaking changes only come in a major rel
 - `RawQuery` static helpers for raw SQL expressions.
 - Translations for `en` and `id`.
 
-[Unreleased]: https://github.com/jund-fauz/eloquent-kompact/compare/v1.6.0...HEAD
+[Unreleased]: https://github.com/jund-fauz/eloquent-kompact/compare/v1.7.0...HEAD
+[1.7.0]: https://github.com/jund-fauz/eloquent-kompact/compare/v1.6.0...v1.7.0
 [1.6.0]: https://github.com/jund-fauz/eloquent-kompact/compare/v1.5.0...v1.6.0
 [1.5.0]: https://github.com/jund-fauz/eloquent-kompact/compare/v1.4.0...v1.5.0
 [1.4.0]: https://github.com/jund-fauz/eloquent-kompact/compare/v1.3.0...v1.4.0
