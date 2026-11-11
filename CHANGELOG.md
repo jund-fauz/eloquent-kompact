@@ -7,6 +7,20 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [1.9.1] - 2026-11-11
+
+### Fixed
+
+- `Column\Validation::unique()` threw an `Error` in 1.9.0, because the helper `is_one_of_them_null()` it uses was not released.
+
+### Added
+
+- Helper `is_one_of_them_null()`.
+
+### Tests
+
+- Added tests for `is_one_of_them_null()`.
+
 ## [1.9.0] - 2026-11-11
 
 ### Added
@@ -2160,7 +2174,8 @@ The first stable release: from now on, breaking changes only come in a major rel
 - `RawQuery` static helpers for raw SQL expressions.
 - Translations for `en` and `id`.
 
-[Unreleased]: https://github.com/jund-fauz/eloquent-kompact/compare/v1.9.0...HEAD
+[Unreleased]: https://github.com/jund-fauz/eloquent-kompact/compare/v1.9.1...HEAD
+[1.9.1]: https://github.com/jund-fauz/eloquent-kompact/compare/v1.9.0...v1.9.1
 [1.9.0]: https://github.com/jund-fauz/eloquent-kompact/compare/v1.8.0...v1.9.0
 [1.8.0]: https://github.com/jund-fauz/eloquent-kompact/compare/v1.7.0...v1.8.0
 [1.7.0]: https://github.com/jund-fauz/eloquent-kompact/compare/v1.6.0...v1.7.0
