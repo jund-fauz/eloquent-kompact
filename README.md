@@ -5,6 +5,8 @@
 [![PHP Version](https://img.shields.io/packagist/dependency-v/jund-fauz/eloquent-kompact/php)](https://packagist.org/packages/jund-fauz/eloquent-kompact)
 [![License](https://img.shields.io/packagist/l/jund-fauz/eloquent-kompact)](LICENSE)
 
+English | [Bahasa Indonesia](README.id.md)
+
 A set of automation & helper tools to improve development experience and convenience in building app using Eloquent ORM by Laravel.
 
 ```bash
@@ -958,6 +960,7 @@ use const JundFauz\EloquentKompact\NEW_LINE;
 | `is_not_null($value)` / `is_not_array($value)` | Negated `is_null()` / `is_array()` |
 | `is_all_null(...$values)` | Whether every value, nested arrays included, is `null` |
 | `is_all_not_null(...$values)` | Whether no value, nested arrays included, is `null` |
+| `is_one_of_them_null(...$values)` | Whether at least one value is `null` |
 | `is_one_of_them_not_null(...$values)` | Whether at least one value, nested arrays included, is not `null` |
 | `is_array_or_collection($value)` | Whether the value is an array or a Laravel `Collection` |
 | `is_associative_array($value)` | Whether the value is an array that is not a list, so also `[5 => 'x']`; `[]` is not |
