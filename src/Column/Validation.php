@@ -3,17 +3,34 @@
 namespace JundFauz\EloquentKompact\Column;
 
 use BadMethodCallException;
+use Illuminate\Database\Eloquent\Model;
 use Illuminate\Support\Stringable;
+use Illuminate\Validation\Rules\Unique;
 use JundFauz\EloquentKompact\Builder\Collection;
 use JundFauz\EloquentKompact\Builder\Str;
+use JundFauz\EloquentKompact\Helper\Error\ErrorThrow;
+use JundFauz\EloquentKompact\Model\KompactModel;
+use JundFauz\EloquentKompact\Model\KompactPivot;
+use JundFauz\EloquentKompact\Model\KompactUser;
 use JundFauz\EloquentKompact\Regex\Regex;
 use function JundFauz\EloquentKompact\collect;
 use function JundFauz\EloquentKompact\is_all_not_null;
 use function JundFauz\EloquentKompact\is_all_null;
 use function JundFauz\EloquentKompact\is_not_null;
+use function JundFauz\EloquentKompact\is_one_of_them_not_null;
+use function JundFauz\EloquentKompact\is_one_of_them_null;
+use function JundFauz\EloquentKompact\not_in;
 
+/**
+ * @method static integer()
+ * @method static numeric()
+ * @method static boolean()
+ * @method static required()
+ */
 class Validation
 {
+    use ErrorThrow;
+
     private Collection $payload;
 
     private function __construct(?Collection $payload = null)
@@ -26,14 +43,13 @@ class Validation
         return new static();
     }
 
-    public function integer(): static
+    public function __call(string $name, array $arguments)
     {
-        return $this->add('integer');
-    }
+        if (not_in($name, Str::of('integer, numeric, boolean, required')->explode(', '))) {
+            self::methodNotFound($name);
+        }
 
-    public function numeric(): static
-    {
-        return $this->add('numeric');
+        return $this->add($name);
     }
 
     public function decimal(?int $minDecimal = null, ?int $maxDecimal = null): static
@@ -69,9 +85,15 @@ class Validation
         return $this->add("regex:$regex");
     }
 
-    public function boolean(): static
+    /**
+     * @param string|null $columnName
+     * @param class-string<KompactModel|KompactUser|KompactPivot>|null $model
+     * @param Model|null $record
+     * @return $this
+     */
+    public function unique(?string $columnName = null, ?string $model = null, ?Model $record = null): static
     {
-        return $this->add('boolean');
+        return $this->add(is_one_of_them_null($columnName, $model) ? 'unique' : $model::uniqueRule($columnName, $record));
     }
 
     public function payload(): array
@@ -84,10 +106,10 @@ class Validation
         return $this->payload();
     }
 
-    private function add(string|Str|Stringable $payload): static
+    private function add(string|Str|Stringable|Unique $payload): static
     {
         $newInstance = new static(collect($this->payload));
-        $newInstance->payload->push((string) $payload);
+        $newInstance->payload->push($payload instanceof Unique ? $payload : ((string)$payload));
         return $newInstance;
     }
 }

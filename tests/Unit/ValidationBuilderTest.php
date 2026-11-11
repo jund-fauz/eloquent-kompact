@@ -4,6 +4,7 @@ namespace JundFauz\EloquentKompact\Tests\Unit;
 
 use BadMethodCallException;
 use Illuminate\Database\Eloquent\Model;
+use Illuminate\Validation\Rules\Unique;
 use JundFauz\EloquentKompact\Column\Validation;
 use JundFauz\EloquentKompact\Regex\Regex;
 use JundFauz\EloquentKompact\Tests\TestCase;
@@ -18,6 +19,50 @@ class ValidationBuilderTest extends TestCase
             ['numeric', 'min:0.5', 'max:10', 'decimal:0,3', 'integer', 'boolean', 'regex:/^a$/'],
             Validation::init()->numeric()->min(0.5)->max(10)->decimal(0, 3)->integer()->boolean()->regex(Regex::create('a')->exact())->build(),
         );
+    }
+
+    #[Test]
+    public function it_builds_the_required_rule(): void
+    {
+        $this->assertSame(['required', 'integer'], Validation::init()->required()->integer()->build());
+    }
+
+    #[Test]
+    public function it_throws_on_an_unknown_rule_method(): void
+    {
+        $this->expectException(BadMethodCallException::class);
+
+        Validation::init()->string();
+    }
+
+    #[Test]
+    public function it_builds_the_unique_rule_of_a_model(): void
+    {
+        $rules = Validation::init()->required()->unique('name', ValidationBuilderUniqueModel::class)->build();
+
+        $this->assertSame('required', $rules[0]);
+        $this->assertInstanceOf(Unique::class, $rules[1]);
+        $this->assertSame('unique:unique_probes,name,NULL,id', (string) $rules[1]);
+    }
+
+    #[Test]
+    public function it_ignores_the_record_in_the_unique_rule(): void
+    {
+        $record = new ValidationBuilderUniqueModel();
+        $record->id = 5;
+
+        $this->assertSame(
+            'unique:unique_probes,name,"5",id',
+            (string) Validation::init()->unique('name', ValidationBuilderUniqueModel::class, $record)->build()[0],
+        );
+    }
+
+    #[Test]
+    public function it_builds_the_plain_unique_rule_without_a_column_or_model(): void
+    {
+        $this->assertSame(['unique'], Validation::init()->unique()->build());
+        $this->assertSame(['unique'], Validation::init()->unique('name')->build());
+        $this->assertSame(['unique'], Validation::init()->unique(model: ValidationBuilderUniqueModel::class)->build());
     }
 
     #[Test]
@@ -69,6 +114,11 @@ class ValidationBuilderTest extends TestCase
 
 class ValidationBuilderSubclass extends Validation
 {
+}
+
+class ValidationBuilderUniqueModel extends \JundFauz\EloquentKompact\Model\KompactModel
+{
+    protected $table = 'unique_probes';
 }
 
 class ValidationBuilderModel extends \JundFauz\EloquentKompact\Model\KompactModel
