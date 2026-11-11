@@ -1,5 +1,10 @@
 # Eloquent Kompact
 
+[![Tests](https://github.com/jund-fauz/eloquent-kompact/actions/workflows/tests.yml/badge.svg)](https://github.com/jund-fauz/eloquent-kompact/actions/workflows/tests.yml)
+[![Latest Version](https://img.shields.io/packagist/v/jund-fauz/eloquent-kompact)](https://packagist.org/packages/jund-fauz/eloquent-kompact)
+[![PHP Version](https://img.shields.io/packagist/dependency-v/jund-fauz/eloquent-kompact/php)](https://packagist.org/packages/jund-fauz/eloquent-kompact)
+[![License](https://img.shields.io/packagist/l/jund-fauz/eloquent-kompact)](LICENSE)
+
 A set of automation & helper tools to improve development experience and convenience in building app using Eloquent ORM by Laravel.
 
 ```bash
@@ -7,6 +12,51 @@ composer require jund-fauz/eloquent-kompact
 ```
 
 Requires PHP 8.3+ and Laravel 12 or 13. The service provider is registered through package discovery.
+
+## Why
+
+Name your columns by a [convention](#column-naming-convention) and the model reads the rest from the table at runtime: the fillable list, the casts and the relations. Nothing is generated into your model files, so there is nothing to keep in sync after a migration.
+
+Before, with a plain Eloquent model:
+
+```php
+use App\Enums\OrderStatus;
+use Illuminate\Database\Eloquent\Model;
+use Illuminate\Database\Eloquent\Relations\BelongsTo;
+
+class Order extends Model
+{
+    protected $fillable = ['customer_user_id', 'status_enum', 'weight_gram', 'paid_is', 'note'];
+
+    protected $casts = [
+        'status_enum' => OrderStatus::class,
+        'weight_gram' => 'decimal:7',
+        'paid_is' => 'boolean',
+    ];
+
+    public function customerUser(): BelongsTo
+    {
+        return $this->belongsTo(User::class, 'customer_user_id');
+    }
+}
+```
+
+After, with the same `orders` table:
+
+```php
+use JundFauz\EloquentKompact\Model\KompactModel;
+
+class Order extends KompactModel
+{
+    protected static bool $useSoftDelete = false;
+}
+
+$order->customerUser;           // belongsTo(User::class, 'customer_user_id')
+$order->status_enum;            // App\Enums\OrderStatus
+Order::create($request->only('customer_user_id', 'status_enum', 'weight_gram', 'paid_is', 'note'));
+```
+
+See [AutoFillable](#autofillable), [AutoCast](#autocast) and [AutoRelation](#autorelation) for the details, and [IDE helper](#ide-helper) for autocomplete of the dynamic relations.
 
 - [Versioning](#versioning)
 - [Configuration](#configuration)
@@ -20,6 +70,7 @@ Requires PHP 8.3+ and Laravel 12 or 13. The service provider is registered throu
 - [Regex](#regex)
 - [Helper functions](#helper-functions)
 - [Other helpers](#other-helpers)
+- [AI-assisted development](#ai-assisted-development)
 
 ## Versioning
 
@@ -975,3 +1026,7 @@ Constants: `NEW_LINE` (`"\n"`), `DISTANCE_LINE` (`"\n\n"`), `NAMESPACE_DELIMITER
 - `Helper\Arr` extends Laravel's `Arr` with `pullMany(&$array, ...$keys)` (pulls several keys at once) and `isKeysDontExist($array, ...$keys)`.
 - `Cast\UuidCast` casts an attribute to and from a `Ramsey\Uuid\UuidInterface`.
 - Error messages and `Convert::booleanToString()` are translated in English and Indonesian.
+
+## AI-assisted development
+
+This package is developed with AI assistance, using Claude. The test suite runs on CI for every push and pull request, against each supported PHP and Laravel version.

@@ -7,6 +7,13 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+### Changed
+
+- The README starts with badges (tests, latest version, PHP version, license) and a "Why" section with a before/after model.
+- `composer.json` has `keywords`, `homepage` and `support` links, so the package is easier to find on Packagist.
+- The test workflow uses `actions/checkout@v7`.
+- The README has an "AI-assisted development" section.
+
 ## [1.6.0] - 2026-11-11
 
 ### Added
