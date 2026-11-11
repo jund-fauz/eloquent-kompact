@@ -12,6 +12,7 @@ use Illuminate\Support\Facades\File;
 use Illuminate\Support\ServiceProvider;
 use Illuminate\Support\Str;
 use JundFauz\EloquentKompact\Column\ColumnListing;
+use JundFauz\EloquentKompact\Console\ColumnBuilderCommand;
 use JundFauz\EloquentKompact\Console\IdeHelperCommand;
 use JundFauz\EloquentKompact\Helper\Path;
 use JundFauz\EloquentKompact\Model\KompactModel;
@@ -55,7 +56,7 @@ class EloquentKompactServiceProvider extends ServiceProvider
     public function configureArtisan(): void
     {
         if ($this->app->runningInConsole()) {
-            $this->commands([IdeHelperCommand::class]);
+            $this->commands([IdeHelperCommand::class, ColumnBuilderCommand::class]);
         }
     }
 
