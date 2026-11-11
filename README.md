@@ -42,6 +42,8 @@ php artisan vendor:publish --tag=eloquent-kompact-config
 | `column.custom_tokens` | `[]` | Your own column tokens, see [Custom tokens](#custom-tokens) |
 | `fillable.exclude_column_by.exact` | `['id']` | Column names left out of the dynamic fillable list |
 | `fillable.exclude_column_by.contain` | `[]` | Parts of column names: a column containing one of them is left out of the dynamic fillable list |
+| `fillable.exclude_column_by.prefix` | `[]` | Starts of column names: a column starting with one of them is left out of the dynamic fillable list |
+| `fillable.exclude_column_by.postfix` | `[]` | Ends of column names: a column ending with one of them is left out of the dynamic fillable list |
 | `fillable.exclude_column_by.token` | `[]` | Token names (`'relation'`, `'enum'`, a custom token name, …) whose columns are left out of the dynamic fillable list |
 | `fillable.exclude_column_by.regex` | `[]` | Regexes of columns left out of the dynamic fillable list |
 | `ide-helper.auto_generate` | `env('KOMPACT_IDE_HELPER', false)` | Run `kompact:ide-helper` after `php artisan migrate` in the local environment |
@@ -181,6 +183,8 @@ Model results use [`Model\Collection`](#other-helpers), unless the model has `#[
     'exclude_column_by' => [
         'exact' => ['id', 'remember_token'],
         'contain' => ['password'],                // password, password_hash, old_password, …
+        'prefix' => ['internal_'],                // internal_note, internal_code, …
+        'postfix' => ['_hash'],                   // password_hash, token_hash, …
         'token' => ['relation'],                  // every column ending in _id
         'regex' => [Regex::create('secret_')->startsWith()],
     ],
