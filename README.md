@@ -1027,6 +1027,7 @@ use const JundFauz\EloquentKompact\NEW_LINE;
 | `array_key_values($array)` | `[key, value]` of an array with one item; with several items, every key and then every value in one flat list |
 | `array_normalize($list)` | The item of a list with one item, or the list as it is. The list needs numeric keys from `0` |
 | `array_compact($array, ...$keys)` | `[key => value]` for the given keys of the array, `null` for a missing one; a named argument is an alias: `array_compact($data, 'a', x: 'b')` → `['a' => …, 'x' => $data['b']]` |
+| `array_compact_and_unset(&$array, ...$keys)` | `array_compact()` that also unsets the given keys from the array: `array_compact_and_unset($data, 'a', x: 'b')` → `['a' => …, 'x' => …]`, and `$data` no longer has `a` and `b`. The array is taken by reference, so it has to be a variable |
 | `assign_as($value, ...$keys)` | `[key => value]` with the same value for every key, e.g. `assign_as(1, 'a', 'b')` → `['a' => 1, 'b' => 1]`; `[]` without keys |
 | `merge(...$arrays)` | `array_merge()` of the arrays |
 | `merge_mixed_array($values)` | The strings and arrays of `$values` merged into one array: a string with an `int` key becomes a list item, a string with a string key keeps that key, and the items of an array are merged with `array_merge()` |

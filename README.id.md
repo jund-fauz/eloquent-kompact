@@ -1027,6 +1027,7 @@ use const JundFauz\EloquentKompact\NEW_LINE;
 | `array_key_values($array)` | `[key, value]` dari array dengan satu item; dengan beberapa item, semua key lalu semua value dalam satu list datar |
 | `array_normalize($list)` | Item dari list dengan satu item, atau list-nya apa adanya. List-nya butuh key numerik mulai dari `0` |
 | `array_compact($array, ...$keys)` | `[key => nilai]` untuk key-key array yang diberikan, `null` untuk yang tidak ada; named argument menjadi alias: `array_compact($data, 'a', x: 'b')` → `['a' => …, 'x' => $data['b']]` |
+| `array_compact_and_unset(&$array, ...$keys)` | `array_compact()` yang juga meng-unset key-key yang diberikan dari array: `array_compact_and_unset($data, 'a', x: 'b')` → `['a' => …, 'x' => …]`, dan `$data` tidak lagi punya `a` dan `b`. Array-nya diambil by reference, jadi harus berupa variabel |
 | `assign_as($value, ...$keys)` | `[key => value]` dengan nilai yang sama untuk setiap key, misalnya `assign_as(1, 'a', 'b')` → `['a' => 1, 'b' => 1]`; `[]` tanpa key |
 | `merge(...$arrays)` | `array_merge()` dari array-array itu |
 | `merge_mixed_array($values)` | String dan array di `$values` digabung jadi satu array: string dengan key `int` menjadi item list, string dengan key string mempertahankan key itu, dan item-item array digabung dengan `array_merge()` |
