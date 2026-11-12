@@ -5,6 +5,7 @@ namespace JundFauz\EloquentKompact\Tests\Unit;
 use BadMethodCallException;
 use JundFauz\EloquentKompact\Column\Builder\Concerns\ColumnBuilder;
 use JundFauz\EloquentKompact\Column\Builder\Concerns\Morph;
+use JundFauz\EloquentKompact\Column\Builder\Concerns\RelationBuilder;
 use JundFauz\EloquentKompact\Column\ColumnCreator;
 use JundFauz\EloquentKompact\Tests\TestCase;
 use PHPUnit\Framework\Attributes\Test;
@@ -59,6 +60,29 @@ class ColumnBuilderTest extends TestCase
 
         TestMorph::sourceId();
     }
+
+    #[Test]
+    public function it_builds_the_relation_columns_by_their_name_or_their_alias(): void
+    {
+        $this->assertSame('customer_user_id', TestRelation::customer_user());
+        $this->assertSame('author_user_id', TestRelation::author());
+    }
+
+    #[Test]
+    public function it_uses_the_delimiter_for_the_relation_columns(): void
+    {
+        ColumnCreator::configureDelimiter('-');
+
+        $this->assertSame('author_user-id', TestRelation::author());
+    }
+
+    #[Test]
+    public function it_rejects_an_unknown_relation(): void
+    {
+        $this->expectException(BadMethodCallException::class);
+
+        TestRelation::author_user();
+    }
 }
 
 class Gram extends ColumnBuilder
@@ -76,4 +100,9 @@ class PerUnit extends ColumnBuilder
 class TestMorph extends Morph
 {
     public const string attribute = 'attributable';
+}
+
+class TestRelation extends RelationBuilder
+{
+    protected static array $relation = ['customer_user', 'author' => 'author_user'];
 }

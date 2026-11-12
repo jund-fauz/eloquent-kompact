@@ -21,6 +21,8 @@ use function JundFauz\EloquentKompact\array_flat;
 use function JundFauz\EloquentKompact\array_get;
 use function JundFauz\EloquentKompact\array_get_as_collection;
 use function JundFauz\EloquentKompact\array_get_or;
+use function JundFauz\EloquentKompact\get_array_list;
+use function JundFauz\EloquentKompact\merge;
 use function JundFauz\EloquentKompact\array_pull;
 use function JundFauz\EloquentKompact\array_pull_list;
 use function JundFauz\EloquentKompact\array_wrap;
@@ -723,6 +725,21 @@ class FunctionsTest extends TestCase
         $this->assertSame(['a', 'b'], array_get_as_collection($config['token'], [])->all());
         $this->assertSame([], array_get_as_collection($config['missing'], [])->all());
         $this->assertSame(['x'], array_get_as_collection($config['other'], ['x'])->all());
+        $this->assertSame([], array_get_as_collection($config['missing'])->all());
+    }
+
+    #[Test]
+    public function it_gets_the_list_items_of_an_array(): void
+    {
+        $this->assertSame([0 => 'a', 5 => 'c'], get_array_list(['a', 'k' => 'b', 5 => 'c']));
+        $this->assertSame([], get_array_list(['k' => 'b']));
+    }
+
+    #[Test]
+    public function it_merges_arrays(): void
+    {
+        $this->assertSame(['a' => 2, 0 => 'x', 1 => 'y'], merge(['a' => 1, 'x'], ['a' => 2, 'y']));
+        $this->assertSame([], merge());
     }
 
     #[Test]

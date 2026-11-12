@@ -177,9 +177,14 @@ function array_get(mixed &$data, mixed $defaultValue = null)
     return $data ?? $defaultValue;
 }
 
-function array_get_as_collection(mixed &$data, mixed $defaultValue): Collection
+function array_get_as_collection(mixed &$data, mixed $defaultValue = null): Collection
 {
     return collect(array_get($data, $defaultValue));
+}
+
+function get_array_list(array $from): array
+{
+    return array_filter($from, 'is_int', ARRAY_FILTER_USE_KEY);
 }
 
 function assign_as(mixed $data, string ...$keys): array
@@ -328,6 +333,11 @@ function model_compact(Model $model, string ...$columns): array
 function stringify(array $data): array
 {
     return array_map(fn (mixed $data) => is_array($data) ? stringify($data) : (string)$data, $data);
+}
+
+function merge(array ...$values): array
+{
+    return array_merge(...$values);
 }
 
 function merge_as_array(mixed ...$values): array
