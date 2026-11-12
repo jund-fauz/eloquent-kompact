@@ -361,10 +361,10 @@ function null_coalescing(mixed $firstValue, mixed $defaultValue)
     return $firstValue ?? $defaultValue;
 }
 
-function if_not_null(mixed $value, mixed &$ifNotNullValue)
+function if_not_null(mixed $value, mixed $ifNotNullValue)
 {
     return is_not_null($value)
-        ? ($ifNotNullValue ?? null)
+        ? $ifNotNullValue
         : null;
 }
 

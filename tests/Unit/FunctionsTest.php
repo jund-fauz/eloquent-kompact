@@ -737,15 +737,16 @@ class FunctionsTest extends TestCase
     {
         $user = (object) ['name' => 'Ana'];
         $data = ['name' => 'Ana'];
-        $null = null;
-        $label = 'paid';
 
         $this->assertSame('Ana', if_not_null($user, $user->name));
         $this->assertSame('Ana', if_not_null($data, $data['name']));
-        $this->assertNull(if_not_null($data, $data['missing']));
-        $this->assertSame('paid', if_not_null(0, $label));
-        $this->assertNull(if_not_null(null, $label));
-        $this->assertNull(if_not_null($null, $null['name']));
+        $this->assertSame('paid', if_not_null(0, 'paid'));
+        $this->assertSame('paid', if_not_null('', 'paid'));
+        $this->assertNull(if_not_null(null, 'paid'));
+
+        // The value is taken as it is, so the array and the object are not changed
+        $this->assertSame(['name' => 'Ana'], $data);
+        $this->assertSame(['name' => 'Ana'], (array) $user);
     }
 
     #[Test]
