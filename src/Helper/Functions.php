@@ -259,9 +259,19 @@ function str_constant(string $className, string $constantName): string
     return "$className::$constantName";
 }
 
-function same_with(mixed $firstValue, mixed $secondValue): bool
+function cast_as(mixed $value, string $cast): mixed
 {
-    return $firstValue === $secondValue;
+    static $caster;
+    $caster ??= new class extends Model {};
+
+    return (clone $caster)->mergeCasts(['value' => $cast])->setRawAttributes(['value' => $value])->value;
+}
+
+function same_with(mixed $firstValue, mixed $secondValue, ?string $cast = null): bool
+{
+    return is_null($cast)
+        ? $firstValue === $secondValue
+        : cast_as($firstValue, $cast) === cast_as($secondValue, $cast);
 }
 
 function same_with_one_of(mixed $toCompareValue, mixed ...$anotherValues): bool
@@ -269,9 +279,9 @@ function same_with_one_of(mixed $toCompareValue, mixed ...$anotherValues): bool
     return in_array($toCompareValue, $anotherValues, true);
 }
 
-function not_same_with(mixed $firstValue, mixed $secondValue): bool
+function not_same_with(mixed $firstValue, mixed $secondValue, ?string $cast = null): bool
 {
-    return $firstValue !== $secondValue;
+    return ! same_with($firstValue, $secondValue, $cast);
 }
 
 function higher_than(int|float|string $firstNumber, int|float|string $secondNumber): bool

@@ -67,6 +67,7 @@ use function JundFauz\EloquentKompact\not_same_with;
 use function JundFauz\EloquentKompact\path_concat;
 use function JundFauz\EloquentKompact\relation_concat;
 use function JundFauz\EloquentKompact\same_with;
+use function JundFauz\EloquentKompact\cast_as;
 use function JundFauz\EloquentKompact\same_with_one_of;
 use function JundFauz\EloquentKompact\schema_concat;
 use function JundFauz\EloquentKompact\str_before_last;
@@ -432,6 +433,30 @@ class FunctionsTest extends TestCase
     }
 
     #[Test]
+    public function it_casts_a_value(): void
+    {
+        $this->assertSame(5, cast_as('5', 'integer'));
+        $this->assertSame('10.50', cast_as('10.5', 'decimal:2'));
+        $this->assertTrue(cast_as(1, 'boolean'));
+        $this->assertSame([1, 2], cast_as('[1,2]', 'array'));
+        $this->assertSame(FunctionsTestStatus::Paid, cast_as('paid', FunctionsTestStatus::class));
+        $this->assertSame(FunctionsTestStatus::Paid, cast_as(FunctionsTestStatus::Paid, FunctionsTestStatus::class));
+        $this->assertNull(cast_as(null, 'integer'));
+    }
+
+    #[Test]
+    public function it_compares_values_with_a_cast(): void
+    {
+        $this->assertTrue(same_with('5', 5, 'integer'));
+        $this->assertTrue(same_with('10.5', 10.50, 'decimal:2'));
+        $this->assertTrue(same_with('paid', FunctionsTestStatus::Paid, FunctionsTestStatus::class));
+        $this->assertTrue(same_with(1, '1', 'string'));
+        $this->assertFalse(same_with('5', 6, 'integer'));
+        $this->assertFalse(not_same_with('5', 5, 'integer'));
+        $this->assertTrue(not_same_with('5', 6, 'integer'));
+    }
+
+    #[Test]
     public function it_compares_with_one_of_the_values_strictly(): void
     {
         $object = new stdClass;
@@ -780,4 +805,9 @@ class FunctionsTest extends TestCase
         $this->assertTrue(is_not_dir(__DIR__ . '/missing'));
         $this->assertTrue(is_not_dir(__FILE__));
     }
+}
+
+enum FunctionsTestStatus: string
+{
+    case Paid = 'paid';
 }
