@@ -1001,6 +1001,7 @@ use const JundFauz\EloquentKompact\NEW_LINE;
 | `str_constant($class, $constant)` | `Class::Constant`, e.g. for `defined()` or `constant()` |
 | `ternary($condition, $trueValue, $falseValue)` | `$condition ? $trueValue : $falseValue` |
 | `elvis($value, $default)` | `$value ?: $default` |
+| `if_not_null($value, &$then)` | `$then` if `$value` is not `null`, or `null`. `$then` is taken by reference, like `array_get()`, so it has to be a variable, a property or an array item, and a missing array key gives no warning: `if_not_null($order, $data['note'])` |
 | `null_coalescing($value, $default)` | `$value ?? $default`, for a value that exists: a missing array key still gives PHP's `Undefined array key` warning, use `array_get()` for that |
 | `array_get(&$value, $default = null)` | `$value ?? $default` without a warning for a missing array key, also nested or on `null`: `array_get($config['token'], [])`. Without a default it gives `null`. The value is taken by reference, so it has to be a variable or an array item, and a missing key is added to the array as `null` |
 | `array_get_as_collection(&$value, $default = null)` | `array_get()` as a [`Builder\Collection`](#other-helpers) |

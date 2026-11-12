@@ -1001,6 +1001,7 @@ use const JundFauz\EloquentKompact\NEW_LINE;
 | `str_constant($class, $constant)` | `Class::Constant`, misalnya untuk `defined()` atau `constant()` |
 | `ternary($condition, $trueValue, $falseValue)` | `$condition ? $trueValue : $falseValue` |
 | `elvis($value, $default)` | `$value ?: $default` |
+| `if_not_null($value, &$then)` | `$then` kalau `$value` tidak `null`, atau `null`. `$then` diambil by reference, seperti `array_get()`, jadi harus berupa variabel, property atau item array, dan key array yang tidak ada tidak memunculkan warning: `if_not_null($order, $data['note'])` |
 | `null_coalescing($value, $default)` | `$value ?? $default`, untuk nilai yang ada: key array yang tidak ada tetap memunculkan warning `Undefined array key` dari PHP, pakai `array_get()` untuk itu |
 | `array_get(&$value, $default = null)` | `$value ?? $default` tanpa warning untuk key array yang tidak ada, juga bersarang atau pada `null`: `array_get($config['token'], [])`. Tanpa default hasilnya `null`. Nilainya diambil by reference, jadi harus berupa variabel atau item array, dan key yang tidak ada ditambahkan ke array sebagai `null` |
 | `array_get_as_collection(&$value, $default = null)` | `array_get()` sebagai [`Builder\Collection`](#helper-lain) |
