@@ -7,6 +7,16 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [1.16.1] - 2026-11-12
+
+### Fixed
+
+- `if_not_null()` takes its second argument by value instead of by reference, so it also takes a literal or the result of a call, and no longer adds a missing array key or property to the array or object it reads.
+
+### Tests
+
+- Updated the tests of `if_not_null()`.
+
 ## [1.16.0] - 2026-11-12
 
 ### Added
@@ -2255,7 +2265,8 @@ The first stable release: from now on, breaking changes only come in a major rel
 - `RawQuery` static helpers for raw SQL expressions.
 - Translations for `en` and `id`.
 
-[Unreleased]: https://github.com/jund-fauz/eloquent-kompact/compare/v1.16.0...HEAD
+[Unreleased]: https://github.com/jund-fauz/eloquent-kompact/compare/v1.16.1...HEAD
+[1.16.1]: https://github.com/jund-fauz/eloquent-kompact/compare/v1.16.0...v1.16.1
 [1.16.0]: https://github.com/jund-fauz/eloquent-kompact/compare/v1.15.0...v1.16.0
 [1.15.0]: https://github.com/jund-fauz/eloquent-kompact/compare/v1.14.0...v1.15.0
 [1.14.0]: https://github.com/jund-fauz/eloquent-kompact/compare/v1.13.0...v1.14.0
