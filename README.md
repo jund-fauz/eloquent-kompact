@@ -1003,7 +1003,7 @@ use const JundFauz\EloquentKompact\NEW_LINE;
 | `elvis($value, $default)` | `$value ?: $default` |
 | `if_not_null($value, $then)` | `$then` if `$value` is not `null`, or `null`: `if_not_null($paidAt, 'Paid')`. `$then` is evaluated before the call, also when `$value` is `null` |
 | `null_coalescing($value, $default)` | `$value ?? $default`, for a value that exists: a missing array key still gives PHP's `Undefined array key` warning, use `array_get()` for that |
-| `array_get(&$value, $default = null)` | `$value ?? $default` without a warning for a missing array key, also nested or on `null`: `array_get($config['token'], [])`. Without a default it gives `null`. The value is taken by reference, so it has to be a variable or an array item, and a missing key is added to the array as `null` |
+| `array_get(&$value, $default = null, $cast = null)` | `$value ?? $default` without a warning for a missing array key, also nested or on `null`: `array_get($config['token'], [])`. Without a default it gives `null`. With a cast the result is cast with [`cast_as()`](#other-helpers): `array_get($row['qty'], 0, 'integer')`. The value is taken by reference, so it has to be a variable or an array item, and a missing key is added to the array as `null` |
 | `array_get_as_collection(&$value, $default = null)` | `array_get()` as a [`Builder\Collection`](#other-helpers) |
 | `get_array_list($array)` | The items with an `int` key, keeping the keys: `get_array_list(['a', 'k' => 'b'])` → `[0 => 'a']` |
 | `is_not_dir($path)` | `! is_dir()` |
