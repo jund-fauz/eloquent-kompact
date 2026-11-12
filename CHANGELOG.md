@@ -7,6 +7,18 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [1.12.0] - 2026-11-12
+
+### Added
+
+- `Column\Builder\Concerns\RelationBuilder`: a column builder for the relation columns, listed in `$relation` by name (`'customer_user'` → `customer_user()`) or by alias (`'author' => 'author_user'` → `author()`), e.g. `author_user_id`.
+- Helpers `get_array_list()` (the items with an `int` key) and `merge()` (`array_merge()`).
+- The default of `array_get_as_collection()` is optional and is `null` when left out.
+
+### Tests
+
+- Added tests for `RelationBuilder`, `get_array_list()`, `merge()` and `array_get_as_collection()` without a default.
+
 ## [1.11.0] - 2026-11-12
 
 ### Added
@@ -2201,7 +2213,8 @@ The first stable release: from now on, breaking changes only come in a major rel
 - `RawQuery` static helpers for raw SQL expressions.
 - Translations for `en` and `id`.
 
-[Unreleased]: https://github.com/jund-fauz/eloquent-kompact/compare/v1.11.0...HEAD
+[Unreleased]: https://github.com/jund-fauz/eloquent-kompact/compare/v1.12.0...HEAD
+[1.12.0]: https://github.com/jund-fauz/eloquent-kompact/compare/v1.11.0...v1.12.0
 [1.11.0]: https://github.com/jund-fauz/eloquent-kompact/compare/v1.10.0...v1.11.0
 [1.10.0]: https://github.com/jund-fauz/eloquent-kompact/compare/v1.9.2...v1.10.0
 [1.9.2]: https://github.com/jund-fauz/eloquent-kompact/compare/v1.9.1...v1.9.2
