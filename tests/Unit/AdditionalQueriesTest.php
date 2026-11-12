@@ -284,6 +284,41 @@ class AdditionalQueriesTest extends TestCase
     }
 
     #[Test]
+    public function it_compares_a_column_with_another_cast(): void
+    {
+        $model = new CastCompareModel();
+        $model->setRawAttributes(['qty' => '5', 'price' => '10.5', 'flag' => 1]);
+
+        $this->assertFalse($model->sameWith('qty', 5));
+        $this->assertTrue($model->sameWith('qty', 5, 'integer'));
+        $this->assertTrue($model->sameWith('price', '10.50', 'decimal:2'));
+        $this->assertTrue($model->sameWith('flag', '1', 'string'));
+        $this->assertTrue($model->notSameWith('qty', 5));
+        $this->assertFalse($model->notSameWith('qty', 5, 'integer'));
+        $this->assertTrue($model->notSameWith('qty', 6, 'integer'));
+
+        // The casts of the model stay as they are
+        $this->assertSame('5', $model->qty);
+        $this->assertTrue($model->flag);
+        $this->assertArrayNotHasKey('qty', $model->getCasts());
+    }
+
+    #[Test]
+    public function it_compares_a_dirty_column_with_another_cast(): void
+    {
+        $model = new CastCompareModel();
+        $model->setRawAttributes(['qty' => '5', 'price' => '10.5'], true);
+        $model->qty = '7';
+
+        $this->assertTrue($model->sameWithAndDirty('qty', 7, 'integer'));
+        $this->assertFalse($model->sameWithAndDirty('qty', 7));
+        $this->assertFalse($model->sameWithAndDirty('price', '10.50', 'decimal:2'));
+        $this->assertTrue($model->notSameWithAndDirty('qty', 5, 'integer'));
+        $this->assertFalse($model->notSameWithAndDirty('qty', 7, 'integer'));
+        $this->assertFalse($model->notSameWithAndDirty('price', 1, 'integer'));
+    }
+
+    #[Test]
     public function it_compares_the_columns_with_another_model(): void
     {
         $comment = MorphComment::find(1);
@@ -575,6 +610,13 @@ class MorphComment extends Model
     protected static string $builder = Builder::class;
 
     protected $table = 'comments';
+}
+
+class CastCompareModel extends Model
+{
+    use AdditionalQueries;
+
+    protected $casts = ['flag' => 'boolean'];
 }
 
 class MorphPost extends Model {}

@@ -115,26 +115,69 @@ trait AdditionalQueries
      *
      * @param string $columnName
      * @param mixed $value
+     * @param string|null $cast A cast of Laravel (e.g. 'integer', 'decimal:2', an enum class) used instead of
+     *                          the cast of the column for this comparison only, e.g. sameWith('qty', 5, 'integer')
      * @return bool
      */
-    public function sameWith(string $columnName, mixed $value): bool
+    public function sameWith(string $columnName, mixed $value, ?string $cast = null): bool
     {
-        return $this->{$columnName} === $value;
+        return $this->castedAttribute($columnName, $cast) === $value;
     }
 
-    public function sameWithAndDirty(string $columnName, mixed $value): bool
+    /**
+     * sameWith(), with the column being dirty
+     *
+     * @param string $columnName
+     * @param mixed $value
+     * @param string|null $cast See sameWith()
+     * @return bool
+     */
+    public function sameWithAndDirty(string $columnName, mixed $value, ?string $cast = null): bool
     {
-        return $this->isDirty($columnName) && $this->sameWith($columnName, $value);
+        return $this->isDirty($columnName) && $this->sameWith($columnName, $value, $cast);
     }
 
-    public function notSameWith(string $columnName, mixed $value): bool
+    /**
+     * Shorthand for: $this->{$columnName} !== $value
+     *
+     * The attribute is compared after casting, like sameWith()
+     *
+     * @param string $columnName
+     * @param mixed $value
+     * @param string|null $cast See sameWith()
+     * @return bool
+     */
+    public function notSameWith(string $columnName, mixed $value, ?string $cast = null): bool
     {
-        return $this->{$columnName} !== $value;
+        return $this->castedAttribute($columnName, $cast) !== $value;
     }
 
-    public function notSameWithAndDirty(string $columnName, mixed $value): bool
+    /**
+     * notSameWith(), with the column being dirty
+     *
+     * @param string $columnName
+     * @param mixed $value
+     * @param string|null $cast See sameWith()
+     * @return bool
+     */
+    public function notSameWithAndDirty(string $columnName, mixed $value, ?string $cast = null): bool
     {
-        return $this->isDirty($columnName) && $this->notSameWith($columnName, $value);
+        return $this->isDirty($columnName) && $this->notSameWith($columnName, $value, $cast);
+    }
+
+    /**
+     * The attribute after casting, with $cast instead of the cast of the column when it is given.
+     * The cast is applied to a clone, so the casts of the model stay as they are
+     *
+     * @param string $columnName
+     * @param string|null $cast
+     * @return mixed
+     */
+    protected function castedAttribute(string $columnName, ?string $cast = null): mixed
+    {
+        return (is_not_null($cast)
+            ? (clone $this)->mergeCasts([$columnName => $cast])
+            : $this)->{$columnName};
     }
 
     public function sameWithOther(Model $other, string ...$columns): bool
