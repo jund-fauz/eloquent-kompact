@@ -984,7 +984,8 @@ use const JundFauz\EloquentKompact\NEW_LINE;
 | `is_one_of_them_not_null(...$values)` | Whether at least one value, nested arrays included, is not `null` |
 | `is_array_or_collection($value)` | Whether the value is an array or a Laravel `Collection` |
 | `is_associative_array($value)` | Whether the value is an array that is not a list, so also `[5 => 'x']`; `[]` is not |
-| `same_with($a, $b)` / `not_same_with($a, $b)` | `$a === $b` / `$a !== $b` |
+| `same_with($a, $b, $cast = null)` / `not_same_with($a, $b, $cast = null)` | `$a === $b` / `$a !== $b`. With a cast, both values are cast with it first: `same_with('5', 5, 'integer')` → `true` |
+| `cast_as($value, $cast)` | The value cast with a cast of Laravel, like an attribute of a model: `cast_as('10.5', 'decimal:2')` → `'10.50'`, `cast_as('paid', Status::class)` → `Status::Paid`. A date cast gives a Carbon object |
 | `same_with_one_of($value, ...$others)` | Whether `$value` is `===` to one of the others; `false` without others |
 | `higher_than($a, $b)` / `lower_than($a, $b)` | `$a > $b` / `$a < $b` for `int`, `float` and numeric strings, e.g. decimal casts like `'2.50'` |
 | `higher_than_or_same_with($a, $b)` / `lower_than_or_same_with($a, $b)` | `$a >= $b` / `$a <= $b`, for the same values |

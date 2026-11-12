@@ -984,7 +984,8 @@ use const JundFauz\EloquentKompact\NEW_LINE;
 | `is_one_of_them_not_null(...$values)` | Apakah setidaknya satu nilai, termasuk array bersarang, tidak `null` |
 | `is_array_or_collection($value)` | Apakah nilainya array atau `Collection` Laravel |
 | `is_associative_array($value)` | Apakah nilainya array yang bukan list, jadi `[5 => 'x']` juga termasuk; `[]` tidak |
-| `same_with($a, $b)` / `not_same_with($a, $b)` | `$a === $b` / `$a !== $b` |
+| `same_with($a, $b, $cast = null)` / `not_same_with($a, $b, $cast = null)` | `$a === $b` / `$a !== $b`. Dengan cast, kedua nilai di-cast dulu dengannya: `same_with('5', 5, 'integer')` → `true` |
+| `cast_as($value, $cast)` | Nilai yang di-cast dengan cast Laravel, seperti atribut model: `cast_as('10.5', 'decimal:2')` → `'10.50'`, `cast_as('paid', Status::class)` → `Status::Paid`. Cast tanggal menghasilkan object Carbon |
 | `same_with_one_of($value, ...$others)` | Apakah `$value` `===` dengan salah satu nilai lain; `false` tanpa nilai lain |
 | `higher_than($a, $b)` / `lower_than($a, $b)` | `$a > $b` / `$a < $b` untuk `int`, `float` dan string numerik, misalnya cast decimal seperti `'2.50'` |
 | `higher_than_or_same_with($a, $b)` / `lower_than_or_same_with($a, $b)` | `$a >= $b` / `$a <= $b`, untuk nilai yang sama |
