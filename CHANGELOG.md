@@ -7,6 +7,17 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [1.13.0] - 2026-11-12
+
+### Added
+
+- `compact()` of a model and `model_compact()` take the columns in arrays too, and use a string key, in an array or as a named argument, as the alias of the column: `$user->compact('id', ['mail' => 'email'])` → `['id' => 1, 'mail' => '…']`.
+- Helpers `array_compact()` (`[key => value]` for the given keys of an array, with named arguments as aliases) and `merge_mixed_array()` (strings and arrays merged into one array, keeping the string keys).
+
+### Tests
+
+- Added tests for the aliases of `compact()` and `model_compact()`, `array_compact()` and `merge_mixed_array()`.
+
 ## [1.12.0] - 2026-11-12
 
 ### Added
@@ -2213,7 +2224,8 @@ The first stable release: from now on, breaking changes only come in a major rel
 - `RawQuery` static helpers for raw SQL expressions.
 - Translations for `en` and `id`.
 
-[Unreleased]: https://github.com/jund-fauz/eloquent-kompact/compare/v1.12.0...HEAD
+[Unreleased]: https://github.com/jund-fauz/eloquent-kompact/compare/v1.13.0...HEAD
+[1.13.0]: https://github.com/jund-fauz/eloquent-kompact/compare/v1.12.0...v1.13.0
 [1.12.0]: https://github.com/jund-fauz/eloquent-kompact/compare/v1.11.0...v1.12.0
 [1.11.0]: https://github.com/jund-fauz/eloquent-kompact/compare/v1.10.0...v1.11.0
 [1.10.0]: https://github.com/jund-fauz/eloquent-kompact/compare/v1.9.2...v1.10.0
