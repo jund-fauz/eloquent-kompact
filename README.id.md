@@ -222,6 +222,22 @@ Morph::sourceableModel();  // sourceable_type
 
 Token yang merupakan keyword PHP mendapat `C` di akhir nama class-nya, seperti `ArrayC`, dan `ColumnBuilder` membuangnya lagi untuk menemukan token. Setelah command ini pernah dijalankan, command ini berjalan lagi sendiri setelah setiap `php artisan migrate` di environment `local`, untuk setiap namespace yang berisi class hasil generate-nya (dicari dari docblock-nya di dalam `app/`). Command ini juga bisa dijalankan ulang manual: class yang di-generate-nya diperbarui ke kolom terbaru, dan konstanta yang di-rename di `Morph` (`public const string source = 'sourceable';`, lalu `Morph::sourceId()`) tetap dipertahankan. Class dengan nama yang sama yang tidak di-generate oleh command ini akan dilewati, kecuali diberi `--force`.
 
+Command ini tidak membuat class untuk token `id`. Tulis sendiri dengan `Column\Builder\Concerns\RelationBuilder`, dengan daftar relasi di `$relation`: item tanpa key dipanggil dengan namanya sendiri, dan item dengan key dipanggil dengan key-nya:
+
+```php
+use JundFauz\EloquentKompact\Column\Builder\Concerns\RelationBuilder;
+
+class Relation extends RelationBuilder
+{
+    protected static array $relation = ['customer_user', 'author' => 'author_user'];
+}
+
+Relation::customer_user(); // customer_user_id
+Relation::author();        // author_user_id
+```
+
+Nama method-nya persis item atau key yang ditulis, dan nama lain akan melempar `BadMethodCallException`.
+
 `ColumnCheck` memberi tahu apakah sebuah kolom (nama atau definisi kolom dengan `name`) diakhiri sebuah token. Hanya token terakhir yang dihitung:
 
 ```php
@@ -982,7 +998,8 @@ use const JundFauz\EloquentKompact\NEW_LINE;
 | `elvis($value, $default)` | `$value ?: $default` |
 | `null_coalescing($value, $default)` | `$value ?? $default`, untuk nilai yang ada: key array yang tidak ada tetap memunculkan warning `Undefined array key` dari PHP, pakai `array_get()` untuk itu |
 | `array_get(&$value, $default = null)` | `$value ?? $default` tanpa warning untuk key array yang tidak ada, juga bersarang atau pada `null`: `array_get($config['token'], [])`. Tanpa default hasilnya `null`. Nilainya diambil by reference, jadi harus berupa variabel atau item array, dan key yang tidak ada ditambahkan ke array sebagai `null` |
-| `array_get_as_collection(&$value, $default)` | `array_get()` sebagai [`Builder\Collection`](#helper-lain) |
+| `array_get_as_collection(&$value, $default = null)` | `array_get()` sebagai [`Builder\Collection`](#helper-lain) |
+| `get_array_list($array)` | Item-item dengan key `int`, key dipertahankan: `get_array_list(['a', 'k' => 'b'])` → `[0 => 'a']` |
 | `is_not_dir($path)` | `! is_dir()` |
 | `str_concat(...$values)` | Digabung tanpa delimiter |
 | `word_concat(...$values)` | Digabung dengan spasi |
@@ -1004,6 +1021,7 @@ use const JundFauz\EloquentKompact\NEW_LINE;
 | `array_key_values($array)` | `[key, value]` dari array dengan satu item; dengan beberapa item, semua key lalu semua value dalam satu list datar |
 | `array_normalize($list)` | Item dari list dengan satu item, atau list-nya apa adanya. List-nya butuh key numerik mulai dari `0` |
 | `assign_as($value, ...$keys)` | `[key => value]` dengan nilai yang sama untuk setiap key, misalnya `assign_as(1, 'a', 'b')` → `['a' => 1, 'b' => 1]`; `[]` tanpa key |
+| `merge(...$arrays)` | `array_merge()` dari array-array itu |
 | `merge_as_array(...$values)` | Array asosiatif atau collection digabung beserta key-nya, key yang belakangan menang dan nilai bersarang tetap apa adanya: `merge_as_array(['a' => 1], ['b' => 2])` → `['a' => 1, 'b' => 2]`. Di sini `null`, string kosong dan array kosong diabaikan. Kalau ada nilai lain di sampingnya, semua nilai masuk ke satu list datar, termasuk array dan collection bersarang; key dibuang dan `null` dipertahankan: `merge_as_array(['a' => 1], 'x')` → `[1, 'x']` |
 | `array_pull(&$array, ...$keys)` | `Arr::pullMany()`: menghapus key-key itu dan mengembalikan nilai dari satu key, atau `[key => value]` untuk beberapa key |
 | `array_pull_list(&$array, ...$keys)` | `array_pull()`, tapi beberapa key menghasilkan list sesuai urutan yang diberikan, misalnya untuk `[$name, $email] = array_pull_list($data, 'name', 'email')` |

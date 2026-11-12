@@ -222,6 +222,22 @@ Morph::sourceableModel();  // sourceable_type
 
 A token that is a PHP keyword gets a `C` at the end of its class, like `ArrayC`, and `ColumnBuilder` drops it again to find the token. Once the command has run, it runs again by itself after every `php artisan migrate` in the `local` environment, for every namespace that has classes it generated (found by their docblock inside `app/`). It can also be run again by hand: the classes it generated are updated to the latest columns, and a constant renamed in `Morph` (`public const string source = 'sourceable';`, then `Morph::sourceId()`) is kept. A class with the same name that the command did not generate is skipped, unless `--force` is given.
 
+The command makes no class for the `id` token. Write one yourself with `Column\Builder\Concerns\RelationBuilder`, listing the relations in `$relation`: an item without a key is called by its own name, and an item with a key by that key:
+
+```php
+use JundFauz\EloquentKompact\Column\Builder\Concerns\RelationBuilder;
+
+class Relation extends RelationBuilder
+{
+    protected static array $relation = ['customer_user', 'author' => 'author_user'];
+}
+
+Relation::customer_user(); // customer_user_id
+Relation::author();        // author_user_id
+```
+
+The method name is the item or the key exactly as written, and another name throws a `BadMethodCallException`.
+
 `ColumnCheck` tells whether a column (a name or a column definition with a `name`) ends with a token. Only the last token counts:
 
 ```php
@@ -982,7 +998,8 @@ use const JundFauz\EloquentKompact\NEW_LINE;
 | `elvis($value, $default)` | `$value ?: $default` |
 | `null_coalescing($value, $default)` | `$value ?? $default`, for a value that exists: a missing array key still gives PHP's `Undefined array key` warning, use `array_get()` for that |
 | `array_get(&$value, $default = null)` | `$value ?? $default` without a warning for a missing array key, also nested or on `null`: `array_get($config['token'], [])`. Without a default it gives `null`. The value is taken by reference, so it has to be a variable or an array item, and a missing key is added to the array as `null` |
-| `array_get_as_collection(&$value, $default)` | `array_get()` as a [`Builder\Collection`](#other-helpers) |
+| `array_get_as_collection(&$value, $default = null)` | `array_get()` as a [`Builder\Collection`](#other-helpers) |
+| `get_array_list($array)` | The items with an `int` key, keeping the keys: `get_array_list(['a', 'k' => 'b'])` → `[0 => 'a']` |
 | `is_not_dir($path)` | `! is_dir()` |
 | `str_concat(...$values)` | Joined without a delimiter |
 | `word_concat(...$values)` | Joined with a space |
@@ -1004,6 +1021,7 @@ use const JundFauz\EloquentKompact\NEW_LINE;
 | `array_key_values($array)` | `[key, value]` of an array with one item; with several items, every key and then every value in one flat list |
 | `array_normalize($list)` | The item of a list with one item, or the list as it is. The list needs numeric keys from `0` |
 | `assign_as($value, ...$keys)` | `[key => value]` with the same value for every key, e.g. `assign_as(1, 'a', 'b')` → `['a' => 1, 'b' => 1]`; `[]` without keys |
+| `merge(...$arrays)` | `array_merge()` of the arrays |
 | `merge_as_array(...$values)` | Associative arrays or collections merged with their keys, where a later key wins and nested values stay as they are: `merge_as_array(['a' => 1], ['b' => 2])` → `['a' => 1, 'b' => 2]`. `null`, blank strings and empty arrays are ignored there. With any other value next to them, every value goes in one flat list, nested arrays and collections included; keys are dropped and `null` is kept: `merge_as_array(['a' => 1], 'x')` → `[1, 'x']` |
 | `array_pull(&$array, ...$keys)` | `Arr::pullMany()`: removes the keys and returns the value of one key, or `[key => value]` for several |
 | `array_pull_list(&$array, ...$keys)` | `array_pull()`, but several keys give a list in the given order, e.g. for `[$name, $email] = array_pull_list($data, 'name', 'email')` |
