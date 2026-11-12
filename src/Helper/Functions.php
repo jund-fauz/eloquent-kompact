@@ -172,9 +172,10 @@ function array_cast(mixed $data): array
     };
 }
 
-function array_get(mixed &$data, mixed $defaultValue = null)
+function array_get(mixed &$data, mixed $defaultValue = null, ?string $cast = null)
 {
-    return $data ?? $defaultValue;
+    $result = $data ?? $defaultValue;
+    return is_not_null($cast) ? cast_as($result, $cast) : $result;
 }
 
 function array_get_as_collection(mixed &$data, mixed $defaultValue = null): Collection

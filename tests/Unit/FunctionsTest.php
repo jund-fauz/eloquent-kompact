@@ -767,6 +767,22 @@ class FunctionsTest extends TestCase
     }
 
     #[Test]
+    public function it_gets_a_value_or_a_default_with_a_cast(): void
+    {
+        $array = ['a' => '5', 'empty' => null, 'status' => 'paid', 'json' => '[1,2]'];
+
+        $this->assertSame(5, array_get($array['a'], 0, 'integer'));
+        $this->assertSame(7, array_get($array['missing'], '7', 'integer'));
+        $this->assertSame(0, array_get($array['empty'], '0', 'integer'));
+        $this->assertNull(array_get($array['other'], null, 'integer'));
+        $this->assertSame([1, 2], array_get($array['json'], null, 'array'));
+        $this->assertSame(FunctionsTestStatus::Paid, array_get($array['status'], null, FunctionsTestStatus::class));
+
+        // Without a cast the value is taken as it is
+        $this->assertSame('5', array_get($array['a'], 0));
+    }
+
+    #[Test]
     public function it_concatenates_collections(): void
     {
         $this->assertSame('abcd', str_concat('a', collect(['b', 'c']), new SupportCollection(['d'])));
