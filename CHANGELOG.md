@@ -7,6 +7,17 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [1.15.0] - 2026-11-12
+
+### Added
+
+- `same_with()` and `not_same_with()` take a cast as their third argument, which both values are cast with before comparing, e.g. `same_with('5', 5, 'integer')`.
+- Helper `cast_as($value, $cast)`: the value cast with a cast of Laravel, like an attribute of a model.
+
+### Tests
+
+- Added tests for `cast_as()` and comparing values with a cast.
+
 ## [1.14.0] - 2026-11-12
 
 ### Added
@@ -2234,7 +2245,8 @@ The first stable release: from now on, breaking changes only come in a major rel
 - `RawQuery` static helpers for raw SQL expressions.
 - Translations for `en` and `id`.
 
-[Unreleased]: https://github.com/jund-fauz/eloquent-kompact/compare/v1.14.0...HEAD
+[Unreleased]: https://github.com/jund-fauz/eloquent-kompact/compare/v1.15.0...HEAD
+[1.15.0]: https://github.com/jund-fauz/eloquent-kompact/compare/v1.14.0...v1.15.0
 [1.14.0]: https://github.com/jund-fauz/eloquent-kompact/compare/v1.13.0...v1.14.0
 [1.13.0]: https://github.com/jund-fauz/eloquent-kompact/compare/v1.12.0...v1.13.0
 [1.12.0]: https://github.com/jund-fauz/eloquent-kompact/compare/v1.11.0...v1.12.0
