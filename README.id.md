@@ -458,6 +458,7 @@ $order->isNotNull('note');
 // Perbandingan ketat atribut, setelah casting
 $user->sameWith('role', 'admin');
 $user->notSameWith('role', 'admin');
+$order->sameWith('qty', 5, 'integer');                           // dengan cast lain, hanya untuk perbandingan ini
 $user->sameWithOther($otherUser, 'tenant_id', 'branch_id');      // semua kolom sama
 $user->sameWithOtherOr($otherUser, 'tenant_id', 'branch_id');    // setidaknya satu kolom sama
 $user->notSameWithOther($otherUser, 'tenant_id', 'branch_id');   // semua kolom berbeda
@@ -492,6 +493,8 @@ Order::randomId('status', 'paid'); // argumen untuk where()
 `assignIfBlank()`, `assignIfBlankFrom()` dan `isBlank()` memakai `blank()` dari Laravel, jadi `null`, string kosong (juga `'   '`) dan array kosong dihitung blank, sedangkan `0`, `'0'` dan `false` tidak. `isFilled()` memakai `filled()`, kebalikannya. `assignIfNull()` dan `assignIfNullFrom()` hanya mengganti `null`.
 
 `match()` dan keluarga `sameWithOther()` mengembalikan `false` kalau tidak ada kondisi atau kolom yang diberikan. `notSameWithOther()` bukan kebalikan `sameWithOther()`: kebalikannya adalah `notSameWithOtherOr()`. Object seperti tanggal Carbon dari kolom `datetime` dibandingkan berdasarkan identitas, jadi dua model tidak pernah punya tanggal yang sama. Nilai array cocok kalau atributnya sama dengan salah satu item-nya, kecuali atributnya sendiri berupa array.
+
+`sameWith()`, `notSameWith()`, `sameWithAndDirty()` dan `notSameWithAndDirty()` menerima cast Laravel sebagai argumen ketiga (`'integer'`, `'decimal:2'`, `'string'`, class enum, …), yang dipakai menggantikan cast kolom hanya untuk perbandingan itu; cast model tetap seperti semula. Accessor kolom tetap menang atasnya, dan cast tanggal tetap menghasilkan object yang dibandingkan berdasarkan identitas.
 
 Method `AndDirty` memakai `isDirty()` dari Eloquent pada setiap kolom, jadi `sameWithOtherOrAndDirty()` butuh satu kolom yang dirty sekaligus sama, sedangkan `sameWithOtherAndDirty()` dan `matchAndDirty()` bernilai `false` kalau salah satu kolom tidak dirty. Setiap atribut yang diisi pada model baru itu dirty. Kolom yang berubah masih dirty di event `saving`, `saved`, `updating`, `updated`, `creating` dan `created`, dan tidak ada yang dirty setelah `save()` selesai.
 
