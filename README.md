@@ -981,7 +981,7 @@ use const JundFauz\EloquentKompact\NEW_LINE;
 | `ternary($condition, $trueValue, $falseValue)` | `$condition ? $trueValue : $falseValue` |
 | `elvis($value, $default)` | `$value ?: $default` |
 | `null_coalescing($value, $default)` | `$value ?? $default`, for a value that exists: a missing array key still gives PHP's `Undefined array key` warning, use `array_get()` for that |
-| `array_get(&$value, $default)` | `$value ?? $default` without a warning for a missing array key, also nested or on `null`: `array_get($config['token'], [])`. The value is taken by reference, so it has to be a variable or an array item, and a missing key is added to the array as `null` |
+| `array_get(&$value, $default = null)` | `$value ?? $default` without a warning for a missing array key, also nested or on `null`: `array_get($config['token'], [])`. Without a default it gives `null`. The value is taken by reference, so it has to be a variable or an array item, and a missing key is added to the array as `null` |
 | `array_get_as_collection(&$value, $default)` | `array_get()` as a [`Builder\Collection`](#other-helpers) |
 | `is_not_dir($path)` | `! is_dir()` |
 | `str_concat(...$values)` | Joined without a delimiter |
