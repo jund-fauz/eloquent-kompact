@@ -172,7 +172,7 @@ function array_cast(mixed $data): array
     };
 }
 
-function array_get(mixed &$data, mixed $defaultValue)
+function array_get(mixed &$data, mixed $defaultValue = null)
 {
     return $data ?? $defaultValue;
 }

@@ -9,13 +9,11 @@ use function JundFauz\EloquentKompact\path_concat;
  */
 class Path
 {
-    /** @internal */
     public static function fileConfig(): string
     {
         return path_concat(self::root(), 'config', 'eloquent-kompact.php');
     }
 
-    /** @internal */
     public static function lang(): string
     {
         return path_concat(self::root(), 'lang');

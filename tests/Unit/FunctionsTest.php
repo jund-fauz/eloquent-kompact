@@ -683,6 +683,8 @@ class FunctionsTest extends TestCase
         $this->assertSame('x', array_get($array['empty'], 'x'));
         $this->assertSame('x', array_get($array['missing'], 'x'));
         $this->assertSame([], array_get($array['missing']['nested'], []));
+        $this->assertSame(1, array_get($array['a']));
+        $this->assertNull(array_get($array['other']));
 
         $null = null;
         $this->assertSame('x', array_get($null['key'], 'x'));
