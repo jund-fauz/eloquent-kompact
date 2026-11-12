@@ -50,6 +50,8 @@ use function JundFauz\EloquentKompact\lower_than;
 use function JundFauz\EloquentKompact\lower_than_or_same_with;
 use function JundFauz\EloquentKompact\merge_as_array;
 use function JundFauz\EloquentKompact\model_compact;
+use function JundFauz\EloquentKompact\merge_mixed_array;
+use function JundFauz\EloquentKompact\array_compact;
 use function JundFauz\EloquentKompact\namespace_concat;
 use function JundFauz\EloquentKompact\array_cast;
 use function JundFauz\EloquentKompact\elvis;
@@ -587,6 +589,35 @@ class FunctionsTest extends TestCase
 
         $this->assertSame(['name' => 'a', 'active' => true], model_compact($model, 'name', 'active'));
         $this->assertSame(['tags' => ['x']], model_compact($model, 'tags'));
+    }
+
+    #[Test]
+    public function it_compacts_model_attributes_with_an_alias(): void
+    {
+        $model = self::model(['name' => 'a', 'email' => 'a@b.c', 'active' => 1]);
+
+        $this->assertSame(['name' => 'a', 'email' => 'a@b.c'], model_compact($model, ['name', 'email']));
+        $this->assertSame(['nama' => 'a', 'surel' => 'a@b.c'], model_compact($model, ['nama' => 'name', 'surel' => 'email']));
+        $this->assertSame(['nama' => 'a', 'email' => 'a@b.c'], model_compact($model, ['nama' => 'name'], 'email'));
+        $this->assertSame(['active' => true, 'nama' => 'a'], model_compact($model, 'active', nama: 'name'));
+    }
+
+    #[Test]
+    public function it_merges_strings_and_arrays_keeping_the_string_keys(): void
+    {
+        $this->assertSame(['a', 'k' => 'b', 'c', 'x' => 'y'], merge_mixed_array(['a', ['k' => 'b'], ['c'], 'x' => 'y']));
+        $this->assertSame([], merge_mixed_array([]));
+    }
+
+    #[Test]
+    public function it_compacts_an_array(): void
+    {
+        $array = ['a' => 1, 'b' => 2];
+
+        $this->assertSame(['a' => 1, 'c' => null], array_compact($array, 'a', 'c'));
+        $this->assertSame(['a' => 1, 'x' => 2], array_compact($array, 'a', x: 'b'));
+        $this->assertSame([], array_compact($array));
+        $this->assertSame(['a' => 1, 'b' => 2], $array);
     }
 
     #[Test]

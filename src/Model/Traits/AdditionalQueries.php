@@ -59,7 +59,7 @@ trait AdditionalQueries
         return $result;
     }
 
-    public function compact(string ...$columns): array
+    public function compact(string|array ...$columns): array
     {
         return model_compact($this, ...$columns);
     }

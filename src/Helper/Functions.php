@@ -187,6 +187,19 @@ function get_array_list(array $from): array
     return array_filter($from, 'is_int', ARRAY_FILTER_USE_KEY);
 }
 
+function array_compact(array $array, string ...$keys): array
+{
+    $result = [];
+    foreach ($keys as $key => $keyValue) {
+        if (is_string($key)) {
+            $result[$key] = array_get($array[$keyValue]);
+        } else {
+            $result[$keyValue] = array_get($array[$keyValue]);
+        }
+    }
+    return $result;
+}
+
 function assign_as(mixed $data, string ...$keys): array
 {
     $result = [];
@@ -306,6 +319,21 @@ function not_defined(string $constant_name): bool
     return ! defined($constant_name);
 }
 
+function merge_mixed_array(array $data): array
+{
+    return is_count_zero($data)
+        ? $data
+        :  merge(...array_map(
+        fn (string|array $data, string|int $key) => match (true) {
+            is_array($data) => $data,
+            is_string($key) => [$key => $data],
+            default => [$data]
+        },
+        $data,
+        array_keys($data) ?: []
+    ));
+}
+
 function ternary(mixed $condition, mixed $trueValue, mixed $falseValue)
 {
     return $condition
@@ -323,10 +351,10 @@ function null_coalescing(mixed $firstValue, mixed $defaultValue)
     return $firstValue ?? $defaultValue;
 }
 
-function model_compact(Model $model, string ...$columns): array
+function model_compact(Model $model, string|array ...$columns): array
 {
-    return collect($columns)
-        ->mapWithKeys(fn (string $column) => [$column => $model->{$column}])
+    return collect(merge_mixed_array($columns))
+        ->mapWithKeys(fn (string $column, mixed $key) => [(is_string($key) ? $key : $column) => $model->{$column}])
         ->toArray();
 }
 

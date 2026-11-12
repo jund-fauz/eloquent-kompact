@@ -469,6 +469,8 @@ class AdditionalQueriesTest extends TestCase
 
         $this->assertSame(['id' => 1, 'commentable_id' => 1], $comment->compact('id', 'commentable_id'));
         $this->assertSame(['commentable_id' => 1, 'id' => 1], $comment->compact('commentable_id', 'id'));
+        $this->assertSame(['id' => 1, 'post' => 1], $comment->compact('id', ['post' => 'commentable_id']));
+        $this->assertSame(['id' => 1, 'post' => 1, 'key' => 1], $comment->compact(['id', 'post' => 'commentable_id'], key: 'id'));
     }
 
     #[Test]
