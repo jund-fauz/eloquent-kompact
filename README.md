@@ -433,6 +433,7 @@ $comment->getRelVia(Post::class, User::class);                     // $comment->
 
 // [column => value] for the given columns, after casting (a missing one is null)
 $user->compact('name', 'email'); // ['name' => 'Ana', 'email' => 'ana@example.com']
+$user->compact('name', ['mail' => 'email']); // ['name' => 'Ana', 'mail' => 'ana@example.com'], also compact('name', mail: 'email')
 
 // update() with several arrays merged, where a later key wins
 $order->updateMany($data, $order->compact('note'), ['status' => 'paid']);
@@ -1020,13 +1021,15 @@ use const JundFauz\EloquentKompact\NEW_LINE;
 | `array_key_change(&$array, $oldKey, $newKey)` | Renames a key in place. The key moves to the end of the array, an existing `$newKey` is replaced, and a missing `$oldKey` gives PHP's `Undefined array key` warning |
 | `array_key_values($array)` | `[key, value]` of an array with one item; with several items, every key and then every value in one flat list |
 | `array_normalize($list)` | The item of a list with one item, or the list as it is. The list needs numeric keys from `0` |
+| `array_compact($array, ...$keys)` | `[key => value]` for the given keys of the array, `null` for a missing one; a named argument is an alias: `array_compact($data, 'a', x: 'b')` → `['a' => …, 'x' => $data['b']]` |
 | `assign_as($value, ...$keys)` | `[key => value]` with the same value for every key, e.g. `assign_as(1, 'a', 'b')` → `['a' => 1, 'b' => 1]`; `[]` without keys |
 | `merge(...$arrays)` | `array_merge()` of the arrays |
+| `merge_mixed_array($values)` | The strings and arrays of `$values` merged into one array: a string with an `int` key becomes a list item, a string with a string key keeps that key, and the items of an array are merged with `array_merge()` |
 | `merge_as_array(...$values)` | Associative arrays or collections merged with their keys, where a later key wins and nested values stay as they are: `merge_as_array(['a' => 1], ['b' => 2])` → `['a' => 1, 'b' => 2]`. `null`, blank strings and empty arrays are ignored there. With any other value next to them, every value goes in one flat list, nested arrays and collections included; keys are dropped and `null` is kept: `merge_as_array(['a' => 1], 'x')` → `[1, 'x']` |
 | `array_pull(&$array, ...$keys)` | `Arr::pullMany()`: removes the keys and returns the value of one key, or `[key => value]` for several |
 | `array_pull_list(&$array, ...$keys)` | `array_pull()`, but several keys give a list in the given order, e.g. for `[$name, $email] = array_pull_list($data, 'name', 'email')` |
 | `stringify($array)` | Every value cast to a `string`, nested arrays included, keeping the keys; `null` and `false` become `''` |
-| `model_compact($model, ...$columns)` | `[column => value]` for the given columns, after casting; missing attributes are `null` and loaded relations become arrays |
+| `model_compact($model, ...$columns)` | `[column => value]` for the given columns, after casting; missing attributes are `null` and loaded relations become arrays. A column can be given in an array, and a string key, in an array or as a named argument, is used as its alias: `model_compact($user, 'id', ['mail' => 'email'])` → `['id' => 1, 'mail' => '…']` |
 | `str_before_last()`, `str_lower()`, `str_upper()` | Laravel's `Str::beforeLast()`, `lower()`, `upper()` |
 | `str_empty_if_false($condition, $value)` | `$value`, or `''` if `$condition` is falsy, like [`Str::emptyIfFalse()`](#str) |
 

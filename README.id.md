@@ -433,6 +433,7 @@ $comment->getRelVia(Post::class, User::class);                     // $comment->
 
 // [kolom => nilai] untuk kolom yang diberikan, setelah casting (yang tidak ada bernilai null)
 $user->compact('name', 'email'); // ['name' => 'Ana', 'email' => 'ana@example.com']
+$user->compact('name', ['mail' => 'email']); // ['name' => 'Ana', 'mail' => 'ana@example.com'], juga compact('name', mail: 'email')
 
 // update() dengan beberapa array digabung, key yang belakangan menang
 $order->updateMany($data, $order->compact('note'), ['status' => 'paid']);
@@ -1020,13 +1021,15 @@ use const JundFauz\EloquentKompact\NEW_LINE;
 | `array_key_change(&$array, $oldKey, $newKey)` | Mengganti nama key di tempat. Key pindah ke akhir array, `$newKey` yang sudah ada diganti, dan `$oldKey` yang tidak ada memunculkan warning `Undefined array key` dari PHP |
 | `array_key_values($array)` | `[key, value]` dari array dengan satu item; dengan beberapa item, semua key lalu semua value dalam satu list datar |
 | `array_normalize($list)` | Item dari list dengan satu item, atau list-nya apa adanya. List-nya butuh key numerik mulai dari `0` |
+| `array_compact($array, ...$keys)` | `[key => nilai]` untuk key-key array yang diberikan, `null` untuk yang tidak ada; named argument menjadi alias: `array_compact($data, 'a', x: 'b')` → `['a' => …, 'x' => $data['b']]` |
 | `assign_as($value, ...$keys)` | `[key => value]` dengan nilai yang sama untuk setiap key, misalnya `assign_as(1, 'a', 'b')` → `['a' => 1, 'b' => 1]`; `[]` tanpa key |
 | `merge(...$arrays)` | `array_merge()` dari array-array itu |
+| `merge_mixed_array($values)` | String dan array di `$values` digabung jadi satu array: string dengan key `int` menjadi item list, string dengan key string mempertahankan key itu, dan item-item array digabung dengan `array_merge()` |
 | `merge_as_array(...$values)` | Array asosiatif atau collection digabung beserta key-nya, key yang belakangan menang dan nilai bersarang tetap apa adanya: `merge_as_array(['a' => 1], ['b' => 2])` → `['a' => 1, 'b' => 2]`. Di sini `null`, string kosong dan array kosong diabaikan. Kalau ada nilai lain di sampingnya, semua nilai masuk ke satu list datar, termasuk array dan collection bersarang; key dibuang dan `null` dipertahankan: `merge_as_array(['a' => 1], 'x')` → `[1, 'x']` |
 | `array_pull(&$array, ...$keys)` | `Arr::pullMany()`: menghapus key-key itu dan mengembalikan nilai dari satu key, atau `[key => value]` untuk beberapa key |
 | `array_pull_list(&$array, ...$keys)` | `array_pull()`, tapi beberapa key menghasilkan list sesuai urutan yang diberikan, misalnya untuk `[$name, $email] = array_pull_list($data, 'name', 'email')` |
 | `stringify($array)` | Setiap nilai di-cast ke `string`, termasuk array bersarang, key dipertahankan; `null` dan `false` menjadi `''` |
-| `model_compact($model, ...$columns)` | `[kolom => nilai]` untuk kolom yang diberikan, setelah casting; atribut yang tidak ada bernilai `null` dan relasi yang sudah dimuat menjadi array |
+| `model_compact($model, ...$columns)` | `[kolom => nilai]` untuk kolom yang diberikan, setelah casting; atribut yang tidak ada bernilai `null` dan relasi yang sudah dimuat menjadi array. Kolom bisa diberikan dalam array, dan key string, di dalam array atau sebagai named argument, dipakai sebagai alias-nya: `model_compact($user, 'id', ['mail' => 'email'])` → `['id' => 1, 'mail' => '…']` |
 | `str_before_last()`, `str_lower()`, `str_upper()` | `Str::beforeLast()`, `lower()`, `upper()` dari Laravel |
 | `str_empty_if_false($condition, $value)` | `$value`, atau `''` kalau `$condition` falsy, seperti [`Str::emptyIfFalse()`](#str) |
 
