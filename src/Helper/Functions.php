@@ -361,6 +361,13 @@ function null_coalescing(mixed $firstValue, mixed $defaultValue)
     return $firstValue ?? $defaultValue;
 }
 
+function if_not_null(mixed $value, mixed &$ifNotNullValue)
+{
+    return is_not_null($value)
+        ? ($ifNotNullValue ?? null)
+        : null;
+}
+
 function model_compact(Model $model, string|array ...$columns): array
 {
     return collect(merge_mixed_array($columns))

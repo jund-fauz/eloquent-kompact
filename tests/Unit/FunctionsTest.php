@@ -61,6 +61,7 @@ use function JundFauz\EloquentKompact\not_in;
 use function JundFauz\EloquentKompact\in;
 use function JundFauz\EloquentKompact\not_in_array;
 use function JundFauz\EloquentKompact\null_coalescing;
+use function JundFauz\EloquentKompact\if_not_null;
 use function JundFauz\EloquentKompact\str_constant;
 use function JundFauz\EloquentKompact\ternary;
 use function JundFauz\EloquentKompact\not_same_with;
@@ -729,6 +730,22 @@ class FunctionsTest extends TestCase
 
         $this->assertSame(0, null_coalescing(0, 'b'));
         $this->assertSame('b', null_coalescing(null, 'b'));
+    }
+
+    #[Test]
+    public function it_gives_a_value_only_if_another_is_not_null(): void
+    {
+        $user = (object) ['name' => 'Ana'];
+        $data = ['name' => 'Ana'];
+        $null = null;
+        $label = 'paid';
+
+        $this->assertSame('Ana', if_not_null($user, $user->name));
+        $this->assertSame('Ana', if_not_null($data, $data['name']));
+        $this->assertNull(if_not_null($data, $data['missing']));
+        $this->assertSame('paid', if_not_null(0, $label));
+        $this->assertNull(if_not_null(null, $label));
+        $this->assertNull(if_not_null($null, $null['name']));
     }
 
     #[Test]
