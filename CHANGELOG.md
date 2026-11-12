@@ -7,6 +7,16 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [1.18.0] - 2026-11-12
+
+### Added
+
+- Helper `array_compact_and_unset(&$array, ...$keys)`: `array_compact()` that also unsets the given keys from the array.
+
+### Tests
+
+- Added tests for `array_compact_and_unset()`.
+
 ## [1.17.0] - 2026-11-12
 
 ### Added
@@ -2275,7 +2285,8 @@ The first stable release: from now on, breaking changes only come in a major rel
 - `RawQuery` static helpers for raw SQL expressions.
 - Translations for `en` and `id`.
 
-[Unreleased]: https://github.com/jund-fauz/eloquent-kompact/compare/v1.17.0...HEAD
+[Unreleased]: https://github.com/jund-fauz/eloquent-kompact/compare/v1.18.0...HEAD
+[1.18.0]: https://github.com/jund-fauz/eloquent-kompact/compare/v1.17.0...v1.18.0
 [1.17.0]: https://github.com/jund-fauz/eloquent-kompact/compare/v1.16.1...v1.17.0
 [1.16.1]: https://github.com/jund-fauz/eloquent-kompact/compare/v1.16.0...v1.16.1
 [1.16.0]: https://github.com/jund-fauz/eloquent-kompact/compare/v1.15.0...v1.16.0
