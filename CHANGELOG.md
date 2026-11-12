@@ -7,6 +7,16 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [1.11.0] - 2026-11-12
+
+### Added
+
+- The default of `array_get()` is optional and is `null` when left out.
+
+### Tests
+
+- Added tests for `array_get()` without a default.
+
 ## [1.10.0] - 2026-11-11
 
 ### Added
@@ -2191,7 +2201,8 @@ The first stable release: from now on, breaking changes only come in a major rel
 - `RawQuery` static helpers for raw SQL expressions.
 - Translations for `en` and `id`.
 
-[Unreleased]: https://github.com/jund-fauz/eloquent-kompact/compare/v1.10.0...HEAD
+[Unreleased]: https://github.com/jund-fauz/eloquent-kompact/compare/v1.11.0...HEAD
+[1.11.0]: https://github.com/jund-fauz/eloquent-kompact/compare/v1.10.0...v1.11.0
 [1.10.0]: https://github.com/jund-fauz/eloquent-kompact/compare/v1.9.2...v1.10.0
 [1.9.2]: https://github.com/jund-fauz/eloquent-kompact/compare/v1.9.1...v1.9.2
 [1.9.1]: https://github.com/jund-fauz/eloquent-kompact/compare/v1.9.0...v1.9.1
