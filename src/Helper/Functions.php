@@ -201,6 +201,21 @@ function array_compact(array $array, string ...$keys): array
     return $result;
 }
 
+function array_compact_and_unset(array &$array, string ...$keys): array
+{
+
+    $result = [];
+    foreach ($keys as $key => $keyValue) {
+        if (is_string($key)) {
+            $result[$key] = array_get($array[$keyValue]);
+        } else {
+            $result[$keyValue] = array_get($array[$keyValue]);
+        }
+        unset($array[$keyValue]);
+    }
+    return $result;
+}
+
 function assign_as(mixed $data, string ...$keys): array
 {
     $result = [];
@@ -263,7 +278,7 @@ function str_constant(string $className, string $constantName): string
 function cast_as(mixed $value, string $cast): mixed
 {
     static $caster;
-    $caster ??= new class extends Model {};
+    $caster ??= new class extends Model { };
 
     return (clone $caster)->mergeCasts(['value' => $cast])->setRawAttributes(['value' => $value])->value;
 }
@@ -334,15 +349,15 @@ function merge_mixed_array(array $data): array
 {
     return is_count_zero($data)
         ? $data
-        :  merge(...array_map(
-        fn (string|array $data, string|int $key) => match (true) {
-            is_array($data) => $data,
-            is_string($key) => [$key => $data],
-            default => [$data]
-        },
-        $data,
-        array_keys($data) ?: []
-    ));
+        : merge(...array_map(
+            fn (string|array $data, string|int $key) => match (true) {
+                is_array($data) => $data,
+                is_string($key) => [$key => $data],
+                default => [$data]
+            },
+            $data,
+            array_keys($data) ?: []
+        ));
 }
 
 function ternary(mixed $condition, mixed $trueValue, mixed $falseValue)
@@ -420,7 +435,7 @@ function is_whole_number(int $number): bool
 
 function is_zero(mixed $data): bool
 {
-    return is_numeric($data) && same_with((float) $data, 0.0);
+    return is_numeric($data) && same_with((float)$data, 0.0);
 }
 
 function is_app_local_or_test(): bool

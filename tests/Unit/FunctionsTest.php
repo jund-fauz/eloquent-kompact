@@ -52,6 +52,7 @@ use function JundFauz\EloquentKompact\merge_as_array;
 use function JundFauz\EloquentKompact\model_compact;
 use function JundFauz\EloquentKompact\merge_mixed_array;
 use function JundFauz\EloquentKompact\array_compact;
+use function JundFauz\EloquentKompact\array_compact_and_unset;
 use function JundFauz\EloquentKompact\namespace_concat;
 use function JundFauz\EloquentKompact\array_cast;
 use function JundFauz\EloquentKompact\elvis;
@@ -644,6 +645,22 @@ class FunctionsTest extends TestCase
         $this->assertSame(['a' => 1, 'x' => 2], array_compact($array, 'a', x: 'b'));
         $this->assertSame([], array_compact($array));
         $this->assertSame(['a' => 1, 'b' => 2], $array);
+    }
+
+    #[Test]
+    public function it_compacts_an_array_and_unsets_the_keys(): void
+    {
+        $array = ['a' => 1, 'b' => 2, 'c' => 3];
+        $this->assertSame(['a' => 1, 'x' => null], array_compact_and_unset($array, 'a', 'x'));
+        $this->assertSame(['b' => 2, 'c' => 3], $array);
+
+        $array = ['a' => 1, 'b' => 2, 'c' => 3];
+        $this->assertSame(['a' => 1, 'y' => 2], array_compact_and_unset($array, 'a', y: 'b'));
+        $this->assertSame(['c' => 3], $array);
+
+        $array = ['a' => 1];
+        $this->assertSame([], array_compact_and_unset($array));
+        $this->assertSame(['a' => 1], $array);
     }
 
     #[Test]
