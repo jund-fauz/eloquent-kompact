@@ -338,6 +338,26 @@ class AdditionalQueriesTest extends TestCase
     }
 
     #[Test]
+    public function it_casts_the_value_with_the_cast_too(): void
+    {
+        $model = new CastCompareModel();
+        $model->setRawAttributes(['qty' => '5', 'price' => '10.5'], true);
+        $model->qty = '7';
+
+        $this->assertTrue($model->sameWith('price', '10.5', 'decimal:2'));
+        $this->assertFalse($model->notSameWith('price', '10.5', 'decimal:2'));
+        $this->assertTrue($model->sameWith('qty', '7', 'integer'));
+        $this->assertFalse($model->notSameWith('qty', '7', 'integer'));
+        $this->assertTrue($model->notSameWith('qty', '5', 'integer'));
+        $this->assertTrue($model->sameWithAndDirty('qty', '7', 'integer'));
+        $this->assertFalse($model->notSameWithAndDirty('qty', '7', 'integer'));
+
+        // Without a cast the value is compared as it is
+        $this->assertFalse($model->sameWith('qty', 7));
+        $this->assertTrue($model->notSameWith('qty', 7));
+    }
+
+    #[Test]
     public function it_compares_the_columns_with_another_model(): void
     {
         $comment = MorphComment::find(1);

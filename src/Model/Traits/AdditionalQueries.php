@@ -110,19 +110,20 @@ trait AdditionalQueries
     /**
      * Shorthand for: $this->{$columnName} === $value
      *
-     * The attribute is compared after casting, so the value must have the cast type,
+     * The attribute is compared after casting, so without $cast the value must have the cast type,
      * e.g. an enum case for an enum column. Object attributes such as dates are compared by identity,
      * so they never match another instance with the same value
      *
      * @param string $columnName
      * @param mixed $value
      * @param string|null $cast A cast of Laravel (e.g. 'integer', 'decimal:2', an enum class) used instead of
-     *                          the cast of the column for this comparison only, e.g. sameWith('qty', 5, 'integer')
+     *                          the cast of the column for this comparison only, and also applied to $value
+     *                          by cast_as(), e.g. sameWith('qty', '5', 'integer')
      * @return bool
      */
     public function sameWith(string $columnName, mixed $value, ?string $cast = null): bool
     {
-        return $this->castedAttribute($columnName, $cast) === $value;
+        return $this->castedAttribute($columnName, $cast) === cast_as($value, $cast);
     }
 
     /**
@@ -150,7 +151,7 @@ trait AdditionalQueries
      */
     public function notSameWith(string $columnName, mixed $value, ?string $cast = null): bool
     {
-        return $this->castedAttribute($columnName, $cast) !== $value;
+        return $this->castedAttribute($columnName, $cast) !== cast_as($value, $cast);
     }
 
     /**
@@ -406,12 +407,9 @@ trait AdditionalQueries
         return array_reduce($columns, fn ($acc, $column) => $acc && ! $this->wasChanged($column), true);
     }
 
-    public function grep(string $columnName, mixed $defaultValue, ?string $cast = null)
+    public function grep(string $columnName, mixed $defaultValue, ?string $cast = null): mixed
     {
-        return (is_not_null($cast)
-            ? (clone $this)->mergeCasts([$columnName => $cast])
-            : $this)->{$columnName}
-            ?? (is_not_null($cast) ? cast_as($defaultValue, $cast) : $defaultValue);
+        return $this->castedAttribute($columnName, $cast) ?? cast_as($defaultValue, $cast);
     }
 
     public static function randomId(...$filter): ?int
