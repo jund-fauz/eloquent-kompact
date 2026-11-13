@@ -7,6 +7,33 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [1.21.0] - 2026-11-13
+
+### Added
+
+- Helpers `plus()`, `minus()`, `multiply()` and `divide()`: bcmath arithmetic that returns a numeric string with `$precision` decimals. They throw an `InvalidArgumentException` for a value that is not numeric or a negative precision, and `divide()` throws a `DivisionByZeroError` on zero.
+- Helper `num_same_with($a, $b, $precision = null)`: whether two numbers are the same with bcmath, e.g. `num_same_with('2.50', 2.5)`.
+- Helpers `is_all_numeric()`, `is_any_numeric()`, `is_not_numeric()`, `is_all_not_numeric()` and `is_any_not_numeric()`.
+- Helpers `is_positive_number()` and `is_negative_number()`.
+- Config `decimal.default-precision` (`3`): the number of decimals of the number helpers when no precision is given.
+
+### Changed
+
+- `higher_than()`, `lower_than()`, `higher_than_or_same_with()` and `lower_than_or_same_with()` compare with bcmath and take a precision as their third argument. Decimals after the precision (by default `3`) are cut off, so `higher_than('0.0005', '0')` is now `false`. A value that is not numeric now gives `false` instead of a PHP comparison, e.g. `higher_than('abc', '1')`. Floats, exponents such as `'1E5'` and numbers with surrounding spaces are read as numbers.
+- The package now requires the `bcmath` extension.
+
+### Deprecated
+
+- `BoolB` and its internal `Compare` class, which are removed in the next major release. Use the helper functions instead.
+
+### Documentation
+
+- Documented the number helpers, the `decimal.default-precision` config, the `bcmath` requirement and the deprecation of `BoolB`.
+
+### Tests
+
+- Added tests for the bcmath arithmetic and comparisons with a precision, for floats, exponents and padded numbers, for values that are not numeric, and for the new numeric checks.
+
 ## [1.20.0] - 2026-11-13
 
 ### Added
@@ -2324,7 +2351,8 @@ The first stable release: from now on, breaking changes only come in a major rel
 - `RawQuery` static helpers for raw SQL expressions.
 - Translations for `en` and `id`.
 
-[Unreleased]: https://github.com/jund-fauz/eloquent-kompact/compare/v1.20.0...HEAD
+[Unreleased]: https://github.com/jund-fauz/eloquent-kompact/compare/v1.21.0...HEAD
+[1.21.0]: https://github.com/jund-fauz/eloquent-kompact/compare/v1.20.0...v1.21.0
 [1.20.0]: https://github.com/jund-fauz/eloquent-kompact/compare/v1.19.0...v1.20.0
 [1.19.0]: https://github.com/jund-fauz/eloquent-kompact/compare/v1.18.0...v1.19.0
 [1.18.0]: https://github.com/jund-fauz/eloquent-kompact/compare/v1.17.0...v1.18.0
