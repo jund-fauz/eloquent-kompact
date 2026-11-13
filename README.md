@@ -462,7 +462,7 @@ $order->isNotNull('note');
 // Strict comparison of attributes, after casting
 $user->sameWith('role', 'admin');
 $user->notSameWith('role', 'admin');
-$order->sameWith('qty', 5, 'integer');                           // with another cast, for this comparison only
+$order->sameWith('qty', '5', 'integer');                         // with another cast, for this comparison only
 $user->sameWithOther($otherUser, 'tenant_id', 'branch_id');      // every column is the same
 $user->sameWithOtherOr($otherUser, 'tenant_id', 'branch_id');    // at least one column is the same
 $user->notSameWithOther($otherUser, 'tenant_id', 'branch_id');   // every column is different
@@ -498,7 +498,7 @@ Order::randomId('status', 'paid'); // the arguments of where()
 
 `match()` and the `sameWithOther()` family return `false` when no condition or column is given. `notSameWithOther()` is not the opposite of `sameWithOther()`: that is `notSameWithOtherOr()`. Objects such as the Carbon dates of `datetime` columns are compared by identity, so two models never have the same date. An array value matches if the attribute equals one of its items, unless the attribute itself is an array.
 
-`sameWith()`, `notSameWith()`, `sameWithAndDirty()` and `notSameWithAndDirty()` take a cast of Laravel as their third argument (`'integer'`, `'decimal:2'`, `'string'`, an enum class, …), used instead of the cast of the column for that comparison only; the casts of the model stay as they are. An accessor of the column still wins over it, and a date cast still gives an object, compared by identity.
+`sameWith()`, `notSameWith()`, `sameWithAndDirty()` and `notSameWithAndDirty()` take a cast of Laravel as their third argument (`'integer'`, `'decimal:2'`, `'string'`, an enum class, …), used instead of the cast of the column for that comparison only, and also applied to the value with [`cast_as()`](#other-helpers); the casts of the model stay as they are. Without a cast the value is compared as it is. An accessor of the column still wins over it, and a date cast still gives an object, compared by identity.
 
 The `AndDirty` methods use Eloquent's `isDirty()` on each column, so `sameWithOtherOrAndDirty()` needs one column that is both dirty and the same, and `sameWithOtherAndDirty()` and `matchAndDirty()` are `false` if one of the columns is not dirty. Every attribute set on a new model is dirty. Changed columns are still dirty in the `saving`, `saved`, `updating`, `updated`, `creating` and `created` events, and nothing is dirty once `save()` has returned.
 
@@ -989,7 +989,7 @@ use const JundFauz\EloquentKompact\NEW_LINE;
 | `is_array_or_collection($value)` | Whether the value is an array or a Laravel `Collection` |
 | `is_associative_array($value)` | Whether the value is an array that is not a list, so also `[5 => 'x']`; `[]` is not |
 | `same_with($a, $b, $cast = null)` / `not_same_with($a, $b, $cast = null)` | `$a === $b` / `$a !== $b`. With a cast, both values are cast with it first: `same_with('5', 5, 'integer')` → `true` |
-| `cast_as($value, $cast)` | The value cast with a cast of Laravel, like an attribute of a model: `cast_as('10.5', 'decimal:2')` → `'10.50'`, `cast_as('paid', Status::class)` → `Status::Paid`. A date cast gives a Carbon object |
+| `cast_as($value, $cast = null)` | The value cast with a cast of Laravel, like an attribute of a model: `cast_as('10.5', 'decimal:2')` → `'10.50'`, `cast_as('paid', Status::class)` → `Status::Paid`. A date cast gives a Carbon object. Without a cast the value is returned as it is |
 | `same_with_one_of($value, ...$others)` | Whether `$value` is `===` to one of the others; `false` without others |
 | `higher_than($a, $b)` / `lower_than($a, $b)` | `$a > $b` / `$a < $b` for `int`, `float` and numeric strings, e.g. decimal casts like `'2.50'` |
 | `higher_than_or_same_with($a, $b)` / `lower_than_or_same_with($a, $b)` | `$a >= $b` / `$a <= $b`, for the same values |

@@ -462,7 +462,7 @@ $order->isNotNull('note');
 // Perbandingan ketat atribut, setelah casting
 $user->sameWith('role', 'admin');
 $user->notSameWith('role', 'admin');
-$order->sameWith('qty', 5, 'integer');                           // dengan cast lain, hanya untuk perbandingan ini
+$order->sameWith('qty', '5', 'integer');                         // dengan cast lain, hanya untuk perbandingan ini
 $user->sameWithOther($otherUser, 'tenant_id', 'branch_id');      // semua kolom sama
 $user->sameWithOtherOr($otherUser, 'tenant_id', 'branch_id');    // setidaknya satu kolom sama
 $user->notSameWithOther($otherUser, 'tenant_id', 'branch_id');   // semua kolom berbeda
@@ -498,7 +498,7 @@ Order::randomId('status', 'paid'); // argumen untuk where()
 
 `match()` dan keluarga `sameWithOther()` mengembalikan `false` kalau tidak ada kondisi atau kolom yang diberikan. `notSameWithOther()` bukan kebalikan `sameWithOther()`: kebalikannya adalah `notSameWithOtherOr()`. Object seperti tanggal Carbon dari kolom `datetime` dibandingkan berdasarkan identitas, jadi dua model tidak pernah punya tanggal yang sama. Nilai array cocok kalau atributnya sama dengan salah satu item-nya, kecuali atributnya sendiri berupa array.
 
-`sameWith()`, `notSameWith()`, `sameWithAndDirty()` dan `notSameWithAndDirty()` menerima cast Laravel sebagai argumen ketiga (`'integer'`, `'decimal:2'`, `'string'`, class enum, …), yang dipakai menggantikan cast kolom hanya untuk perbandingan itu; cast model tetap seperti semula. Accessor kolom tetap menang atasnya, dan cast tanggal tetap menghasilkan object yang dibandingkan berdasarkan identitas.
+`sameWith()`, `notSameWith()`, `sameWithAndDirty()` dan `notSameWithAndDirty()` menerima cast Laravel sebagai argumen ketiga (`'integer'`, `'decimal:2'`, `'string'`, class enum, …), yang dipakai menggantikan cast kolom hanya untuk perbandingan itu, dan juga diterapkan ke nilainya dengan [`cast_as()`](#helper-lain); cast model tetap seperti semula. Tanpa cast, nilainya dibandingkan apa adanya. Accessor kolom tetap menang atasnya, dan cast tanggal tetap menghasilkan object yang dibandingkan berdasarkan identitas.
 
 Method `AndDirty` memakai `isDirty()` dari Eloquent pada setiap kolom, jadi `sameWithOtherOrAndDirty()` butuh satu kolom yang dirty sekaligus sama, sedangkan `sameWithOtherAndDirty()` dan `matchAndDirty()` bernilai `false` kalau salah satu kolom tidak dirty. Setiap atribut yang diisi pada model baru itu dirty. Kolom yang berubah masih dirty di event `saving`, `saved`, `updating`, `updated`, `creating` dan `created`, dan tidak ada yang dirty setelah `save()` selesai.
 
@@ -989,7 +989,7 @@ use const JundFauz\EloquentKompact\NEW_LINE;
 | `is_array_or_collection($value)` | Apakah nilainya array atau `Collection` Laravel |
 | `is_associative_array($value)` | Apakah nilainya array yang bukan list, jadi `[5 => 'x']` juga termasuk; `[]` tidak |
 | `same_with($a, $b, $cast = null)` / `not_same_with($a, $b, $cast = null)` | `$a === $b` / `$a !== $b`. Dengan cast, kedua nilai di-cast dulu dengannya: `same_with('5', 5, 'integer')` → `true` |
-| `cast_as($value, $cast)` | Nilai yang di-cast dengan cast Laravel, seperti atribut model: `cast_as('10.5', 'decimal:2')` → `'10.50'`, `cast_as('paid', Status::class)` → `Status::Paid`. Cast tanggal menghasilkan object Carbon |
+| `cast_as($value, $cast = null)` | Nilai yang di-cast dengan cast Laravel, seperti atribut model: `cast_as('10.5', 'decimal:2')` → `'10.50'`, `cast_as('paid', Status::class)` → `Status::Paid`. Cast tanggal menghasilkan object Carbon. Tanpa cast, nilainya dikembalikan apa adanya |
 | `same_with_one_of($value, ...$others)` | Apakah `$value` `===` dengan salah satu nilai lain; `false` tanpa nilai lain |
 | `higher_than($a, $b)` / `lower_than($a, $b)` | `$a > $b` / `$a < $b` untuk `int`, `float` dan string numerik, misalnya cast decimal seperti `'2.50'` |
 | `higher_than_or_same_with($a, $b)` / `lower_than_or_same_with($a, $b)` | `$a >= $b` / `$a <= $b`, untuk nilai yang sama |
