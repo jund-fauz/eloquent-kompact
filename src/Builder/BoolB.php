@@ -4,6 +4,9 @@ namespace JundFauz\EloquentKompact\Builder;
 
 use JundFauz\EloquentKompact\Internal\Logic\Compare;
 
+/**
+ * @deprecated since 1.21.0. Will be deleted on next major version.
+ */
 final readonly class BoolB
 {
     public bool $result;

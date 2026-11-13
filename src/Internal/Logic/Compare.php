@@ -7,6 +7,7 @@ use JundFauz\EloquentKompact\Builder\BoolB;
 
 /**
  * @internal
+ * @deprecated since 1.21.0. Will be deleted on next major version.
  */
 final readonly class Compare
 {
