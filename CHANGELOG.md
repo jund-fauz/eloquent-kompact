@@ -7,6 +7,25 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [1.20.0] - 2026-11-13
+
+### Added
+
+- `cast_as()` takes `null` as its cast, which is now optional, and then returns the value as it is.
+
+### Changed
+
+- With a cast, `sameWith()`, `notSameWith()`, `sameWithAndDirty()` and `notSameWithAndDirty()` also cast the value with `cast_as()`, e.g. `sameWith('qty', '5', 'integer')` is now `true`. Without a cast the value is compared as it is.
+- `grep()` declares its `mixed` return type.
+
+### Documentation
+
+- Documented the cast of the value in `sameWith()` and the optional cast of `cast_as()`.
+
+### Tests
+
+- Added tests for casting the value in `sameWith()` and `notSameWith()`, and for `cast_as()` without a cast.
+
 ## [1.19.0] - 2026-11-13
 
 ### Added
@@ -2305,7 +2324,8 @@ The first stable release: from now on, breaking changes only come in a major rel
 - `RawQuery` static helpers for raw SQL expressions.
 - Translations for `en` and `id`.
 
-[Unreleased]: https://github.com/jund-fauz/eloquent-kompact/compare/v1.19.0...HEAD
+[Unreleased]: https://github.com/jund-fauz/eloquent-kompact/compare/v1.20.0...HEAD
+[1.20.0]: https://github.com/jund-fauz/eloquent-kompact/compare/v1.19.0...v1.20.0
 [1.19.0]: https://github.com/jund-fauz/eloquent-kompact/compare/v1.18.0...v1.19.0
 [1.18.0]: https://github.com/jund-fauz/eloquent-kompact/compare/v1.17.0...v1.18.0
 [1.17.0]: https://github.com/jund-fauz/eloquent-kompact/compare/v1.16.1...v1.17.0
