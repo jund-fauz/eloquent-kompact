@@ -420,6 +420,10 @@ $comment->isMorphModelSame('commentable', Post::class); // true
 // Atribut pertama yang tidak null
 $user->getOr('nickname', 'name');
 
+// Sebuah atribut, atau default kalau null; dengan cast hanya untuk pembacaan ini, yang juga dipakai untuk meng-cast default
+$order->grep('note', '-');
+$order->grep('qty', 0, 'integer');
+
 // Beberapa atribut, sesuai urutan yang diberikan (yang tidak ada bernilai null)
 $user->getMany('name', 'email'); // ['Ana', 'ana@example.com']
 
@@ -601,7 +605,7 @@ Payload adalah nama modifier, list modifier, atau `[modifier => argumen]`:
 ```php
 use JundFauz\EloquentKompact\Column\Config;
 use JundFauz\EloquentKompact\Column\ColumnCreator;
-use JundFauz\EloquentKompact\Column\Payload;
+use function JundFauz\EloquentKompact\merge;
 
 Schema::create('posts', function (Blueprint $table) {
     $table->id();
@@ -611,7 +615,7 @@ Schema::create('posts', function (Blueprint $table) {
         $table->string(ColumnCreator::enum('status')),
         $table->foreignId(ColumnCreator::relation('author_user')),
         $table->text('body'),
-    ], Payload::build(
+    ], merge(
         ['title' => ['unique', 'comment' => 'Shown in the list']],
         ['/_id$/' => ['index']],
         ['rest' => 'nullable'],
@@ -619,7 +623,7 @@ Schema::create('posts', function (Blueprint $table) {
 });
 ```
 
-`Payload::allNullable` adalah `['all' => 'nullable']` yang siap pakai.
+Konstanta `JundFauz\EloquentKompact\Column\ALL_NULLABLE` adalah `['all' => 'nullable']` yang siap pakai. `Payload::allNullable` dan `Payload::build()` deprecated sejak `1.19.0`: pakai `ALL_NULLABLE` dan [`merge()`](#fungsi-helper) sebagai gantinya.
 
 `Convert` mengubah nama dan nilai dari satu bentuk ke bentuk lain:
 
@@ -1001,7 +1005,7 @@ use const JundFauz\EloquentKompact\NEW_LINE;
 | `str_constant($class, $constant)` | `Class::Constant`, misalnya untuk `defined()` atau `constant()` |
 | `ternary($condition, $trueValue, $falseValue)` | `$condition ? $trueValue : $falseValue` |
 | `elvis($value, $default)` | `$value ?: $default` |
-| `if_not_null($value, $then)` | `$then` kalau `$value` tidak `null`, atau `null`: `if_not_null($paidAt, 'Lunas')`. `$then` dievaluasi sebelum fungsi dipanggil, juga saat `$value` bernilai `null` |
+| `if_not_null($value, $then)` | `$then` kalau `$value` tidak `null`, atau `null`: `if_not_null($paidAt, 'Lunas')`. `$then` dievaluasi sebelum fungsi dipanggil, juga saat `$value` bernilai `null`. `@experimental` |
 | `null_coalescing($value, $default)` | `$value ?? $default`, untuk nilai yang ada: key array yang tidak ada tetap memunculkan warning `Undefined array key` dari PHP, pakai `array_get()` untuk itu |
 | `array_get(&$value, $default = null, $cast = null)` | `$value ?? $default` tanpa warning untuk key array yang tidak ada, juga bersarang atau pada `null`: `array_get($config['token'], [])`. Tanpa default hasilnya `null`. Dengan cast, hasilnya di-cast dengan [`cast_as()`](#helper-lain): `array_get($row['qty'], 0, 'integer')`. Nilainya diambil by reference, jadi harus berupa variabel atau item array, dan key yang tidak ada ditambahkan ke array sebagai `null` |
 | `array_get_as_collection(&$value, $default = null)` | `array_get()` sebagai [`Builder\Collection`](#helper-lain) |

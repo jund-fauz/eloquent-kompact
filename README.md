@@ -420,6 +420,10 @@ $comment->isMorphModelSame('commentable', Post::class); // true
 // The first non-null attribute
 $user->getOr('nickname', 'name');
 
+// An attribute, or the default if it is null; with a cast for this read only, which the default is cast with too
+$order->grep('note', '-');
+$order->grep('qty', 0, 'integer');
+
 // Several attributes, in the given order (a missing one is null)
 $user->getMany('name', 'email'); // ['Ana', 'ana@example.com']
 
@@ -601,7 +605,7 @@ A payload is a modifier name, a list of them, or `[modifier => arguments]`:
 ```php
 use JundFauz\EloquentKompact\Column\Config;
 use JundFauz\EloquentKompact\Column\ColumnCreator;
-use JundFauz\EloquentKompact\Column\Payload;
+use function JundFauz\EloquentKompact\merge;
 
 Schema::create('posts', function (Blueprint $table) {
     $table->id();
@@ -611,7 +615,7 @@ Schema::create('posts', function (Blueprint $table) {
         $table->string(ColumnCreator::enum('status')),
         $table->foreignId(ColumnCreator::relation('author_user')),
         $table->text('body'),
-    ], Payload::build(
+    ], merge(
         ['title' => ['unique', 'comment' => 'Shown in the list']],
         ['/_id$/' => ['index']],
         ['rest' => 'nullable'],
@@ -619,7 +623,7 @@ Schema::create('posts', function (Blueprint $table) {
 });
 ```
 
-`Payload::allNullable` is a ready-made `['all' => 'nullable']`.
+The constant `JundFauz\EloquentKompact\Column\ALL_NULLABLE` is a ready-made `['all' => 'nullable']`. `Payload::allNullable` and `Payload::build()` are deprecated since `1.19.0`: use `ALL_NULLABLE` and [`merge()`](#helper-functions) instead.
 
 `Convert` turns names and values into each other:
 
@@ -1001,7 +1005,7 @@ use const JundFauz\EloquentKompact\NEW_LINE;
 | `str_constant($class, $constant)` | `Class::Constant`, e.g. for `defined()` or `constant()` |
 | `ternary($condition, $trueValue, $falseValue)` | `$condition ? $trueValue : $falseValue` |
 | `elvis($value, $default)` | `$value ?: $default` |
-| `if_not_null($value, $then)` | `$then` if `$value` is not `null`, or `null`: `if_not_null($paidAt, 'Paid')`. `$then` is evaluated before the call, also when `$value` is `null` |
+| `if_not_null($value, $then)` | `$then` if `$value` is not `null`, or `null`: `if_not_null($paidAt, 'Paid')`. `$then` is evaluated before the call, also when `$value` is `null`. `@experimental` |
 | `null_coalescing($value, $default)` | `$value ?? $default`, for a value that exists: a missing array key still gives PHP's `Undefined array key` warning, use `array_get()` for that |
 | `array_get(&$value, $default = null, $cast = null)` | `$value ?? $default` without a warning for a missing array key, also nested or on `null`: `array_get($config['token'], [])`. Without a default it gives `null`. With a cast the result is cast with [`cast_as()`](#other-helpers): `array_get($row['qty'], 0, 'integer')`. The value is taken by reference, so it has to be a variable or an array item, and a missing key is added to the array as `null` |
 | `array_get_as_collection(&$value, $default = null)` | `array_get()` as a [`Builder\Collection`](#other-helpers) |
