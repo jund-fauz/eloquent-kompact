@@ -377,7 +377,13 @@ function null_coalescing(mixed $firstValue, mixed $defaultValue)
     return $firstValue ?? $defaultValue;
 }
 
-function if_not_null(mixed $value, mixed $ifNotNullValue)
+/**
+ * @experimental
+ * @param mixed $value
+ * @param mixed $ifNotNullValue
+ * @return mixed|null
+ */
+function if_not_null(mixed $value, mixed $ifNotNullValue): mixed
 {
     return is_not_null($value)
         ? $ifNotNullValue
