@@ -447,6 +447,15 @@ class FunctionsTest extends TestCase
     }
 
     #[Test]
+    public function it_returns_the_value_without_a_cast(): void
+    {
+        $this->assertSame('5', cast_as('5'));
+        $this->assertSame('5', cast_as('5', null));
+        $this->assertSame([1], cast_as([1]));
+        $this->assertNull(cast_as(null));
+    }
+
+    #[Test]
     public function it_compares_values_with_a_cast(): void
     {
         $this->assertTrue(same_with('5', 5, 'integer'));

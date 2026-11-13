@@ -275,8 +275,12 @@ function str_constant(string $className, string $constantName): string
     return "$className::$constantName";
 }
 
-function cast_as(mixed $value, string $cast): mixed
+function cast_as(mixed $value, ?string $cast = null): mixed
 {
+    if (is_null($cast)) {
+        return $value;
+    }
+
     static $caster;
     $caster ??= new class extends Model { };
 
@@ -285,9 +289,7 @@ function cast_as(mixed $value, string $cast): mixed
 
 function same_with(mixed $firstValue, mixed $secondValue, ?string $cast = null): bool
 {
-    return is_null($cast)
-        ? $firstValue === $secondValue
-        : cast_as($firstValue, $cast) === cast_as($secondValue, $cast);
+    return cast_as($firstValue, $cast) === cast_as($secondValue, $cast);
 }
 
 function same_with_one_of(mixed $toCompareValue, mixed ...$anotherValues): bool
@@ -441,7 +443,7 @@ function is_whole_number(int $number): bool
 
 function is_zero(mixed $data): bool
 {
-    return is_numeric($data) && same_with((float)$data, 0.0);
+    return is_numeric($data) && same_with($data, 0.0, 'float');
 }
 
 function is_app_local_or_test(): bool
