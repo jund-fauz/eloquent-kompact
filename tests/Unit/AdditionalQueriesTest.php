@@ -304,6 +304,25 @@ class AdditionalQueriesTest extends TestCase
     }
 
     #[Test]
+    public function it_greps_a_column_or_the_default(): void
+    {
+        $model = new CastCompareModel();
+        $model->setRawAttributes(['qty' => '5', 'note' => null, 'flag' => 1]);
+
+        $this->assertSame('5', $model->grep('qty', 0));
+        $this->assertSame(5, $model->grep('qty', 0, 'integer'));
+        $this->assertTrue($model->grep('flag', false));
+        $this->assertSame('-', $model->grep('note', '-'));
+        $this->assertSame('-', $model->grep('missing', '-'));
+        $this->assertSame(0, $model->grep('note', '0', 'integer'));
+        $this->assertNull($model->grep('note', null, 'integer'));
+
+        // The casts of the model stay as they are
+        $this->assertSame('5', $model->qty);
+        $this->assertArrayNotHasKey('qty', $model->getCasts());
+    }
+
+    #[Test]
     public function it_compares_a_dirty_column_with_another_cast(): void
     {
         $model = new CastCompareModel();

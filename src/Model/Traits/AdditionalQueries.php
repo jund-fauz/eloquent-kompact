@@ -7,6 +7,7 @@ use Illuminate\Database\Eloquent\Relations\Relation;
 use JundFauz\EloquentKompact\Column\Convert;
 use JundFauz\EloquentKompact\Column\ColumnCreator;
 use function JundFauz\EloquentKompact\array_filter_filled;
+use function JundFauz\EloquentKompact\cast_as;
 use function JundFauz\EloquentKompact\is_not_array;
 use function JundFauz\EloquentKompact\is_not_null;
 use function JundFauz\EloquentKompact\merge_as_array;
@@ -403,6 +404,14 @@ trait AdditionalQueries
             return ! $this->wasChanged();
         }
         return array_reduce($columns, fn ($acc, $column) => $acc && ! $this->wasChanged($column), true);
+    }
+
+    public function grep(string $columnName, mixed $defaultValue, ?string $cast = null)
+    {
+        return (is_not_null($cast)
+            ? (clone $this)->mergeCasts([$columnName => $cast])
+            : $this)->{$columnName}
+            ?? (is_not_null($cast) ? cast_as($defaultValue, $cast) : $defaultValue);
     }
 
     public static function randomId(...$filter): ?int
