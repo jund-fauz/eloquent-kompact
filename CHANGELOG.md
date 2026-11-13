@@ -7,6 +7,26 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [1.19.0] - 2026-11-13
+
+### Added
+
+- `grep($column, $default, $cast = null)` on `AdditionalQueries`: the attribute, or the default if it is `null`. With a cast, the attribute is read with it instead of the cast of the column, for this read only, and the default is cast with it by `cast_as()`.
+- Constant `JundFauz\EloquentKompact\Column\ALL_NULLABLE`: `['all' => 'nullable']`.
+
+### Changed
+
+- `if_not_null()` is marked `@experimental` and declares its `mixed` return type.
+
+### Deprecated
+
+- `Payload::allNullable`, use `ALL_NULLABLE` instead.
+- `Payload::build()`, use `merge()` instead.
+
+### Tests
+
+- Added tests for `grep()` and `ALL_NULLABLE`.
+
 ## [1.18.0] - 2026-11-12
 
 ### Added
@@ -2285,7 +2305,8 @@ The first stable release: from now on, breaking changes only come in a major rel
 - `RawQuery` static helpers for raw SQL expressions.
 - Translations for `en` and `id`.
 
-[Unreleased]: https://github.com/jund-fauz/eloquent-kompact/compare/v1.18.0...HEAD
+[Unreleased]: https://github.com/jund-fauz/eloquent-kompact/compare/v1.19.0...HEAD
+[1.19.0]: https://github.com/jund-fauz/eloquent-kompact/compare/v1.18.0...v1.19.0
 [1.18.0]: https://github.com/jund-fauz/eloquent-kompact/compare/v1.17.0...v1.18.0
 [1.17.0]: https://github.com/jund-fauz/eloquent-kompact/compare/v1.16.1...v1.17.0
 [1.16.1]: https://github.com/jund-fauz/eloquent-kompact/compare/v1.16.0...v1.16.1
