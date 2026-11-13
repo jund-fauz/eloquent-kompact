@@ -13,7 +13,7 @@ A set of automation & helper tools to improve development experience and conveni
 composer require jund-fauz/eloquent-kompact
 ```
 
-Requires PHP 8.3+ and Laravel 12 or 13. The service provider is registered through package discovery.
+Requires PHP 8.3+, the `bcmath` extension and Laravel 12 or 13. The service provider is registered through package discovery.
 
 ## Why
 
@@ -102,6 +102,7 @@ php artisan vendor:publish --tag=eloquent-kompact-config
 | `fillable.include_explicitly` | `[]` | Columns always in the dynamic fillable list of a model whose table has them, even when `exclude_column_by` leaves them out |
 | `morph_model_use` | `''` | `'table'` or `'model'` to register a morph map of the models in `path.model`, see [Morph map](#morph-map) |
 | `ide-helper.auto_generate` | `env('KOMPACT_IDE_HELPER', false)` | Run `kompact:ide-helper` after `php artisan migrate` in the local environment |
+| `decimal.default-precision` | `3` | Number of decimals of the [number helpers](#helper-functions) when no precision is given |
 
 A namespace may be written with or without a trailing backslash (`App\Models` or `App\Models\`).
 
@@ -918,6 +919,8 @@ Laravel's methods that return something else (`explode()`, `length()`, `contains
 
 ## BoolB
 
+> **Deprecated** since `1.21.0`, together with its internal `Compare` class, and removed in the next major release. Use the [helper functions](#helper-functions) such as `same_with()` and `higher_than()` instead.
+
 `JundFauz\EloquentKompact\Builder\BoolB` is an immutable boolean builder, read with the readonly `result` property. Comparisons are strict and evaluated from left to right:
 
 ```php
@@ -991,9 +994,13 @@ use const JundFauz\EloquentKompact\NEW_LINE;
 | `same_with($a, $b, $cast = null)` / `not_same_with($a, $b, $cast = null)` | `$a === $b` / `$a !== $b`. With a cast, both values are cast with it first: `same_with('5', 5, 'integer')` → `true` |
 | `cast_as($value, $cast = null)` | The value cast with a cast of Laravel, like an attribute of a model: `cast_as('10.5', 'decimal:2')` → `'10.50'`, `cast_as('paid', Status::class)` → `Status::Paid`. A date cast gives a Carbon object. Without a cast the value is returned as it is |
 | `same_with_one_of($value, ...$others)` | Whether `$value` is `===` to one of the others; `false` without others |
-| `higher_than($a, $b)` / `lower_than($a, $b)` | `$a > $b` / `$a < $b` for `int`, `float` and numeric strings, e.g. decimal casts like `'2.50'` |
-| `higher_than_or_same_with($a, $b)` / `lower_than_or_same_with($a, $b)` | `$a >= $b` / `$a <= $b`, for the same values |
+| `higher_than($a, $b, $precision = null)` / `lower_than($a, $b, $precision = null)` | `$a > $b` / `$a < $b` with bcmath, for `int`, `float` and numeric strings, e.g. decimal casts like `'2.50'`. Decimals after `$precision` (by default `decimal.default-precision`, `3`) are cut off: `higher_than('0.0005', '0')` is `false`, `higher_than('0.0005', '0', 4)` is `true`. `false` when a value is not numeric or the precision is negative |
+| `higher_than_or_same_with($a, $b, $precision = null)` / `lower_than_or_same_with($a, $b, $precision = null)` / `num_same_with($a, $b, $precision = null)` | `$a >= $b` / `$a <= $b` / `$a == $b` as numbers, the same way: `num_same_with('2.50', 2.5)` is `true` |
+| `plus($a, $b, $precision = null)` / `minus(…)` / `multiply(…)` / `divide(…)` | `$a + $b` / `$a - $b` / `$a * $b` / `$a / $b` with bcmath, as a string with `$precision` decimals (the rest cut off): `plus(0.1, 0.2)` → `'0.300'`, `divide('10', '3', 2)` → `'3.33'`. Throws an `InvalidArgumentException` when a value is not numeric or the precision is negative, and `divide()` a `DivisionByZeroError` on zero |
 | `is_natural_number($number)` / `is_whole_number($number)` | Whether the `int` is `> 0` / `>= 0` |
+| `is_positive_number($number)` / `is_negative_number($number)` | Whether the `int` is `> 0` / `< 0` |
+| `is_all_numeric(...$values)` / `is_any_numeric(...$values)` | Whether every value / at least one value is numeric |
+| `is_not_numeric($value)` / `is_all_not_numeric(...$values)` / `is_any_not_numeric(...$values)` | `! is_numeric()` / whether no value / at least one value is not numeric |
 | `is_zero($value)` | Whether the value is numeric and `0`, also `-0.0`, `'0'` and `'0.00'`; `null` and `'abc'` are not |
 | `is_count_zero($value)` / `is_count_one($value)` / `is_count_many($value)` | Whether the array or `Countable` has no item / one item / more than one item |
 | `is_app_local_or_test()` | Whether the app runs in the `local` or `testing` environment |

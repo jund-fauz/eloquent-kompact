@@ -13,7 +13,7 @@ Kumpulan alat otomatisasi & helper untuk meningkatkan pengalaman dan kenyamanan 
 composer require jund-fauz/eloquent-kompact
 ```
 
-Membutuhkan PHP 8.3+ dan Laravel 12 atau 13. Service provider didaftarkan lewat package discovery.
+Membutuhkan PHP 8.3+, extension `bcmath` dan Laravel 12 atau 13. Service provider didaftarkan lewat package discovery.
 
 ## Kenapa
 
@@ -102,6 +102,7 @@ php artisan vendor:publish --tag=eloquent-kompact-config
 | `fillable.include_explicitly` | `[]` | Kolom yang selalu masuk daftar fillable dinamis pada model yang tabelnya punya kolom itu, walaupun dikeluarkan oleh `exclude_column_by` |
 | `morph_model_use` | `''` | `'table'` atau `'model'` untuk mendaftarkan morph map dari model-model di `path.model`, lihat [Morph map](#morph-map) |
 | `ide-helper.auto_generate` | `env('KOMPACT_IDE_HELPER', false)` | Menjalankan `kompact:ide-helper` setelah `php artisan migrate` di environment local |
+| `decimal.default-precision` | `3` | Jumlah desimal [helper angka](#fungsi-helper) kalau precision tidak diberikan |
 
 Namespace boleh ditulis dengan atau tanpa backslash di akhir (`App\Models` atau `App\Models\`).
 
@@ -918,6 +919,8 @@ Method Laravel yang mengembalikan hal lain (`explode()`, `length()`, `contains()
 
 ## BoolB
 
+> **Deprecated** sejak `1.21.0`, bersama class internal `Compare`-nya, dan dihapus di rilis major berikutnya. Pakai [fungsi helper](#fungsi-helper) seperti `same_with()` dan `higher_than()` sebagai gantinya.
+
 `JundFauz\EloquentKompact\Builder\BoolB` adalah builder boolean yang immutable, dibaca lewat property readonly `result`. Perbandingannya ketat dan dievaluasi dari kiri ke kanan:
 
 ```php
@@ -991,9 +994,13 @@ use const JundFauz\EloquentKompact\NEW_LINE;
 | `same_with($a, $b, $cast = null)` / `not_same_with($a, $b, $cast = null)` | `$a === $b` / `$a !== $b`. Dengan cast, kedua nilai di-cast dulu dengannya: `same_with('5', 5, 'integer')` → `true` |
 | `cast_as($value, $cast = null)` | Nilai yang di-cast dengan cast Laravel, seperti atribut model: `cast_as('10.5', 'decimal:2')` → `'10.50'`, `cast_as('paid', Status::class)` → `Status::Paid`. Cast tanggal menghasilkan object Carbon. Tanpa cast, nilainya dikembalikan apa adanya |
 | `same_with_one_of($value, ...$others)` | Apakah `$value` `===` dengan salah satu nilai lain; `false` tanpa nilai lain |
-| `higher_than($a, $b)` / `lower_than($a, $b)` | `$a > $b` / `$a < $b` untuk `int`, `float` dan string numerik, misalnya cast decimal seperti `'2.50'` |
-| `higher_than_or_same_with($a, $b)` / `lower_than_or_same_with($a, $b)` | `$a >= $b` / `$a <= $b`, untuk nilai yang sama |
+| `higher_than($a, $b, $precision = null)` / `lower_than($a, $b, $precision = null)` | `$a > $b` / `$a < $b` dengan bcmath, untuk `int`, `float` dan string numerik, misalnya cast decimal seperti `'2.50'`. Desimal setelah `$precision` (default-nya `decimal.default-precision`, `3`) dipotong: `higher_than('0.0005', '0')` bernilai `false`, `higher_than('0.0005', '0', 4)` bernilai `true`. `false` kalau ada nilai yang tidak numerik atau precision-nya negatif |
+| `higher_than_or_same_with($a, $b, $precision = null)` / `lower_than_or_same_with($a, $b, $precision = null)` / `num_same_with($a, $b, $precision = null)` | `$a >= $b` / `$a <= $b` / `$a == $b` sebagai angka, dengan cara yang sama: `num_same_with('2.50', 2.5)` bernilai `true` |
+| `plus($a, $b, $precision = null)` / `minus(…)` / `multiply(…)` / `divide(…)` | `$a + $b` / `$a - $b` / `$a * $b` / `$a / $b` dengan bcmath, sebagai string dengan `$precision` desimal (sisanya dipotong): `plus(0.1, 0.2)` → `'0.300'`, `divide('10', '3', 2)` → `'3.33'`. Melempar `InvalidArgumentException` kalau ada nilai yang tidak numerik atau precision-nya negatif, dan `divide()` melempar `DivisionByZeroError` untuk nol |
 | `is_natural_number($number)` / `is_whole_number($number)` | Apakah `int`-nya `> 0` / `>= 0` |
+| `is_positive_number($number)` / `is_negative_number($number)` | Apakah `int`-nya `> 0` / `< 0` |
+| `is_all_numeric(...$values)` / `is_any_numeric(...$values)` | Apakah semua nilai / minimal satu nilai numerik |
+| `is_not_numeric($value)` / `is_all_not_numeric(...$values)` / `is_any_not_numeric(...$values)` | `! is_numeric()` / apakah tidak ada nilai / minimal satu nilai yang tidak numerik |
 | `is_zero($value)` | Apakah nilainya numerik dan `0`, juga `-0.0`, `'0'` dan `'0.00'`; `null` dan `'abc'` tidak |
 | `is_count_zero($value)` / `is_count_one($value)` / `is_count_many($value)` | Apakah array atau `Countable`-nya tidak punya item / punya satu item / lebih dari satu item |
 | `is_app_local_or_test()` | Apakah app berjalan di environment `local` atau `testing` |
