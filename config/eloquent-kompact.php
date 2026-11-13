@@ -25,4 +25,7 @@ return [
     'ide-helper' => [
         'auto_generate' => env('KOMPACT_IDE_HELPER', false)
     ],
+    'decimal' => [
+        'default-precision' => 3
+    ]
 ];

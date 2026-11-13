@@ -6,9 +6,12 @@ use Countable;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Support\Collection as SupportCollection;
 use Illuminate\Support\Facades\App;
+use InvalidArgumentException;
 use JundFauz\EloquentKompact\Builder\Collection;
 use JundFauz\EloquentKompact\Builder\Str;
 use JundFauz\EloquentKompact\Helper\Arr;
+
+/** Will be categorized per file in next major release */
 
 function is_not_null($value): bool
 {
@@ -302,24 +305,294 @@ function not_same_with(mixed $firstValue, mixed $secondValue, ?string $cast = nu
     return ! same_with($firstValue, $secondValue, $cast);
 }
 
-function higher_than(int|float|string $firstNumber, int|float|string $secondNumber): bool
+/**
+ * Whether every value is numeric
+ *
+ * @param mixed ...$value
+ * @return bool
+ */
+function is_all_numeric(...$value): bool
 {
-    return $firstNumber > $secondNumber;
+    return array_all($value, fn ($value) => is_numeric($value));
 }
 
-function lower_than(int|float|string $firstNumber, int|float|string $secondNumber): bool
+/**
+ * Whether at least one value is numeric
+ *
+ * @param mixed ...$value
+ * @return bool
+ */
+function is_any_numeric(...$value): bool
 {
-    return $firstNumber < $secondNumber;
+    return array_any($value, fn ($value) => is_numeric($value));
 }
 
-function higher_than_or_same_with(int|float|string $firstNumber, int|float|string $secondNumber): bool
+/**
+ * ! is_numeric()
+ *
+ * @param mixed $value
+ * @return bool
+ */
+function is_not_numeric($value): bool
 {
-    return $firstNumber >= $secondNumber;
+    return not(is_numeric($value));
 }
 
-function lower_than_or_same_with(int|float|string $firstNumber, int|float|string $secondNumber): bool
+/**
+ * Whether no value is numeric
+ *
+ * @param mixed ...$value
+ * @return bool
+ */
+function is_all_not_numeric(...$value): bool
 {
-    return $firstNumber <= $secondNumber;
+    return array_all($value, fn ($value) => is_not_numeric($value));
+}
+
+/**
+ * Whether at least one value is not numeric
+ *
+ * @param mixed ...$value
+ * @return bool
+ */
+function is_any_not_numeric(...$value): bool
+{
+    return array_any($value, fn ($value) => is_not_numeric($value));
+}
+
+/**
+ * $firstNumber + $secondNumber with bcmath, as a numeric string
+ *
+ * @param int|float|string $firstNumber
+ * @param int|float|string $secondNumber
+ * @param int|null $precision The number of decimals; the config eloquent-kompact.decimal.default-precision (3) when null. Decimals after it are cut off
+ * @return string
+ * @throws InvalidArgumentException When a number is not numeric or the precision is negative
+ */
+function plus($firstNumber, $secondNumber, ?int $precision = null): string
+{
+    if (check_for_number_comparison($firstNumber, $secondNumber, $precision)) {
+        throw new InvalidArgumentException('Non-number passed as argument or negative number as precision parameter');
+    }
+    normalize_numbers($precision, $firstNumber, $secondNumber);
+    return bcadd($firstNumber, $secondNumber, $precision);
+}
+
+/**
+ * $firstNumber - $secondNumber with bcmath, as a numeric string
+ *
+ * @param int|float|string $firstNumber
+ * @param int|float|string $secondNumber
+ * @param int|null $precision The number of decimals; the config eloquent-kompact.decimal.default-precision (3) when null. Decimals after it are cut off
+ * @return string
+ * @throws InvalidArgumentException When a number is not numeric or the precision is negative
+ */
+function minus($firstNumber, $secondNumber, ?int $precision = null): string
+{
+    if (check_for_number_comparison($firstNumber, $secondNumber, $precision)) {
+        throw new InvalidArgumentException('Non-number passed as argument or negative number as precision parameter');
+    }
+    normalize_numbers($precision, $firstNumber, $secondNumber);
+    return bcsub($firstNumber, $secondNumber, $precision);
+}
+
+/**
+ * $firstNumber * $secondNumber with bcmath, as a numeric string
+ *
+ * @param int|float|string $firstNumber
+ * @param int|float|string $secondNumber
+ * @param int|null $precision The number of decimals; the config eloquent-kompact.decimal.default-precision (3) when null. Decimals after it are cut off
+ * @return string
+ * @throws InvalidArgumentException When a number is not numeric or the precision is negative
+ */
+function multiply($firstNumber, $secondNumber, ?int $precision = null): string
+{
+    if (check_for_number_comparison($firstNumber, $secondNumber, $precision)) {
+        throw new InvalidArgumentException('Non-number passed as argument or negative number as precision parameter');
+    }
+    normalize_numbers($precision, $firstNumber, $secondNumber);
+    return bcmul($firstNumber, $secondNumber, $precision);
+}
+
+/**
+ * $firstNumber / $secondNumber with bcmath, as a numeric string
+ *
+ * @param int|float|string $firstNumber
+ * @param int|float|string $secondNumber
+ * @param int|null $precision The number of decimals; the config eloquent-kompact.decimal.default-precision (3) when null. Decimals after it are cut off
+ * @return string
+ * @throws InvalidArgumentException When a number is not numeric or the precision is negative
+ * @throws \DivisionByZeroError When $secondNumber is zero
+ */
+function divide($firstNumber, $secondNumber, ?int $precision = null): string
+{
+    if (check_for_number_comparison($firstNumber, $secondNumber, $precision)) {
+        throw new InvalidArgumentException('Non-number passed as argument or negative number as precision parameter');
+    }
+    normalize_numbers($precision, $firstNumber, $secondNumber);
+    return bcdiv($firstNumber, $secondNumber, $precision);
+}
+
+/**
+ * $firstNumber > $secondNumber with bcmath; false when a number is not numeric or the precision is negative
+ *
+ * @param int|float|string $firstNumber
+ * @param int|float|string $secondNumber
+ * @param int|null $precision The number of decimals; the config eloquent-kompact.decimal.default-precision (3) when null. Decimals after it are cut off
+ * @return bool
+ */
+function higher_than($firstNumber, $secondNumber, ?int $precision = null): bool
+{
+    if (check_for_number_comparison($firstNumber, $secondNumber, $precision)) {
+        return false;
+    }
+    normalize_numbers($precision, $firstNumber, $secondNumber);
+    return same_with(bccomp($firstNumber, $secondNumber, $precision), 1);
+}
+
+/**
+ * $firstNumber == $secondNumber as numbers with bcmath; false when a number is not numeric or the precision is negative
+ *
+ * @param int|float|string $firstNumber
+ * @param int|float|string $secondNumber
+ * @param int|null $precision The number of decimals; the config eloquent-kompact.decimal.default-precision (3) when null. Decimals after it are cut off
+ * @return bool
+ */
+function num_same_with($firstNumber, $secondNumber, ?int $precision = null): bool
+{
+    if (check_for_number_comparison($firstNumber, $secondNumber, $precision)) {
+        return false;
+    }
+    normalize_numbers($precision, $firstNumber, $secondNumber);
+    return same_with(bccomp($firstNumber, $secondNumber, $precision), 0);
+}
+
+/**
+ * $firstNumber < $secondNumber with bcmath; false when a number is not numeric or the precision is negative
+ *
+ * @param int|float|string $firstNumber
+ * @param int|float|string $secondNumber
+ * @param int|null $precision The number of decimals; the config eloquent-kompact.decimal.default-precision (3) when null. Decimals after it are cut off
+ * @return bool
+ */
+function lower_than($firstNumber, $secondNumber, ?int $precision = null): bool
+{
+    if (check_for_number_comparison($firstNumber, $secondNumber, $precision)) {
+        return false;
+    }
+    normalize_numbers($precision, $firstNumber, $secondNumber);
+    return same_with(bccomp($firstNumber, $secondNumber, $precision), -1);
+}
+
+/**
+ * $firstNumber >= $secondNumber with bcmath; false when a number is not numeric or the precision is negative
+ *
+ * @param int|float|string $firstNumber
+ * @param int|float|string $secondNumber
+ * @param int|null $precision The number of decimals; the config eloquent-kompact.decimal.default-precision (3) when null. Decimals after it are cut off
+ * @return bool
+ */
+function higher_than_or_same_with($firstNumber, $secondNumber, ?int $precision = null): bool
+{
+    if (check_for_number_comparison($firstNumber, $secondNumber, $precision)) {
+        return false;
+    }
+    normalize_numbers($precision, $firstNumber, $secondNumber);
+    return same_with_one_of(bccomp($firstNumber, $secondNumber, $precision), 1, 0);
+}
+
+/**
+ * $firstNumber <= $secondNumber with bcmath; false when a number is not numeric or the precision is negative
+ *
+ * @param int|float|string $firstNumber
+ * @param int|float|string $secondNumber
+ * @param int|null $precision The number of decimals; the config eloquent-kompact.decimal.default-precision (3) when null. Decimals after it are cut off
+ * @return bool
+ */
+function lower_than_or_same_with($firstNumber, $secondNumber, ?int $precision = null): bool
+{
+    if (check_for_number_comparison($firstNumber, $secondNumber, $precision)) {
+        return false;
+    }
+    normalize_numbers($precision, $firstNumber, $secondNumber);
+    return same_with_one_of(bccomp($firstNumber, $secondNumber, $precision), -1, 0);
+}
+
+/**
+ * @param $firstNumber
+ * @param $secondNumber
+ * @param int|null $precision
+ * @return bool
+ * @internal
+ */
+function check_for_number_comparison($firstNumber, $secondNumber, ?int $precision = null): bool
+{
+    return is_any_not_numeric($firstNumber, $secondNumber)
+        || (is_not_null($precision) && is_negative_number($precision));
+}
+
+/**
+ * Fills in the default precision and turns the numbers into strings bcmath reads, with exponents written out
+ *
+ * @param int|null $precision
+ * @param mixed ...$numbers
+ * @return void
+ * @internal
+ */
+function normalize_numbers(?int &$precision = null, &...$numbers): void
+{
+    assign_default_precision($precision);
+    foreach ($numbers as &$number) {
+        $number = expand_exponent(
+            is_float($number)
+                ? json_encode($number, JSON_PRESERVE_ZERO_FRACTION)
+                : trim((string)$number)
+        );
+    }
+}
+
+/**
+ * @param string $number
+ * @return string
+ * @internal
+ */
+function expand_exponent(string $number): string
+{
+    if (! str_contains(strtolower($number), 'e')) {
+        return $number;
+    }
+
+    if (! preg_match('/^([+-]?)(\d*)(?:\.(\d*))?[eE]([+-]?\d+)$/', $number, $matches)) {
+        return $number;
+    }
+
+    $sign = $matches[1];
+    $integer = $matches[2] === '' ? '0' : $matches[2];
+    $fraction = $matches[3] ?? '';
+    $digits = $integer . $fraction;
+    $decimalPosition = strlen($integer) + (int)$matches[4];
+
+    if ($decimalPosition <= 0) {
+        $decimal = '0.' . str_repeat('0', -$decimalPosition) . $digits;
+    } elseif ($decimalPosition >= strlen($digits)) {
+        $decimal = $digits . str_repeat('0', $decimalPosition - strlen($digits));
+    } else {
+        $decimal = substr($digits, 0, $decimalPosition)
+            . '.'
+            . substr($digits, $decimalPosition);
+    }
+
+    return $sign . $decimal;
+}
+
+/**
+ * @param int|null $precision
+ * @return void
+ * @internal
+ */
+function assign_default_precision(?int &$precision = null): void
+{
+    $precision ??= config('eloquent-kompact.decimal.default-precision') ?? 3;
 }
 
 function in(mixed $needle, array|SupportCollection|Collection $haystack, bool $strict = false): bool
@@ -431,9 +704,31 @@ function collect(mixed ...$data): Collection
     });
 }
 
-function is_natural_number(int $number): bool
+/**
+ * Whether the int is < 0
+ *
+ * @param int $number
+ * @return bool
+ */
+function is_negative_number(int $number): bool
+{
+    return $number < 0;
+}
+
+/**
+ * Whether the int is > 0
+ *
+ * @param int $number
+ * @return bool
+ */
+function is_positive_number(int $number): bool
 {
     return $number > 0;
+}
+
+function is_natural_number(int $number): bool
+{
+    return is_positive_number($number);
 }
 
 function is_whole_number(int $number): bool

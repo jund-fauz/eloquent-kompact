@@ -42,6 +42,18 @@ use function JundFauz\EloquentKompact\is_count_one;
 use function JundFauz\EloquentKompact\is_count_zero;
 use function JundFauz\EloquentKompact\is_app_local_or_test;
 use function JundFauz\EloquentKompact\is_natural_number;
+use function JundFauz\EloquentKompact\is_negative_number;
+use function JundFauz\EloquentKompact\is_positive_number;
+use function JundFauz\EloquentKompact\is_all_numeric;
+use function JundFauz\EloquentKompact\is_any_numeric;
+use function JundFauz\EloquentKompact\is_not_numeric;
+use function JundFauz\EloquentKompact\is_all_not_numeric;
+use function JundFauz\EloquentKompact\is_any_not_numeric;
+use function JundFauz\EloquentKompact\num_same_with;
+use function JundFauz\EloquentKompact\plus;
+use function JundFauz\EloquentKompact\minus;
+use function JundFauz\EloquentKompact\multiply;
+use function JundFauz\EloquentKompact\divide;
 use function JundFauz\EloquentKompact\is_whole_number;
 use function JundFauz\EloquentKompact\is_zero;
 use function JundFauz\EloquentKompact\is_not_array;
@@ -593,6 +605,108 @@ class FunctionsTest extends TestCase
         $this->assertTrue(is_whole_number(1));
         $this->assertFalse(is_whole_number(-1));
         $this->assertFalse(is_whole_number(PHP_INT_MIN));
+    }
+
+    #[Test]
+    public function it_checks_negative_and_positive_numbers(): void
+    {
+        $this->assertTrue(is_negative_number(-1));
+        $this->assertFalse(is_negative_number(0));
+        $this->assertFalse(is_negative_number(1));
+
+        $this->assertTrue(is_positive_number(1));
+        $this->assertFalse(is_positive_number(0));
+        $this->assertFalse(is_positive_number(-1));
+    }
+
+    #[Test]
+    public function it_checks_numeric_values(): void
+    {
+        $this->assertTrue(is_all_numeric(1, '2.5', 1e3));
+        $this->assertFalse(is_all_numeric(1, 'abc'));
+        $this->assertTrue(is_any_numeric('abc', '2'));
+        $this->assertFalse(is_any_numeric('abc', null));
+        $this->assertTrue(is_not_numeric('abc'));
+        $this->assertFalse(is_not_numeric('1'));
+        $this->assertTrue(is_all_not_numeric('abc', null));
+        $this->assertFalse(is_all_not_numeric('abc', 1));
+        $this->assertTrue(is_any_not_numeric(1, null));
+        $this->assertFalse(is_any_not_numeric(1, '2'));
+    }
+
+    #[Test]
+    public function it_calculates_with_bcmath(): void
+    {
+        $this->assertSame('2.700', plus('1.5', '1.2'));
+        $this->assertSame('0.300', plus(0.1, 0.2));
+        $this->assertSame('3.000', plus(1, 2));
+        $this->assertSame('2.70', plus('1.5', '1.2', 2));
+        $this->assertSame('-0.750', minus(1.5, 2.25));
+        $this->assertSame('3.75', minus('5', '1.25', 2));
+        $this->assertSame('2469.000', multiply(1234.5, 2));
+        $this->assertSame('100.50', multiply('1.005', '100', 2));
+        $this->assertSame('0.400', multiply('0.0004', '1000'));
+        $this->assertSame('3.333', divide('10', '3'));
+        $this->assertSame('0.33333', divide(1, 3, 5));
+        $this->assertSame('16666.666', divide('10', '0.0006'));
+        $this->assertSame('2500.000', divide('1', '0.0004'));
+    }
+
+    #[Test]
+    public function it_reads_floats_exponents_and_padded_numbers(): void
+    {
+        $this->assertSame('100000000000000000001.000', plus(1e20, 1));
+        $this->assertSame('0.0000001500', plus(1.5e-7, 0, 10));
+        $this->assertSame('1001.000', plus('1e3', '1'));
+        $this->assertSame('1001.000', plus('1E3', '1'));
+        $this->assertSame('-150.000', plus('-1.5e2', '0'));
+        $this->assertSame('5.000', plus('.5e1', '0'));
+        $this->assertSame('3.000', plus(' 2 ', '1'));
+        $this->assertTrue(higher_than('1E5', '1'));
+        $this->assertTrue(higher_than(1e20, 1));
+    }
+
+    #[Test]
+    public function it_rejects_non_numbers_in_calculations(): void
+    {
+        $this->expectException(\InvalidArgumentException::class);
+
+        plus('abc', '1');
+    }
+
+    #[Test]
+    public function it_rejects_a_negative_precision_in_calculations(): void
+    {
+        $this->expectException(\InvalidArgumentException::class);
+
+        divide(1, 2, -1);
+    }
+
+    #[Test]
+    public function it_compares_numbers_with_a_precision(): void
+    {
+        $this->assertTrue(num_same_with('2.50', 2.5));
+        $this->assertTrue(num_same_with(1.9996, '1.9996'));
+        $this->assertTrue(num_same_with(0.1 + 0.2, 0.3));
+        $this->assertFalse(num_same_with('1.5', '1.2'));
+        $this->assertTrue(num_same_with('1.2344', '1.2345'));
+        $this->assertFalse(num_same_with('1.2344', '1.2345', 4));
+        $this->assertFalse(higher_than('0.0005', '0'));
+        $this->assertTrue(higher_than('0.0005', '0', 4));
+        $this->assertFalse(lower_than('1.2344', '1.2345'));
+        $this->assertTrue(lower_than('1.2344', '1.2345', 4));
+        $this->assertTrue(higher_than(1234.5, 1));
+    }
+
+    #[Test]
+    public function it_does_not_compare_non_numbers(): void
+    {
+        $this->assertFalse(higher_than('abc', '1'));
+        $this->assertFalse(lower_than('abc', '1'));
+        $this->assertFalse(num_same_with('abc', 'abc'));
+        $this->assertFalse(higher_than(null, 1));
+        $this->assertFalse(higher_than_or_same_with(1, 1, -1));
+        $this->assertFalse(lower_than_or_same_with(1, 1, -1));
     }
 
     #[Test]
