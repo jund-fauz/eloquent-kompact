@@ -26,7 +26,8 @@
         },
         "files": [
             "src/Helper/Functions.php",
-            "src/Helper/Constant.php"
+            "src/Helper/Constant.php",
+            "src/Column/Payload.php"
         ]
     },
     "autoload-dev": {

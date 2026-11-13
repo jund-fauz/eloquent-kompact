@@ -8,6 +8,7 @@ use JundFauz\EloquentKompact\Column\Config;
 use JundFauz\EloquentKompact\Column\Payload;
 use JundFauz\EloquentKompact\Tests\TestCase;
 use PHPUnit\Framework\Attributes\Test;
+use const JundFauz\EloquentKompact\Column\ALL_NULLABLE;
 
 class ConfigTest extends TestCase
 {
@@ -60,7 +61,7 @@ class ConfigTest extends TestCase
     {
         [$title, $body] = $columns = [self::column('title'), self::column('body')];
 
-        Config::apply($columns, Payload::allNullable);
+        Config::apply($columns, ALL_NULLABLE);
 
         $this->assertTrue($title->nullable);
         $this->assertTrue($body->nullable);
@@ -134,6 +135,8 @@ class ConfigTest extends TestCase
         );
         $this->assertSame(['title' => 'nullable'], Payload::build(['title' => 'unique'], ['title' => 'nullable']));
         $this->assertSame(['all' => 'nullable'], Payload::allNullable);
+        $this->assertSame(['all' => 'nullable'], ALL_NULLABLE);
+        $this->assertSame(Payload::allNullable, ALL_NULLABLE);
     }
 
     private static function column(string $name): ColumnDefinition
