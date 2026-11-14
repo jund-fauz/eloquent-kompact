@@ -7,6 +7,55 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [2.0.0] - 2026-11-14
+
+A major release: the helpers moved to namespaces, the number helpers became the `Math` class, and the deprecated classes are removed. See [UPGRADE.md](UPGRADE.md) for the old name of every helper and what replaces the removed ones.
+
+### Added
+
+- `Math\Math`: `plus()`, `minus()`, `multiply()`, `divide()`, `higherThan()`, `lowerThan()`, `equalTo()`, `higherThanOrEqualTo()` and `lowerThanOrEqualTo()` with bcmath, called statically with exactly two numbers. The precision is the `$precision` of the class, or the config `decimal.default-precision` when it is `null`, so a child class with its own precision replaces the precision argument of the old helpers. They throw an `InvalidArgumentException` for another number of arguments, a value that is not a `float`, an `int` or a numeric string, or a negative precision, a `DivisionByZeroError` for `divide()` by zero and a `BadMethodCallException` for another method.
+- Command `make:kompact-math` (`--class`, `--precision`, `--output`): generates a child class of `Math` with its precision and the `@method` docblock. Missing options are asked; the precision defaults to `decimal.default-precision` and the namespace to `path.math`. An existing file is kept, and a class named `Math` imports the package class as `BaseMath`.
+- Config `path.math` (`App\Logic`): the default namespace of `make:kompact-math`.
+- Helpers `is_not()`, `is_all()`, `is_any()`, `is_all_not()`, `is_any_not()` and `is_any_of()`, which take a check by its name, e.g. `is_all('null', $a, $b)`, `is_not('dir', $path)` or `is_any_of($value, 'int', 'string')`. The check is a function that returns a `bool`: the name itself, `is_` + the name, or the same in this package. Nested arrays are flattened, and a name without such a function throws a `BadMethodCallException`.
+- Helpers `is_all_type_of()` and `is_any_not_type_of()`: whether every value has / at least one value has not the type, or one of the types, checked by PHP's own `is_` functions, e.g. `is_all_type_of(['int', 'string'], 1, 'a')`.
+- Helper `Array\map()`: `array_map()` that also passes the key to the callback.
+- Helpers `namespace_trim()`, `add_extension()`, `add_php_extension()`, `syntax()` and `comment_doc()`, and `String\rtrim_multiline()` (`@experimental`).
+- File helpers `write_file()`, `is_file_exist()`, `ensure_directory_exists()`, `create_php_content()`, `build_class()` and `build_class_docblock()`, used by the generating commands.
+- `Str::join()`, `concat()`, `add()`, `addWord()`, `addAtStart()`, `addWordAtStart()`, `addNamespace()`, `addNamespaceAtStart()`, `addPath()` and `addPathAtStart()` accept arrays, which are flattened: `Str::of('a')->add(['b', ['c']])` → `abc`.
+
+### Changed
+
+- **Breaking:** the array helpers moved to the `JundFauz\EloquentKompact\Array` namespace and the string helpers to `JundFauz\EloquentKompact\String`, most of them without their `array_` or `str_` prefix, e.g. `array_pull()` → `Array\pull()`, `str_concat()` → `String\concat()`, `is_associative_array()` → `Array\is_associative()` and `merge_mixed_array()` → `Array\merge_mixed()`. `merge()`, `merge_as_array()`, `assign_as()`, `get_array_list()`, `in()`, `is_array_or_collection()`, `is_count_zero()`, `is_count_one()`, `is_count_many()` and `stringify()` keep their name in the new namespace.
+- **Breaking:** `Math` replaces the number helpers, and its comparisons throw an `InvalidArgumentException` for a value that is not numeric or `null`, where `higher_than()` and the other comparisons returned `false`.
+- The checks that replace `is_one_of_them_null()`, `is_all_numeric()` and the other separate checks flatten nested arrays, also where the old helper did not: `is_any('null', [null])` is `true`, where `is_one_of_them_null([null])` was `false`.
+- The package now requires the `mbstring` extension.
+- `kompact:column-builder` no longer ends the files it generates with a new line.
+- `Helper\Path`, an internal class, moved to `Internal\Path\Path`.
+
+### Removed
+
+- **Breaking:** helpers `is_all_null()`, `is_all_not_null()`, `is_one_of_them_null()` and `is_one_of_them_not_null()`; use `is_all('null', …)`, `is_all_not('null', …)`, `is_any('null', …)` and `is_any_not('null', …)`.
+- **Breaking:** helpers `is_all_numeric()`, `is_any_numeric()`, `is_not_numeric()`, `is_all_not_numeric()` and `is_any_not_numeric()`; use `is_all('numeric', …)` and the like.
+- **Breaking:** helpers `is_not_array()`, `is_not_dir()` and `not_defined()`; use `is_not('array', …)`, `is_not('dir', …)` and `is_not('defined', …)`.
+- **Breaking:** helpers `plus()`, `minus()`, `multiply()`, `divide()`, `higher_than()`, `lower_than()`, `higher_than_or_same_with()`, `lower_than_or_same_with()` and `num_same_with()`; use `Math`.
+- **Breaking:** helpers `ternary()`, `elvis()` and `null_coalescing()`, deprecated in favor of the PHP operators.
+- **Breaking:** helpers `is_positive_number()`, `is_negative_number()`, `is_natural_number()`, `is_whole_number()` and `is_zero()`.
+- **Breaking:** `Builder\BoolB` and its internal `Compare` class, deprecated since `1.21.0`.
+- **Breaking:** `Helper\Arr` with `pullMany()` and `isKeysDontExist()`; use `Array\pull()`.
+- **Breaking:** the `Column\Payload` class with `allNullable` and `build()`, deprecated since `1.19.0`; use the `ALL_NULLABLE` constant, which stays, and `Array\merge()`.
+
+### Documentation
+
+- Added the migration guide `UPGRADE.md` (and `UPGRADE.id.md`) from `1.x` to `2.0`.
+- Documented `Math` and `make:kompact-math` in place of `BoolB`, the helpers by namespace with the new checks, the config `path.math`, the `mbstring` requirement, the arrays taken by the `Str` methods, and the `^2.0` constraint.
+- Added the PHPDoc of the helper functions and of `Math`.
+
+### Tests
+
+- Added tests for `Math` with the default precision, the precision of a child class and of the config, exponents and the rejected arguments, and for `make:kompact-math`.
+- Added tests for the checks by name, `is_all_type_of()`, `Array\map()`, `String\rtrim_multiline()` and the file and class helpers.
+- Moved the helper tests to the new namespaces, and removed the tests of the removed helpers and classes.
+
 ## [1.21.0] - 2026-11-13
 
 ### Added
@@ -2351,7 +2400,8 @@ The first stable release: from now on, breaking changes only come in a major rel
 - `RawQuery` static helpers for raw SQL expressions.
 - Translations for `en` and `id`.
 
-[Unreleased]: https://github.com/jund-fauz/eloquent-kompact/compare/v1.21.0...HEAD
+[Unreleased]: https://github.com/jund-fauz/eloquent-kompact/compare/v2.0.0...HEAD
+[2.0.0]: https://github.com/jund-fauz/eloquent-kompact/compare/v1.21.0...v2.0.0
 [1.21.0]: https://github.com/jund-fauz/eloquent-kompact/compare/v1.20.0...v1.21.0
 [1.20.0]: https://github.com/jund-fauz/eloquent-kompact/compare/v1.19.0...v1.20.0
 [1.19.0]: https://github.com/jund-fauz/eloquent-kompact/compare/v1.18.0...v1.19.0
