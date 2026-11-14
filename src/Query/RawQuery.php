@@ -9,13 +9,9 @@ use JundFauz\EloquentKompact\Builder\Str;
 use JundFauz\EloquentKompact\Column\Convert;
 use JundFauz\EloquentKompact\Internal\Concerns\Builder;
 use JundFauz\EloquentKompact\Internal\Database\Driver;
-use function JundFauz\EloquentKompact\array_wrap;
-use function JundFauz\EloquentKompact\is_natural_number;
+use function JundFauz\EloquentKompact\Array\wrap;
 use function JundFauz\EloquentKompact\is_not_null;
-use function JundFauz\EloquentKompact\is_whole_number;
-use function JundFauz\EloquentKompact\str_concat;
-use function JundFauz\EloquentKompact\str_empty_if_false;
-use function JundFauz\EloquentKompact\word_concat;
+use function JundFauz\EloquentKompact\String\concat;
 
 /**
  * NOTE: Built to compatible with SQLite, MySQL & PostgreSQL database
@@ -31,7 +27,7 @@ class RawQuery extends Builder implements Expression
     public static function select(string|array $column, string $table): static
     {
         return Str::of('SELECT')
-            ->addWord(join(', ', array_wrap($column)), 'FROM', $table)
+            ->addWord(join(', ', wrap($column)), 'FROM', $table)
             ->asRawQuery();
     }
 
@@ -97,7 +93,7 @@ class RawQuery extends Builder implements Expression
     {
         $columnNames = $this->withResult(...$columnNames);
         $result = [
-            str_concat(array_shift($columnNames), ' * 1.0'),
+            concat(array_shift($columnNames), ' * 1.0'),
             ...array_map(fn (string $columnName) => "NULLIF($columnName, 0)", $columnNames)
         ];
 
@@ -118,7 +114,7 @@ class RawQuery extends Builder implements Expression
         if (is_not_null($defaultValue)) {
             $result .= "\n  ELSE $defaultValue";
         }
-        return $this->set(str_concat($result, "\nEND"));
+        return $this->set(concat($result, "\nEND"));
     }
 
     public static function flexibleCase(string|self|array $conditions, mixed $defaultValue = null): self
@@ -139,12 +135,12 @@ class RawQuery extends Builder implements Expression
         if (is_not_null($defaultValue)) {
             $result .= "\n  ELSE $defaultValue";
         }
-        return self::create(str_concat($result, "\nEND"));
+        return self::create(concat($result, "\nEND"));
     }
 
     public function concat(string|self ...$values): static
     {
-        return $this->set(str_concat(
+        return $this->set(concat(
             "CONCAT_WS('', ",
             join(', ', $this->withResult(...$values)),
             ')'
@@ -175,7 +171,7 @@ class RawQuery extends Builder implements Expression
         string|array $select = '*',
         bool $isUnionAll = true,
     ): static {
-        $columns = array_wrap($columns);
+        $columns = wrap($columns);
 
         return self::recursiveUnion(
             $cteName,
@@ -231,7 +227,7 @@ class RawQuery extends Builder implements Expression
     public function dateAfter(int $count, Interval $type = Interval::Day): static
     {
         return $this->set(Driver::matcher(
-            sqlite: str_concat("datetime($this, '$count ", Str::of($type->value)->plural()->lower(), "')"),
+            sqlite: concat("datetime($this, '$count ", Str::of($type->value)->plural()->lower(), "')"),
             etc: "$this + INTERVAL '$count' $type->value"
         ));
     }
@@ -245,7 +241,7 @@ class RawQuery extends Builder implements Expression
         return $this->set(Driver::matcher(
             mysql: "TIMESTAMPDIFF($interval->value, $secondColumnName, $this)",
             pgsql: "EXTRACT($interval->value FROM ($this - $secondColumnName))",
-            sqlite: str_concat("(strftime('%s', $this) - strftime('%s', $secondColumnName)) / ", match ($interval) {
+            sqlite: concat("(strftime('%s', $this) - strftime('%s', $secondColumnName)) / ", match ($interval) {
                 Interval::Day => 60 * 60 * 24,
                 default => ''
             })
@@ -310,10 +306,10 @@ class RawQuery extends Builder implements Expression
     private static function conditions(string|self|array $conditions, string $table = ''): string
     {
         $result = [];
-        foreach (array_wrap($conditions) as $columnName => $value) {
+        foreach (wrap($conditions) as $columnName => $value) {
             $result[] = is_int($columnName)
                 ? (string)$value
-                : str_concat(self::qualify($columnName, $table), ' = ', (string)$value);
+                : concat(self::qualify($columnName, $table), ' = ', (string)$value);
         }
 
         return join(' AND ', $result);

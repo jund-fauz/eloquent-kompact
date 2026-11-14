@@ -4,7 +4,7 @@ namespace JundFauz\EloquentKompact\Column;
 
 use InvalidArgumentException;
 use JundFauz\EloquentKompact\Builder\Str;
-use function JundFauz\EloquentKompact\array_key_values;
+use function JundFauz\EloquentKompact\Array\key_values;
 
 final class Convert
 {
@@ -43,7 +43,7 @@ final class Convert
             if (count($model) !== 1 || array_is_list($model)) {
                 throw new InvalidArgumentException('A prefixed model has to be [prefix => model class].');
             }
-            [$prefix, $model] = array_key_values($model);
+            [$prefix, $model] = key_values($model);
         }
         $baseName = Str::of($model)->classBasename();
         if ($prefix) {

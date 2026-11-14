@@ -14,10 +14,10 @@ use JundFauz\EloquentKompact\Model\KompactPivot;
 use JundFauz\EloquentKompact\Model\KompactUser;
 use JundFauz\EloquentKompact\Regex\Regex;
 use function JundFauz\EloquentKompact\collect;
-use function JundFauz\EloquentKompact\is_all_not_null;
-use function JundFauz\EloquentKompact\is_all_null;
+use function JundFauz\EloquentKompact\is_all;
+use function JundFauz\EloquentKompact\is_all_not;
+use function JundFauz\EloquentKompact\is_any;
 use function JundFauz\EloquentKompact\is_not_null;
-use function JundFauz\EloquentKompact\is_one_of_them_null;
 use function JundFauz\EloquentKompact\not_in;
 
 /**
@@ -53,14 +53,14 @@ class Validation
 
     public function decimal(?int $minDecimal = null, ?int $maxDecimal = null): static
     {
-        if (is_all_null($minDecimal, $maxDecimal)) {
+        if (is_all('null', $minDecimal, $maxDecimal)) {
             throw new BadMethodCallException("Function should called with at least one parameter.");
         }
         $result = Str::of('decimal:', true);
         if (is_not_null($minDecimal)) {
             $result->concat($minDecimal);
         }
-        if (is_all_not_null($minDecimal, $maxDecimal)) {
+        if (is_all_not('null', $minDecimal, $maxDecimal)) {
             $result->concat(',');
         }
         if (is_not_null($maxDecimal)) {
@@ -92,7 +92,7 @@ class Validation
      */
     public function unique(?string $columnName = null, ?string $model = null, ?Model $record = null): static
     {
-        return $this->add(is_one_of_them_null($columnName, $model) ? 'unique' : $model::uniqueRule($columnName, $record));
+        return $this->add(is_any('null', $columnName, $model) ? 'unique' : $model::uniqueRule($columnName, $record));
     }
 
     public function payload(): array

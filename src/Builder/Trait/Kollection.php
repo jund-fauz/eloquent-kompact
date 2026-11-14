@@ -3,8 +3,8 @@
 namespace JundFauz\EloquentKompact\Builder\Trait;
 
 use JundFauz\EloquentKompact\Builder\Str;
-use function JundFauz\EloquentKompact\array_filter_filled;
-use function JundFauz\EloquentKompact\array_get_or;
+use function JundFauz\EloquentKompact\Array\filter_filled;
+use function JundFauz\EloquentKompact\Array\get_or;
 use function JundFauz\EloquentKompact\is_not_null;
 
 trait Kollection
@@ -16,7 +16,7 @@ trait Kollection
 
     public function filterFilled(): static
     {
-        return $this->newInstance(array_filter_filled($this->items));
+        return $this->newInstance(filter_filled($this->items));
     }
 
     public function deleteNull(): static
@@ -41,7 +41,7 @@ trait Kollection
 
     public function getOr(string ...$keys): mixed
     {
-        return $this->return(array_get_or($this->items, ...$keys));
+        return $this->return(get_or($this->items, ...$keys));
     }
 
     public function getOrWithDefault(mixed $default, string ...$keys): mixed

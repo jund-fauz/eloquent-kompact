@@ -20,16 +20,16 @@ use JundFauz\EloquentKompact\Column\ColumnCreator;
 use JundFauz\EloquentKompact\Model\Traits\AutoRelation;
 use ReflectionClass;
 use ReflectionException;
-use function JundFauz\EloquentKompact\array_pull_list;
+use function JundFauz\EloquentKompact\Array\merge_as_array;
+use function JundFauz\EloquentKompact\Array\pull_list;
 use function JundFauz\EloquentKompact\comment;
 use function JundFauz\EloquentKompact\full_path_on_app;
-use function JundFauz\EloquentKompact\merge_as_array;
 use function JundFauz\EloquentKompact\namespace_concat;
 use function JundFauz\EloquentKompact\path_concat;
 use function JundFauz\EloquentKompact\same_with;
-use function JundFauz\EloquentKompact\str_before_last;
-use function JundFauz\EloquentKompact\str_concat;
-use function JundFauz\EloquentKompact\str_empty_if_false;
+use function JundFauz\EloquentKompact\String\before_last;
+use function JundFauz\EloquentKompact\String\concat;
+use function JundFauz\EloquentKompact\String\empty_if_false;
 use function JundFauz\EloquentKompact\word_concat;
 use function JundFauz\EloquentKompact\write_line;
 use const JundFauz\EloquentKompact\DISTANCE_LINE;
@@ -71,8 +71,8 @@ final class IdeHelperCommand extends Command
             if ($relations = $this->relationsOf($parent, $models)) {
                 $blocks[] = $this->renderMixin($parent, $relations);
                 $mixins[] = [
-                    'classFqn' => str_concat(NAMESPACE_DELIMITER, $parent),
-                    'mixinFqn' => str_concat(NAMESPACE_DELIMITER, $this->mixinFqn($parent))
+                    'classFqn' => concat(NAMESPACE_DELIMITER, $parent),
+                    'mixinFqn' => concat(NAMESPACE_DELIMITER, $this->mixinFqn($parent))
                 ];
             }
         }
@@ -217,7 +217,7 @@ final class IdeHelperCommand extends Command
     {
         return namespace_concat(
             self::MixinNamespace,
-            str_before_last($class, NAMESPACE_DELIMITER),
+            before_last($class, NAMESPACE_DELIMITER),
             Str::of($class)->classBasename()->addAtStart(self::MixinPrefix)
         );
     }
@@ -228,31 +228,31 @@ final class IdeHelperCommand extends Command
         $lines = [];
 
         foreach ($relations as $name => $relation) {
-            [$type, $class, $builder] = array_pull_list($relation, 'type', 'class', 'builder');
+            [$type, $class, $builder] = pull_list($relation, 'type', 'class', 'builder');
 
-            $lines[] = str_concat(self::Indentation,
+            $lines[] = concat(self::Indentation,
                 ' * @property-read \\',
                 in_array($type, self::SingularTypes, true)
                     ? "$class|null"
-                    : str_concat(namespace_concat('Illuminate', 'Database', 'Eloquent', 'Collection'), "<int, \\$class>"),
+                    : concat(namespace_concat('Illuminate', 'Database', 'Eloquent', 'Collection'), "<int, \\$class>"),
                 " \$$name"
             );
-            $lines[] = word_concat(self::Indentation,  str_concat('* @method \\', self::RelationClasses[$type], "<\\$class, \\$parent>", str_empty_if_false($builder, "|\\$builder")), "$name()");
+            $lines[] = word_concat(self::Indentation,  concat('* @method \\', self::RelationClasses[$type], "<\\$class, \\$parent>", empty_if_false($builder, "|\\$builder")), "$name()");
         }
 
         return write_line(
-            word_concat('namespace', str_before_last($mixin, '\\'), '{'),
-            str_concat(self::Indentation, '/**'),
+            word_concat('namespace', before_last($mixin, '\\'), '{'),
+            concat(self::Indentation, '/**'),
             $lines,
             word_concat(self::Indentation, '*/'),
-            str_concat(self::Indentation, word_concat('class', class_basename($mixin), '{}')),
+            concat(self::Indentation, word_concat('class', class_basename($mixin), '{}')),
             '}'
         );
     }
 
     protected function renderFile(array $blocks): string
     {
-        return str_concat(
+        return concat(
             join(DISTANCE_LINE, [
                 write_line(
                     '<?php',
@@ -292,7 +292,7 @@ final class IdeHelperCommand extends Command
 
         $json['helperCode']['classMixins'] = [...array_values($kept), ...$mixins];
 
-        file_put_contents($path, str_concat(
+        file_put_contents($path, concat(
             json_encode($json, JSON_PRETTY_PRINT | JSON_UNESCAPED_SLASHES | JSON_THROW_ON_ERROR),
             NEW_LINE
         ));

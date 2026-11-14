@@ -6,7 +6,7 @@ use Illuminate\Cache\Repository;
 use Illuminate\Support\Facades\Cache;
 use Illuminate\Support\Facades\Schema;
 use function JundFauz\EloquentKompact\schema_concat;
-use function JundFauz\EloquentKompact\str_lower;
+use function JundFauz\EloquentKompact\String\lower;
 
 final class ColumnListing
 {
@@ -23,7 +23,7 @@ final class ColumnListing
 
     public static function has(string $table, string $column): bool
     {
-        return in_array(str_lower($column), array_map(str_lower(...), self::of($table)), true);
+        return in_array(lower($column), array_map(lower(...), self::of($table)), true);
     }
 
     public static function flush(): void

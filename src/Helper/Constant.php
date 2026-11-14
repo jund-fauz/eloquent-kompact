@@ -6,4 +6,7 @@ const NEW_LINE = "\n";
 const DISTANCE_LINE = "\n\n";
 const NAMESPACE_DELIMITER = '\\';
 const PATH_DELIMITER = '/';
-const TAB = '    ';
+const TAB = "    ";
+
+/** @internal  */
+const LIB_NAMESPACE = 'JundFauz\EloquentKompact';

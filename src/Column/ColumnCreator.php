@@ -8,9 +8,9 @@ use JundFauz\EloquentKompact\Helper\Error\ErrorThrow;
 use ReflectionClass;
 use ReflectionClassConstant;
 use function JundFauz\EloquentKompact\collect;
-use function JundFauz\EloquentKompact\in;
+use function JundFauz\EloquentKompact\Array\in;
 use function JundFauz\EloquentKompact\is_not_null;
-use function JundFauz\EloquentKompact\str_concat;
+use function JundFauz\EloquentKompact\String\concat;
 
 /**
  * @method static string enum(string $column)
@@ -75,7 +75,7 @@ final class ColumnCreator
         $customToken = self::getCustomToken($method);
 
         if ((defined($constant) && in(constant($constant), self::tokens(), true)) || $customToken) {
-            return str_concat($parameters[0], self::$delimiter, match (true) {
+            return concat($parameters[0], self::$delimiter, match (true) {
                 is_not_null($customToken) => $customToken,
                 defined($constant) => constant($constant),
             });

@@ -5,7 +5,7 @@ namespace JundFauz\EloquentKompact\Regex;
 use JundFauz\EloquentKompact\Builder\Str;
 use JundFauz\EloquentKompact\Internal\Concerns\Builder;
 use function JundFauz\EloquentKompact\collect;
-use function JundFauz\EloquentKompact\str_concat;
+use function JundFauz\EloquentKompact\String\concat;
 
 class Regex extends Builder
 {
@@ -20,7 +20,7 @@ class Regex extends Builder
 
     public function exact(string|self ...$sentenceOrWord): static
     {
-        return $this->set(str_concat(
+        return $this->set(concat(
             '^',
             $this->withResult(...$sentenceOrWord),
             '$'
@@ -29,17 +29,17 @@ class Regex extends Builder
 
     public function startsWith(string|self ...$sentenceOrWord): static
     {
-        return $this->set(str_concat('^', $this->withResult(...$sentenceOrWord)));
+        return $this->set(concat('^', $this->withResult(...$sentenceOrWord)));
     }
 
     public function endsWith(string|self ...$sentenceOrWord): static
     {
-        return $this->set(str_concat($this->withResult(...$sentenceOrWord), '$'));
+        return $this->set(concat($this->withResult(...$sentenceOrWord), '$'));
     }
 
     public function group(string|self ...$regex): static
     {
-        return $this->set(str_concat('(', $this->withResult(...$regex), ')'));
+        return $this->set(concat('(', $this->withResult(...$regex), ')'));
     }
 
     public function before(string|self ...$regex): static
@@ -54,12 +54,12 @@ class Regex extends Builder
 
     public function exceptWord(string|self $word): static
     {
-        return $this->set(str_concat($this->withResult(str_concat('(?!', static::raw($word), ')'))));
+        return $this->set(concat($this->withResult(concat('(?!', static::raw($word), ')'))));
     }
 
     public function contain(Quantifier|string $conditionCount = '', string|self ...$requirements): static
     {
-        return $this->set(str_concat(
+        return $this->set(concat(
             '[',
             $this->withResult(...$requirements),
             ']',
@@ -69,7 +69,7 @@ class Regex extends Builder
 
     public function range(string $from, string $until): static
     {
-        return $this->set(str_concat($this->withResult("$from-$until")));
+        return $this->set(concat($this->withResult("$from-$until")));
     }
 
     public function asStr(): Str
@@ -82,7 +82,7 @@ class Regex extends Builder
      */
     public function build(): string
     {
-        return str_concat(static::DELIMITER, $this->result, static::DELIMITER);
+        return concat(static::DELIMITER, $this->result, static::DELIMITER);
     }
 
     /**

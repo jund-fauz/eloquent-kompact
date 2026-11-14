@@ -3,6 +3,8 @@
 namespace JundFauz\EloquentKompact\Console;
 
 use Illuminate\Console\Command;
+use Illuminate\Contracts\Filesystem\FileNotFoundException;
+use Illuminate\Support\Collection;
 use Illuminate\Support\Facades\File;
 use Illuminate\Support\Facades\Schema;
 use JundFauz\EloquentKompact\Builder\Str;
@@ -16,10 +18,15 @@ use ReflectionClassConstant;
 use Symfony\Component\Finder\Finder;
 use Symfony\Component\Finder\SplFileInfo;
 use Throwable;
+use function JundFauz\EloquentKompact\build_class;
+use function JundFauz\EloquentKompact\build_class_docblock;
+use function JundFauz\EloquentKompact\create_php_content;
 use function JundFauz\EloquentKompact\full_path_on_app;
-use function JundFauz\EloquentKompact\is_not_dir;
+use function JundFauz\EloquentKompact\is_not;
 use function JundFauz\EloquentKompact\namespace_concat;
+use function JundFauz\EloquentKompact\namespace_trim;
 use function JundFauz\EloquentKompact\path_concat;
+use function JundFauz\EloquentKompact\String\concat;
 
 final class ColumnBuilderCommand extends Command
 {
@@ -49,11 +56,13 @@ final class ColumnBuilderCommand extends Command
         'while', 'xor', 'yield',
     ];
 
+    /**
+     * @throws FileNotFoundException
+     */
     public function handle(): int
     {
-        $namespace = trim(
+        $namespace = namespace_trim(
             $this->option('output') ?: $this->ask('Namespace of the column builder classes, inside app/', self::DefaultOutput),
-            '\\/'
         );
         $directory = full_path_on_app($namespace);
         $columns = $this->columns();
@@ -91,7 +100,7 @@ final class ColumnBuilderCommand extends Command
      */
     public static function generatedNamespaces(): array
     {
-        if (is_not_dir(app_path())) {
+        if (is_not('dir', app_path())) {
             return [];
         }
 
@@ -120,7 +129,7 @@ final class ColumnBuilderCommand extends Command
         }
 
         foreach (config('eloquent-kompact.column.custom_tokens') ?? [] as $name => $definition) {
-            [$token] = (array) $definition;
+            [$token] = (array)$definition;
             $classes[$token] = $this->className(Str::of($name)->pascal()->value());
         }
 
@@ -135,9 +144,9 @@ final class ColumnBuilderCommand extends Command
     /**
      * Every column of every table, or none when the database cannot be read.
      *
-     * @return \Illuminate\Support\Collection<int, string>
+     * @return Collection<int, string>
      */
-    protected function columns(): \Illuminate\Support\Collection
+    protected function columns(): Collection
     {
         try {
             // The latest columns, not the cached ones, e.g. after the schema changed without a migration.
@@ -155,19 +164,22 @@ final class ColumnBuilderCommand extends Command
     }
 
     /**
-     * @param  array<int, string>  $methods
+     * @param array<int, string> $methods
      */
     protected function builderClass(string $namespace, string $class, array $methods): string
     {
-        $parent = class_basename(ColumnBuilder::class);
-
-        return $this->php($namespace, ColumnBuilder::class, $this->docblock($methods) . "class $class extends $parent {}");
+        return create_php_content(
+            $namespace,
+            ColumnBuilder::class,
+            build_class($class, parent: class_basename(ColumnBuilder::class), docblock: $this->docblock($methods))
+        );
     }
 
     /**
      * Morph name => constant name, of the Morph class generated before, so a renamed constant is kept.
      *
      * @return array<string, string>
+     * @throws FileNotFoundException
      */
     protected function morphNames(string $directory): array
     {
@@ -183,8 +195,8 @@ final class ColumnBuilderCommand extends Command
     }
 
     /**
-     * @param  array<int, string>  $morphs
-     * @param  array<string, string>  $names  Morph name => constant name
+     * @param array<int, string> $morphs
+     * @param array<string, string> $names Morph name => constant name
      */
     protected function morphClass(string $namespace, array $morphs, array $names = []): string
     {
@@ -198,33 +210,26 @@ final class ColumnBuilderCommand extends Command
             $constants[] = "    public const string $name = '$morph';";
         }
 
-        $body = $constants === [] ? ' {}' : "\n{\n" . implode("\n\n", $constants) . "\n}";
+        $body = $constants === [] ? '{}' : "\n{\n" . implode("\n\n", $constants) . "\n}";
 
-        return $this->php($namespace, Morph::class . ' as BaseMorph', $this->docblock($methods) . "class Morph extends BaseMorph$body");
+        return create_php_content(
+            $namespace,
+            [Morph::class => 'BaseMorph'],
+            build_class('Morph', $body, 'BaseMorph', $this->docblock($methods))
+        );
     }
 
     /**
-     * @param  array<int, string>  $methods
+     * @param array<int, string> $methods
      */
     protected function docblock(array $methods): string
     {
-        $lines = [' * ' . self::Marker . ', run it again after changing the database.'];
-
-        if ($methods !== []) {
-            $lines[] = ' *';
-            foreach ($methods as $method) {
-                $lines[] = " * @method static string $method";
-            }
-        }
-
-        return "/**\n" . implode("\n", $lines) . "\n */\n";
+        return build_class_docblock($methods, 'string', true, docblockPrefix: concat(self::Marker, ', run it again after changing the database.'));
     }
 
-    protected function php(string $namespace, string $use, string $class): string
-    {
-        return "<?php\n\nnamespace $namespace;\n\nuse $use;\n\n$class\n";
-    }
-
+    /**
+     * @throws FileNotFoundException
+     */
     protected function write(string $directory, string $namespace, string $class, string $content): void
     {
         $file = path_concat($directory, "$class.php");

@@ -5,7 +5,6 @@ namespace JundFauz\EloquentKompact\Column;
 use JundFauz\EloquentKompact\Builder\Str;
 use JundFauz\EloquentKompact\Helper\Error\ErrorThrow;
 use function JundFauz\EloquentKompact\same_with;
-use function JundFauz\EloquentKompact\str_constant;
 
 /**
  * @method static bool isEnum(mixed $column)

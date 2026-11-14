@@ -6,11 +6,11 @@ use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\Relation;
 use JundFauz\EloquentKompact\Column\Convert;
 use JundFauz\EloquentKompact\Column\ColumnCreator;
-use function JundFauz\EloquentKompact\array_filter_filled;
+use function JundFauz\EloquentKompact\Array\filter_filled;
+use function JundFauz\EloquentKompact\Array\merge_as_array;
 use function JundFauz\EloquentKompact\cast_as;
-use function JundFauz\EloquentKompact\is_not_array;
+use function JundFauz\EloquentKompact\is_not;
 use function JundFauz\EloquentKompact\is_not_null;
-use function JundFauz\EloquentKompact\merge_as_array;
 use function JundFauz\EloquentKompact\model_compact;
 
 trait AdditionalQueries
@@ -67,7 +67,7 @@ trait AdditionalQueries
 
     public function updateMany(array ...$data): bool
     {
-        $data = array_filter_filled($data);
+        $data = filter_filled($data);
         if (array_any($data, fn ($data) => array_is_list($data))) {
             return false;
         }
@@ -90,7 +90,7 @@ trait AdditionalQueries
             return false;
         }
 
-        return array_all($conditions, fn ($value, $column) => is_array($value) && is_not_array($this->{$column})
+        return array_all($conditions, fn ($value, $column) => is_array($value) && is_not('array', $this->{$column})
             ? in_array($this->{$column}, $value, true)
             : $this->sameWith($column, $value)
         );
