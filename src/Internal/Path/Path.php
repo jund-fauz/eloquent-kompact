@@ -1,6 +1,6 @@
 <?php
 
-namespace JundFauz\EloquentKompact\Helper;
+namespace JundFauz\EloquentKompact\Internal\Path;
 
 use function JundFauz\EloquentKompact\path_concat;
 
@@ -21,6 +21,6 @@ class Path
 
     private static function root(): string
     {
-        return dirname(__DIR__, 2);
+        return dirname(__DIR__, 3);
     }
 }

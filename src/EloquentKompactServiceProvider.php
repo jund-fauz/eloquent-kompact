@@ -14,13 +14,15 @@ use Illuminate\Support\Str;
 use JundFauz\EloquentKompact\Column\ColumnListing;
 use JundFauz\EloquentKompact\Console\ColumnBuilderCommand;
 use JundFauz\EloquentKompact\Console\IdeHelperCommand;
-use JundFauz\EloquentKompact\Helper\Path;
+use JundFauz\EloquentKompact\Console\MathCommand;
+use JundFauz\EloquentKompact\Internal\Path\Path;
 use JundFauz\EloquentKompact\Model\KompactModel;
 use JundFauz\EloquentKompact\Model\KompactPivot;
 use JundFauz\EloquentKompact\Model\KompactUser;
 use ReflectionClass;
 use Symfony\Component\Finder\SplFileInfo;
 use function config;
+use function JundFauz\EloquentKompact\String\concat;
 
 class EloquentKompactServiceProvider extends ServiceProvider
 {
@@ -56,7 +58,11 @@ class EloquentKompactServiceProvider extends ServiceProvider
     public function configureArtisan(): void
     {
         if ($this->app->runningInConsole()) {
-            $this->commands([IdeHelperCommand::class, ColumnBuilderCommand::class]);
+            $this->commands([
+                IdeHelperCommand::class,
+                ColumnBuilderCommand::class,
+                MathCommand::class
+            ]);
         }
     }
 
@@ -70,10 +76,10 @@ class EloquentKompactServiceProvider extends ServiceProvider
                 throw new Exception("$config as morph doesn't available yet. Request new feature at https://github.com/jund-fauz/eloquent-kompact/issues/new or give your contribution at https://github.com/jund-fauz/eloquent-kompact/pulls");
             }
             $modelNamespace = config('eloquent-kompact.path.model');
-            $namespace = ! Str::endsWith($modelNamespace, NAMESPACE_DELIMITER) ? str_concat($modelNamespace, NAMESPACE_DELIMITER) : $modelNamespace;
+            $namespace = ! Str::endsWith($modelNamespace, NAMESPACE_DELIMITER) ? concat($modelNamespace, NAMESPACE_DELIMITER) : $modelNamespace;
             $path = full_path_on_app($modelNamespace);
 
-            if (is_not_dir($path)) {
+            if (is_not('dir', $path)) {
                 throw new Exception("$path doesn't exist in your current codebase.");
             }
 

@@ -20,7 +20,8 @@ return [
     'morph_model_use' => '',
     'path' => [
         'model' => namespace_concat('App', 'Models'),
-        'database_enum' => namespace_concat('App', 'Enums')
+        'database_enum' => namespace_concat('App', 'Enums'),
+        'math' => namespace_concat('App', 'Logic')
     ],
     'ide-helper' => [
         'auto_generate' => env('KOMPACT_IDE_HELPER', false)
