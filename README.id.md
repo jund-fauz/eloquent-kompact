@@ -13,7 +13,7 @@ Kumpulan alat otomatisasi & helper untuk meningkatkan pengalaman dan kenyamanan 
 composer require jund-fauz/eloquent-kompact
 ```
 
-Membutuhkan PHP 8.3+, extension `bcmath` dan Laravel 12 atau 13. Service provider didaftarkan lewat package discovery.
+Membutuhkan PHP 8.3+, extension `bcmath` dan `mbstring`, dan Laravel 12 atau 13. Service provider didaftarkan lewat package discovery.
 
 ## Kenapa
 
@@ -68,7 +68,7 @@ Lihat [AutoFillable](#autofillable), [AutoCast](#autocast) dan [AutoRelation](#a
 - [Helper migration](#helper-migration)
 - [RawQuery](#rawquery)
 - [Str](#str)
-- [BoolB](#boolb)
+- [Math](#math)
 - [Regex](#regex)
 - [Fungsi helper](#fungsi-helper)
 - [Helper lain](#helper-lain)
@@ -76,7 +76,9 @@ Lihat [AutoFillable](#autofillable), [AutoCast](#autocast) dan [AutoRelation](#a
 
 ## Versi
 
-Package ini mengikuti [Semantic Versioning](https://semver.org) dan stabil sejak `1.0.0`: breaking change hanya datang di rilis major (`2.0.0`), fitur baru di rilis minor (`1.x.0`) dan perbaikan di rilis patch (`1.x.y`). Pasang dengan `^1.0`.
+Package ini mengikuti [Semantic Versioning](https://semver.org) dan stabil sejak `1.0.0`: breaking change hanya datang di rilis major (`2.0.0`), fitur baru di rilis minor (`2.x.0`) dan perbaikan di rilis patch (`2.x.y`). Pasang dengan `^2.0`.
+
+Upgrade dari `1.x`? Lihat [UPGRADE.id.md](UPGRADE.id.md).
 
 Class dan method yang ditandai `@internal` atau `@experimental` tidak termasuk dalam janji ini dan bisa berubah di rilis mana pun.
 
@@ -92,6 +94,7 @@ php artisan vendor:publish --tag=eloquent-kompact-config
 |---|---|---|
 | `path.model` | `App\Models` | Namespace tempat relasi dinamis dan `StaticH::getModel()` mencari model |
 | `path.database_enum` | `App\Enums` | Namespace tempat `AutoCast` mencari enum |
+| `path.math` | `App\Logic` | Namespace default class yang dibuat [`make:kompact-math`](#math) |
 | `column.custom_tokens` | `[]` | Token kolom milikmu sendiri, lihat [Token kustom](#token-kustom) |
 | `fillable.exclude_column_by.exact` | `['id']` | Nama kolom yang dikeluarkan dari daftar fillable dinamis |
 | `fillable.exclude_column_by.contain` | `[]` | Potongan nama kolom: kolom yang mengandung salah satunya dikeluarkan dari daftar fillable dinamis |
@@ -102,7 +105,7 @@ php artisan vendor:publish --tag=eloquent-kompact-config
 | `fillable.include_explicitly` | `[]` | Kolom yang selalu masuk daftar fillable dinamis pada model yang tabelnya punya kolom itu, walaupun dikeluarkan oleh `exclude_column_by` |
 | `morph_model_use` | `''` | `'table'` atau `'model'` untuk mendaftarkan morph map dari model-model di `path.model`, lihat [Morph map](#morph-map) |
 | `ide-helper.auto_generate` | `env('KOMPACT_IDE_HELPER', false)` | Menjalankan `kompact:ide-helper` setelah `php artisan migrate` di environment local |
-| `decimal.default-precision` | `3` | Jumlah desimal [helper angka](#fungsi-helper) kalau precision tidak diberikan |
+| `decimal.default-precision` | `3` | Jumlah desimal [`Math`](#math) kalau class-nya tidak punya precision |
 
 Namespace boleh ditulis dengan atau tanpa backslash di akhir (`App\Models` atau `App\Models\`).
 
@@ -606,7 +609,7 @@ Payload adalah nama modifier, list modifier, atau `[modifier => argumen]`:
 ```php
 use JundFauz\EloquentKompact\Column\Config;
 use JundFauz\EloquentKompact\Column\ColumnCreator;
-use function JundFauz\EloquentKompact\merge;
+use function JundFauz\EloquentKompact\Array\merge;
 
 Schema::create('posts', function (Blueprint $table) {
     $table->id();
@@ -624,7 +627,7 @@ Schema::create('posts', function (Blueprint $table) {
 });
 ```
 
-Konstanta `JundFauz\EloquentKompact\Column\ALL_NULLABLE` adalah `['all' => 'nullable']` yang siap pakai. `Payload::allNullable` dan `Payload::build()` deprecated sejak `1.19.0`: pakai `ALL_NULLABLE` dan [`merge()`](#fungsi-helper) sebagai gantinya.
+Konstanta `JundFauz\EloquentKompact\Column\ALL_NULLABLE` adalah `['all' => 'nullable']` yang siap pakai.
 
 `Convert` mengubah nama dan nilai dari satu bentuk ke bentuk lain:
 
@@ -885,6 +888,8 @@ RawQuery::create('paid')->sum()->divide(RawQuery::create('total')->sum())->as('p
 | `asRegex()` | [`Regex`](#regex) yang diawali nilainya, misalnya `Str::of('_id')->asRegex()->endsWith()` → `/_id$/` |
 | `sameWith($value)` / `notSameWith($value)` | `===` / `!==` ketat, `Stringable` Laravel dibandingkan berdasarkan nilainya |
 
+Method yang menerima beberapa string, kata, namespace atau path juga menerima array-nya, yang akan diratakan: `Str::of('a')->add(['b', ['c']])` → `abc`.
+
 `Str` bisa di-extend: `of()` dan semua method di atas, kecuali `asRawQuery()` dan `asRegex()`, mengembalikan instance subclass.
 
 ```php
@@ -917,33 +922,57 @@ $sql->value(); // SELECT * FROM POSTS;
 
 Method Laravel yang mengembalikan hal lain (`explode()`, `length()`, `contains()`, …) serta `when()` / `unless()` tidak berubah.
 
-## BoolB
+## Math
 
-> **Deprecated** sejak `1.21.0`, bersama class internal `Compare`-nya, dan dihapus di rilis major berikutnya. Pakai [fungsi helper](#fungsi-helper) seperti `same_with()` dan `higher_than()` sebagai gantinya.
-
-`JundFauz\EloquentKompact\Builder\BoolB` adalah builder boolean yang immutable, dibaca lewat property readonly `result`. Perbandingannya ketat dan dievaluasi dari kiri ke kanan:
+`JundFauz\EloquentKompact\Math\Math` menghitung dan membandingkan dua angka dengan bcmath, untuk `int`, `float` dan string numerik, misalnya cast decimal seperti `'2.50'`. Float, eksponen seperti `'1E5'` dan angka yang diapit spasi dibaca sebagai angka. Desimal setelah precision dipotong:
 
 ```php
-use JundFauz\EloquentKompact\Builder\BoolB;
+use JundFauz\EloquentKompact\Math\Math;
 
-BoolB::compare($user->role)->sameWith('admin')
-    ->or($user->status)->notSameWith('banned')
-    ->result;
-// ($role === 'admin') || ($status !== 'banned')
-
-BoolB::initiate($user->active_is)->and($user->role)->sameWith('admin')->result;
+Math::plus(0.1, 0.2);               // '0.300'
+Math::divide('10', '3');            // '3.333'
+Math::higherThan('2.50', '2.00');   // true
+Math::equalTo('2.50', 2.5);         // true
+Math::higherThan('0.0005', '0');    // false, dipotong di 3 desimal
 ```
 
-Pakai `andGroup()` / `orGroup()` dengan `BoolB` lain (atau `bool`) untuk tanda kurung:
+| Method | Hasil |
+|---|---|
+| `plus($a, $b)` / `minus($a, $b)` / `multiply($a, $b)` / `divide($a, $b)` | `$a + $b` / `$a - $b` / `$a * $b` / `$a / $b` sebagai string numerik dengan jumlah desimal sebanyak precision |
+| `higherThan($a, $b)` / `lowerThan($a, $b)` / `equalTo($a, $b)` | `$a > $b` / `$a < $b` / `$a == $b` sebagai angka |
+| `higherThanOrEqualTo($a, $b)` / `lowerThanOrEqualTo($a, $b)` | `$a >= $b` / `$a <= $b` sebagai angka |
+
+Setiap method menerima tepat dua angka. Method melempar `InvalidArgumentException` untuk jumlah argumen lain, nilai yang bukan `float`, `int` atau string numerik, atau precision negatif, `DivisionByZeroError` untuk `divide()` dengan nol, dan `BadMethodCallException` untuk method lain.
+
+Precision-nya adalah `$precision` milik class, atau config `decimal.default-precision` (`3`) kalau bernilai `null`. Untuk precision lain, extend `Math`:
 
 ```php
-// $isAdmin && ($isActive || $isVerified)
-BoolB::compare($user->role)->sameWith('admin')
-    ->andGroup(BoolB::compare($user->status)->sameWith('active')->or($user->verified_at)->notSameWith(null))
-    ->result;
+namespace App\Logic;
+
+use JundFauz\EloquentKompact\Math\Math;
+
+class Money extends Math
+{
+    protected static ?int $precision = 2;
+}
+
+Money::plus('1.555', '1');          // '2.55'
+Money::higherThan('0.005', '0');    // false
 ```
 
-`BoolB::initiate()` juga menerima `BoolB` dan mengembalikannya apa adanya.
+`php artisan make:kompact-math` membuat class seperti itu beserta docblock `@method` untuk autocomplete:
+
+```bash
+php artisan make:kompact-math --class=Money --precision=2 --output=App\\Logic
+```
+
+| Opsi | Default |
+|---|---|
+| `--class` / `-c` | Ditanyakan kalau tidak diberikan |
+| `--precision` / `-p` | Ditanyakan kalau tidak diberikan, lalu config `decimal.default-precision` |
+| `--output` / `-o` | Ditanyakan kalau tidak diberikan, dengan config `path.math` (`App\Logic`) sebagai jawaban default |
+
+File yang sudah ada dibiarkan dan command berhenti. Class bernama `Math` meng-extend `Math` milik package yang di-import sebagai `BaseMath`.
 
 ## Regex
 
@@ -975,84 +1004,116 @@ Regex::create()->contain(Quantifier::oneOrMore, Regex::create()->range('a', 'z')
 
 ## Fungsi helper
 
-Helper-helper ini ada di namespace `JundFauz\EloquentKompact`, jadi import dulu:
+Helper-helper ini ada di tiga namespace, jadi import dulu:
 
 ```php
-use function JundFauz\EloquentKompact\str_concat;
+use function JundFauz\EloquentKompact\is_all;
+use function JundFauz\EloquentKompact\Array\pull;
+use function JundFauz\EloquentKompact\String\concat;
 use const JundFauz\EloquentKompact\NEW_LINE;
 ```
 
+Upgrade dari `1.x`? Lihat [UPGRADE.id.md](UPGRADE.id.md) untuk nama lama setiap helper.
+
+### Pengecekan
+
+Di `JundFauz\EloquentKompact`.
+
+`is_not()`, `is_all()`, `is_any()`, `is_all_not()`, `is_any_not()` dan `is_any_of()` menerima pengecekan lewat namanya. Pengecekannya adalah fungsi yang mengembalikan `bool`, dicari dengan urutan ini: namanya sendiri (`'defined'` → `defined()`), `is_` + namanya (`'null'` → `is_null()`), lalu dua hal yang sama di package ini (`'not_null'` → `is_not_null()`). Fungsi yang mengembalikan hal lain dilewati, jadi `'file'` adalah `is_file()`, bukan `file()`. Nama yang tidak punya fungsi seperti itu melempar `BadMethodCallException`.
+
 | Fungsi | Hasil |
 |---|---|
-| `is_not_null($value)` / `is_not_array($value)` | Kebalikan `is_null()` / `is_array()` |
-| `is_all_null(...$values)` | Apakah semua nilai, termasuk array bersarang, bernilai `null` |
-| `is_all_not_null(...$values)` | Apakah tidak ada nilai, termasuk array bersarang, yang `null` |
-| `is_one_of_them_null(...$values)` | Apakah setidaknya satu nilai bernilai `null` |
-| `is_one_of_them_not_null(...$values)` | Apakah setidaknya satu nilai, termasuk array bersarang, tidak `null` |
-| `is_array_or_collection($value)` | Apakah nilainya array atau `Collection` Laravel |
-| `is_associative_array($value)` | Apakah nilainya array yang bukan list, jadi `[5 => 'x']` juga termasuk; `[]` tidak |
-| `same_with($a, $b, $cast = null)` / `not_same_with($a, $b, $cast = null)` | `$a === $b` / `$a !== $b`. Dengan cast, kedua nilai di-cast dulu dengannya: `same_with('5', 5, 'integer')` → `true` |
-| `cast_as($value, $cast = null)` | Nilai yang di-cast dengan cast Laravel, seperti atribut model: `cast_as('10.5', 'decimal:2')` → `'10.50'`, `cast_as('paid', Status::class)` → `Status::Paid`. Cast tanggal menghasilkan object Carbon. Tanpa cast, nilainya dikembalikan apa adanya |
-| `same_with_one_of($value, ...$others)` | Apakah `$value` `===` dengan salah satu nilai lain; `false` tanpa nilai lain |
-| `higher_than($a, $b, $precision = null)` / `lower_than($a, $b, $precision = null)` | `$a > $b` / `$a < $b` dengan bcmath, untuk `int`, `float` dan string numerik, misalnya cast decimal seperti `'2.50'`. Desimal setelah `$precision` (default-nya `decimal.default-precision`, `3`) dipotong: `higher_than('0.0005', '0')` bernilai `false`, `higher_than('0.0005', '0', 4)` bernilai `true`. `false` kalau ada nilai yang tidak numerik atau precision-nya negatif |
-| `higher_than_or_same_with($a, $b, $precision = null)` / `lower_than_or_same_with($a, $b, $precision = null)` / `num_same_with($a, $b, $precision = null)` | `$a >= $b` / `$a <= $b` / `$a == $b` sebagai angka, dengan cara yang sama: `num_same_with('2.50', 2.5)` bernilai `true` |
-| `plus($a, $b, $precision = null)` / `minus(…)` / `multiply(…)` / `divide(…)` | `$a + $b` / `$a - $b` / `$a * $b` / `$a / $b` dengan bcmath, sebagai string dengan `$precision` desimal (sisanya dipotong): `plus(0.1, 0.2)` → `'0.300'`, `divide('10', '3', 2)` → `'3.33'`. Melempar `InvalidArgumentException` kalau ada nilai yang tidak numerik atau precision-nya negatif, dan `divide()` melempar `DivisionByZeroError` untuk nol |
-| `is_natural_number($number)` / `is_whole_number($number)` | Apakah `int`-nya `> 0` / `>= 0` |
-| `is_positive_number($number)` / `is_negative_number($number)` | Apakah `int`-nya `> 0` / `< 0` |
-| `is_all_numeric(...$values)` / `is_any_numeric(...$values)` | Apakah semua nilai / minimal satu nilai numerik |
-| `is_not_numeric($value)` / `is_all_not_numeric(...$values)` / `is_any_not_numeric(...$values)` | `! is_numeric()` / apakah tidak ada nilai / minimal satu nilai yang tidak numerik |
-| `is_zero($value)` | Apakah nilainya numerik dan `0`, juga `-0.0`, `'0'` dan `'0.00'`; `null` dan `'abc'` tidak |
-| `is_count_zero($value)` / `is_count_one($value)` / `is_count_many($value)` | Apakah array atau `Countable`-nya tidak punya item / punya satu item / lebih dari satu item |
-| `is_app_local_or_test()` | Apakah app berjalan di environment `local` atau `testing` |
+| `is_not($check, $value)` | Pengecekannya `false` untuk nilai itu: `is_not('array', $value)` → `! is_array($value)`, `is_not('defined', 'FOO')` → `! defined('FOO')` |
+| `is_all($check, ...$values)` / `is_any($check, ...$values)` | Pengecekannya `true` untuk semua nilai / minimal satu nilai, termasuk array bersarang: `is_all('null', $a, $b)`, `is_any('numeric', 'abc', '2')` → `true`. Tanpa nilai `true` / `false` |
+| `is_all_not($check, ...$values)` / `is_any_not($check, ...$values)` | Pengecekannya `false` untuk semua nilai / minimal satu nilai, termasuk array bersarang: `is_all_not('null', $a, $b)` |
+| `is_any_of($value, ...$checks)` | Minimal satu pengecekan bernilai `true` untuk nilai itu, berhenti di yang pertama: `is_any_of($value, 'int', 'string')` |
+| `is_all_type_of($type, ...$values)` / `is_any_not_type_of($type, ...$values)` | Semua nilai punya / minimal satu nilai tidak punya tipe itu, atau salah satu tipe itu, termasuk array bersarang: `is_all_type_of(['int', 'string'], 1, 'a')` → `true`. Tipenya dicek dengan fungsi `is_` bawaan PHP, misalnya `'int'` → `is_int()` |
+| `is_not_null($value)` | `! is_null()` |
 | `not($condition)` | `! $condition` |
-| `in($needle, $haystack, $strict = false)` | `in_array()` untuk array atau collection |
+| `same_with($a, $b, $cast = null)` / `not_same_with($a, $b, $cast = null)` | `$a === $b` / `$a !== $b`. Dengan cast, kedua nilai di-cast dulu dengannya: `same_with('5', 5, 'integer')` → `true` |
+| `same_with_one_of($value, ...$others)` | Apakah `$value` `===` dengan salah satu nilai lain; `false` tanpa nilai lain |
+| `cast_as($value, $cast = null)` | Nilai yang di-cast dengan cast Laravel, seperti atribut model: `cast_as('10.5', 'decimal:2')` → `'10.50'`, `cast_as('paid', Status::class)` → `Status::Paid`. Cast tanggal menghasilkan object Carbon. Tanpa cast, nilainya dikembalikan apa adanya |
 | `not_in_array($needle, $haystack, $strict = false)` | `! in_array()` |
 | `not_in($needle, $haystack, $strict = false)` | `not_in_array()` untuk array atau collection |
-| `not_defined($constant)` | `! defined()` |
-| `str_constant($class, $constant)` | `Class::Constant`, misalnya untuk `defined()` atau `constant()` |
-| `ternary($condition, $trueValue, $falseValue)` | `$condition ? $trueValue : $falseValue` |
-| `elvis($value, $default)` | `$value ?: $default` |
 | `if_not_null($value, $then)` | `$then` kalau `$value` tidak `null`, atau `null`: `if_not_null($paidAt, 'Lunas')`. `$then` dievaluasi sebelum fungsi dipanggil, juga saat `$value` bernilai `null`. `@experimental` |
-| `null_coalescing($value, $default)` | `$value ?? $default`, untuk nilai yang ada: key array yang tidak ada tetap memunculkan warning `Undefined array key` dari PHP, pakai `array_get()` untuk itu |
-| `array_get(&$value, $default = null, $cast = null)` | `$value ?? $default` tanpa warning untuk key array yang tidak ada, juga bersarang atau pada `null`: `array_get($config['token'], [])`. Tanpa default hasilnya `null`. Dengan cast, hasilnya di-cast dengan [`cast_as()`](#helper-lain): `array_get($row['qty'], 0, 'integer')`. Nilainya diambil by reference, jadi harus berupa variabel atau item array, dan key yang tidak ada ditambahkan ke array sebagai `null` |
-| `array_get_as_collection(&$value, $default = null)` | `array_get()` sebagai [`Builder\Collection`](#helper-lain) |
-| `get_array_list($array)` | Item-item dengan key `int`, key dipertahankan: `get_array_list(['a', 'k' => 'b'])` → `[0 => 'a']` |
-| `is_not_dir($path)` | `! is_dir()` |
-| `str_concat(...$values)` | Digabung tanpa delimiter |
+| `is_app_local_or_test()` | Apakah app berjalan di environment `local` atau `testing` |
+
+### String, path dan file
+
+Di `JundFauz\EloquentKompact`.
+
+| Fungsi | Hasil |
+|---|---|
 | `word_concat(...$values)` | Digabung dengan spasi |
 | `schema_concat(...$values)` | Digabung dengan `:` |
 | `path_concat(...$values)` | Digabung dengan `/` |
 | `relation_concat(...$values)` | Digabung dengan `.` |
 | `namespace_concat(...$values)` | Digabung dengan `\`, backslash di tiap bagian di-trim |
+| `namespace_trim($value)` | Nilainya tanpa `\` dan `/` di awal dan akhir |
 | `write_line(...$lines)` | Digabung dengan baris baru |
-| `comment($sentence)` | `// sentence` |
+| `comment($sentence)` / `comment_doc($sentence = '')` | `// sentence` / ` * sentence`, satu baris docblock |
 | `add_tab($sentence, $count = 1)` | Kalimat diindentasi dengan `$count` tab berukuran 4 spasi |
+| `syntax($statement)` | Statement-nya diakhiri `;` |
 | `full_path_on_app($path)` | Path absolut di dalam `app/`, misalnya `App\Models` → `{app_path}/Models` |
-| `array_flat(&$array)` | Meratakan array di tempat |
+| `add_extension($filename, $extension)` / `add_php_extension($filename)` | `filename.extension` / `filename.php` |
+| `write_file($directory, $filename, $contents)` | Menulis file-nya, menimpa kalau sudah ada |
+| `is_file_exist($directory, $filename)` | Apakah file-nya ada di direktori itu |
+| `ensure_directory_exists($directory)` | Membuat direktori beserta parent-nya kalau belum ada |
+| `create_php_content($namespace, $use, $class)` | Isi file PHP: open tag, namespace, import dan class-nya. `$use` adalah sebuah class atau list class; `[Class::class => 'Alias']` meng-import-nya dengan alias |
+| `build_class($name, $content = '{}', $parent = '', $docblock = '')` | `class Name extends Parent {}`, dengan docblock di atasnya; spasi di akhir setiap baris di-trim |
+| `build_class_docblock($methods, $returnType = 'mixed', $isStatic = false, $parameters = '', $prefix = '')` | Docblock class dengan baris `@method` untuk setiap method. `$methods` adalah list nama, atau `nama => return type` |
 | `collect(...$values)` | [`Builder\Collection`](#helper-lain) dari satu nilai, seperti `collect()` Laravel, atau dari beberapa nilai sebagai item-nya: `collect(1, 2)` → `[1, 2]`. Tanpa nilai hasilnya kosong. Import untuk memakainya sebagai pengganti milik Laravel |
-| `array_wrap($value)` | `Arr::wrap()` Laravel: nilainya sebagai array, `[]` untuk `null` |
-| `array_cast($value)` | Item-item sebuah collection, atau `array_wrap()` dari nilai lain |
-| `array_get_or($array, ...$keys)` | Nilai pertama yang tidak `null`, sesuai urutan key; dot notation didukung dan key yang tidak ada dilewati |
-| `array_filter_filled($array)` | Nilai yang `filled()` menurut Laravel, key dipertahankan: `null`, string kosong dan array atau collection kosong dihapus; `0`, `'0'` dan `false` dipertahankan |
-| `array_key_change(&$array, $oldKey, $newKey)` | Mengganti nama key di tempat. Key pindah ke akhir array, `$newKey` yang sudah ada diganti, dan `$oldKey` yang tidak ada memunculkan warning `Undefined array key` dari PHP |
-| `array_key_values($array)` | `[key, value]` dari array dengan satu item; dengan beberapa item, semua key lalu semua value dalam satu list datar |
-| `array_normalize($list)` | Item dari list dengan satu item, atau list-nya apa adanya. List-nya butuh key numerik mulai dari `0` |
-| `array_compact($array, ...$keys)` | `[key => nilai]` untuk key-key array yang diberikan, `null` untuk yang tidak ada; named argument menjadi alias: `array_compact($data, 'a', x: 'b')` → `['a' => …, 'x' => $data['b']]` |
-| `array_compact_and_unset(&$array, ...$keys)` | `array_compact()` yang juga meng-unset key-key yang diberikan dari array: `array_compact_and_unset($data, 'a', x: 'b')` → `['a' => …, 'x' => …]`, dan `$data` tidak lagi punya `a` dan `b`. Array-nya diambil by reference, jadi harus berupa variabel |
-| `assign_as($value, ...$keys)` | `[key => value]` dengan nilai yang sama untuk setiap key, misalnya `assign_as(1, 'a', 'b')` → `['a' => 1, 'b' => 1]`; `[]` tanpa key |
-| `merge(...$arrays)` | `array_merge()` dari array-array itu |
-| `merge_mixed_array($values)` | String dan array di `$values` digabung jadi satu array: string dengan key `int` menjadi item list, string dengan key string mempertahankan key itu, dan item-item array digabung dengan `array_merge()` |
-| `merge_as_array(...$values)` | Array asosiatif atau collection digabung beserta key-nya, key yang belakangan menang dan nilai bersarang tetap apa adanya: `merge_as_array(['a' => 1], ['b' => 2])` → `['a' => 1, 'b' => 2]`. Di sini `null`, string kosong dan array kosong diabaikan. Kalau ada nilai lain di sampingnya, semua nilai masuk ke satu list datar, termasuk array dan collection bersarang; key dibuang dan `null` dipertahankan: `merge_as_array(['a' => 1], 'x')` → `[1, 'x']` |
-| `array_pull(&$array, ...$keys)` | `Arr::pullMany()`: menghapus key-key itu dan mengembalikan nilai dari satu key, atau `[key => value]` untuk beberapa key |
-| `array_pull_list(&$array, ...$keys)` | `array_pull()`, tapi beberapa key menghasilkan list sesuai urutan yang diberikan, misalnya untuk `[$name, $email] = array_pull_list($data, 'name', 'email')` |
-| `stringify($array)` | Setiap nilai di-cast ke `string`, termasuk array bersarang, key dipertahankan; `null` dan `false` menjadi `''` |
 | `model_compact($model, ...$columns)` | `[kolom => nilai]` untuk kolom yang diberikan, setelah casting; atribut yang tidak ada bernilai `null` dan relasi yang sudah dimuat menjadi array. Kolom bisa diberikan dalam array, dan key string, di dalam array atau sebagai named argument, dipakai sebagai alias-nya: `model_compact($user, 'id', ['mail' => 'email'])` → `['id' => 1, 'mail' => '…']` |
-| `str_before_last()`, `str_lower()`, `str_upper()` | `Str::beforeLast()`, `lower()`, `upper()` dari Laravel |
-| `str_empty_if_false($condition, $value)` | `$value`, atau `''` kalau `$condition` falsy, seperti [`Str::emptyIfFalse()`](#str) |
 
-Fungsi-fungsi penggabung juga menerima array, yang akan diratakan: `str_concat('a', ['b', ['c']])` → `abc`. `str_concat()` juga menerima collection: `str_concat('a', collect(['b', 'c']))` → `abc`.
+Fungsi-fungsi penggabung juga menerima array, yang akan diratakan: `word_concat('a', ['b', ['c']])` → `a b c`.
 
-Konstanta: `NEW_LINE` (`"\n"`), `DISTANCE_LINE` (`"\n\n"`), `NAMESPACE_DELIMITER` (`\`), `PATH_DELIMITER` (`/`) dan `TAB` (4 spasi).
+### Array
+
+Di `JundFauz\EloquentKompact\Array`.
+
+| Fungsi | Hasil |
+|---|---|
+| `get(&$value, $default = null, $cast = null)` | `$value ?? $default` tanpa warning untuk key array yang tidak ada, juga bersarang atau pada `null`: `get($config['token'], [])`. Tanpa default hasilnya `null`. Dengan cast, hasilnya di-cast dengan `cast_as()`: `get($row['qty'], 0, 'integer')`. Nilainya diambil by reference, jadi harus berupa variabel atau item array, dan key yang tidak ada ditambahkan ke array sebagai `null` |
+| `array_get_as_collection(&$value, $default = null)` | `get()` sebagai [`Builder\Collection`](#helper-lain) |
+| `get_or($array, ...$keys)` | Nilai pertama yang tidak `null`, sesuai urutan key; dot notation didukung dan key yang tidak ada dilewati |
+| `get_array_list($array)` | Item-item dengan key `int`, key dipertahankan: `get_array_list(['a', 'k' => 'b'])` → `[0 => 'a']` |
+| `pull(&$array, ...$keys)` | Menghapus key-key itu dan mengembalikan nilai dari satu key, atau `[key => value]` untuk beberapa key; dot notation didukung |
+| `pull_list(&$array, ...$keys)` | `pull()`, tapi beberapa key menghasilkan list sesuai urutan yang diberikan, misalnya untuk `[$name, $email] = pull_list($data, 'name', 'email')` |
+| `compact($array, ...$keys)` | `[key => nilai]` untuk key-key array yang diberikan, `null` untuk yang tidak ada; named argument menjadi alias: `compact($data, 'a', x: 'b')` → `['a' => …, 'x' => $data['b']]` |
+| `compact_and_unset(&$array, ...$keys)` | `compact()` yang juga meng-unset key-key yang diberikan dari array. Array-nya diambil by reference, jadi harus berupa variabel |
+| `assign_as($value, ...$keys)` | `[key => value]` dengan nilai yang sama untuk setiap key, misalnya `assign_as(1, 'a', 'b')` → `['a' => 1, 'b' => 1]`; `[]` tanpa key |
+| `map($callback, $array)` | `array_map()` yang juga memberikan key: `map(fn ($value, $key) => "$key=$value", $array)`. Hasilnya berupa list |
+| `flat(&$array)` | Meratakan array di tempat |
+| `wrap($value)` | `Arr::wrap()` Laravel: nilainya sebagai array, `[]` untuk `null` |
+| `cast($value)` | Item-item sebuah collection, atau `wrap()` dari nilai lain |
+| `filter_filled($array)` | Nilai yang `filled()` menurut Laravel, key dipertahankan: `null`, string kosong dan array atau collection kosong dihapus; `0`, `'0'` dan `false` dipertahankan |
+| `key_change(&$array, $oldKey, $newKey)` | Mengganti nama key di tempat. Key pindah ke akhir array, `$newKey` yang sudah ada diganti, dan `$oldKey` yang tidak ada memunculkan warning `Undefined array key` dari PHP |
+| `key_values($array)` | `[key, value]` dari array dengan satu item; dengan beberapa item, semua key lalu semua value dalam satu list datar |
+| `normalize($list)` | Item dari list dengan satu item, atau list-nya apa adanya. List-nya butuh key numerik mulai dari `0` |
+| `merge(...$arrays)` | `array_merge()` dari array-array itu |
+| `merge_mixed($values)` | String dan array di `$values` digabung jadi satu array: string dengan key `int` menjadi item list, string dengan key string mempertahankan key itu, dan item-item array digabung dengan `array_merge()` |
+| `merge_as_array(...$values)` | Array asosiatif atau collection digabung beserta key-nya, key yang belakangan menang dan nilai bersarang tetap apa adanya: `merge_as_array(['a' => 1], ['b' => 2])` → `['a' => 1, 'b' => 2]`. Di sini `null`, string kosong dan array kosong diabaikan. Kalau ada nilai lain di sampingnya, semua nilai masuk ke satu list datar, termasuk array dan collection bersarang; key dibuang dan `null` dipertahankan: `merge_as_array(['a' => 1], 'x')` → `[1, 'x']` |
+| `is_associative($value)` | Apakah nilainya array yang bukan list, jadi `[5 => 'x']` juga termasuk; `[]` tidak |
+| `is_array_or_collection($value)` | Apakah nilainya array atau `Collection` Laravel |
+| `is_count_zero($value)` / `is_count_one($value)` / `is_count_many($value)` | Apakah array atau `Countable`-nya tidak punya item / punya satu item / lebih dari satu item |
+| `in($needle, $haystack, $strict = false)` | `in_array()` untuk array atau collection |
+
+### String
+
+Di `JundFauz\EloquentKompact\String`.
+
+| Fungsi | Hasil |
+|---|---|
+| `concat(...$values)` | Digabung tanpa delimiter. Array dan collection diratakan: `concat('a', ['b', collect(['c'])])` → `abc` |
+| `before_last()`, `lower()`, `upper()` | `Str::beforeLast()`, `lower()`, `upper()` dari Laravel |
+| `empty_if_false($condition, $value)` | `$value`, atau `''` kalau `$condition` falsy, seperti [`Str::emptyIfFalse()`](#str) |
+| `constant($class, $constant)` | `Class::Constant`, misalnya untuk `defined()` atau `constant()` bawaan PHP |
+| `stringify($array)` | Setiap nilai di-cast ke `string`, termasuk array bersarang, key dipertahankan; `null` dan `false` menjadi `''` |
+| `rtrim_multiline($value, $characters = " \n\r\t\v\0")` | `rtrim()` pada setiap baris. `@experimental` |
+
+### Konstanta
+
+Di `JundFauz\EloquentKompact`: `NEW_LINE` (`"\n"`), `DISTANCE_LINE` (`"\n\n"`), `NAMESPACE_DELIMITER` (`\`), `PATH_DELIMITER` (`/`) dan `TAB` (4 spasi).
 
 ## Helper lain
 
@@ -1074,9 +1135,9 @@ Konstanta: `NEW_LINE` (`"\n"`), `DISTANCE_LINE` (`"\n\n"`), `NAMESPACE_DELIMITER
   Relation::arrange('name')->relation(['latest' => Post::class])->build();           // latestPost.name
   ```
 
-  Setiap method mengembalikan `Relation` baru. Class ini query `Expression`, tapi `with()`, `load()` dan `loadMissing()` milik Eloquent hanya menerima string, jadi panggil `build()`, cast ke `string`, atau lewatkan list-nya ke `stringify()` untuk method-method itu: `$user->loadMissing(stringify([$relation, $other]))`. Namanya sama dengan `Relation` milik Eloquent; import salah satunya dengan alias kalau sebuah file butuh keduanya.
+  Setiap method mengembalikan `Relation` baru. Class ini query `Expression`, tapi `with()`, `load()` dan `loadMissing()` milik Eloquent hanya menerima string, jadi panggil `build()`, cast ke `string`, atau lewatkan list-nya ke [`String\stringify()`](#string) untuk method-method itu: `$user->loadMissing(stringify([$relation, $other]))`. Namanya sama dengan `Relation` milik Eloquent; import salah satunya dengan alias kalau sebuah file butuh keduanya.
 
-- `Builder\Collection` meng-extend `Collection` milik Laravel dengan `filterFilled()`, `deleteNull()`, `sumAndCompact(...$columns)`, `getOr(...$keys)`, `getOrWithDefault($default, ...$keys)`, `getOrWithDefaultAsCollection($default, ...$keys)`, `normalFilter($callback)` dan `implodeAsStr($value = '', $glue)` (`implode()` Laravel sebagai [`Str`](#str)), dibangun di atas `array_filter_filled()` dan `array_get_or()`. Method-method ini, serta `get()`, `before()` dan `after()` milik Laravel, mengembalikan nilai atau default berupa string sebagai [`Str`](#str) dan array sebagai `Collection`; nilai lain dikembalikan apa adanya. Method Laravel mempertahankan class-nya sepanjang chain. Namanya sama dengan `Collection` milik Laravel; import salah satunya dengan alias kalau sebuah file butuh keduanya.
+- `Builder\Collection` meng-extend `Collection` milik Laravel dengan `filterFilled()`, `deleteNull()`, `sumAndCompact(...$columns)`, `getOr(...$keys)`, `getOrWithDefault($default, ...$keys)`, `getOrWithDefaultAsCollection($default, ...$keys)`, `normalFilter($callback)` dan `implodeAsStr($value = '', $glue)` (`implode()` Laravel sebagai [`Str`](#str)), dibangun di atas `Array\filter_filled()` dan `Array\get_or()`. Method-method ini, serta `get()`, `before()` dan `after()` milik Laravel, mengembalikan nilai atau default berupa string sebagai [`Str`](#str) dan array sebagai `Collection`; nilai lain dikembalikan apa adanya. Method Laravel mempertahankan class-nya sepanjang chain. Namanya sama dengan `Collection` milik Laravel; import salah satunya dengan alias kalau sebuah file butuh keduanya.
 
   ```php
   use function JundFauz\EloquentKompact\collect;
@@ -1111,7 +1172,6 @@ Konstanta: `NEW_LINE` (`"\n"`), `DISTANCE_LINE` (`"\n\n"`), `NAMESPACE_DELIMITER
 
   Hasil yang bukan model menjadi `Builder\Collection`, karena banyak method collection Eloquent mengharapkan model: `pluck()`, `keys()`, `map()` ke nilai lain, dan `Post::pluck()`, yang lewat [`Model\Builder`](#builder). Jadi `Post::all()->pluck('name')->get(0)` adalah `Str`, sedangkan `first()` tetap `string`. `DB::table()->pluck()` tetap memberikan `Collection` milik Laravel.
 
-- `Helper\Arr` meng-extend `Arr` milik Laravel dengan `pullMany(&$array, ...$keys)` (mengambil beberapa key sekaligus) dan `isKeysDontExist($array, ...$keys)`.
 - `Cast\UuidCast` meng-cast atribut dari dan ke `Ramsey\Uuid\UuidInterface`.
 - Pesan error dan `Convert::booleanToString()` diterjemahkan dalam bahasa Inggris dan Indonesia.
 
