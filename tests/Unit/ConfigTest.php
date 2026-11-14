@@ -5,7 +5,6 @@ namespace JundFauz\EloquentKompact\Tests\Unit;
 use Illuminate\Database\Schema\ColumnDefinition;
 use Illuminate\Database\Schema\ForeignKeyDefinition;
 use JundFauz\EloquentKompact\Column\Config;
-use JundFauz\EloquentKompact\Column\Payload;
 use JundFauz\EloquentKompact\Tests\TestCase;
 use PHPUnit\Framework\Attributes\Test;
 use const JundFauz\EloquentKompact\Column\ALL_NULLABLE;
@@ -127,16 +126,9 @@ class ConfigTest extends TestCase
     }
 
     #[Test]
-    public function it_builds_a_payload(): void
+    public function it_defines_the_all_nullable_payload(): void
     {
-        $this->assertSame(
-            ['title' => 'unique', '/_id$/' => 'index', 'rest' => 'nullable'],
-            Payload::build(['title' => 'unique'], ['/_id$/' => 'index'], ['rest' => 'nullable'])
-        );
-        $this->assertSame(['title' => 'nullable'], Payload::build(['title' => 'unique'], ['title' => 'nullable']));
-        $this->assertSame(['all' => 'nullable'], Payload::allNullable);
         $this->assertSame(['all' => 'nullable'], ALL_NULLABLE);
-        $this->assertSame(Payload::allNullable, ALL_NULLABLE);
     }
 
     private static function column(string $name): ColumnDefinition

@@ -95,7 +95,6 @@ class ColumnBuilderCommandTest extends TestCase
              * @method static string netWeight()
              */
             class Gram extends ColumnBuilder {}
-
             PHP, $this->file('Gram'));
         $this->assertStringContainsString('@method static string created()', $this->file('Timestamp'));
         $this->assertStringContainsString('@method static string updated()', $this->file('Timestamp'));
@@ -127,7 +126,6 @@ class ColumnBuilderCommandTest extends TestCase
             {
                 public const string sourceable = 'sourceable';
             }
-
             PHP, $this->file('Morph'));
     }
 

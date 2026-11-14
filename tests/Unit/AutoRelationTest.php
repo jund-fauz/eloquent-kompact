@@ -160,7 +160,7 @@ class AutoRelationTest extends TestCase
         $this->assertTrue($writers->first()->relationLoaded('articles'));
         $this->assertCount(2, $writers->first()->articles);
 
-        $articles = Article::with('writer', 'notes')->get();
+        $articles = Article::with(['writer', 'notes'])->get();
 
         $this->assertSame('Ana', $articles->first()->writer->name);
         $this->assertCount(2, $articles->first()->notes);

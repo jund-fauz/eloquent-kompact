@@ -3,96 +3,57 @@
 namespace JundFauz\EloquentKompact\Tests\Unit;
 
 use ArrayObject;
+use BadMethodCallException;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Support\Collection as SupportCollection;
+use Illuminate\Support\Facades\File;
+use JundFauz\EloquentKompact\Array as Arr;
 use JundFauz\EloquentKompact\Builder\Relation;
+use JundFauz\EloquentKompact\String as Str;
 use JundFauz\EloquentKompact\Tests\TestCase;
 use PHPUnit\Framework\Attributes\DataProvider;
 use PHPUnit\Framework\Attributes\Test;
 use stdClass;
-
+use function JundFauz\EloquentKompact\add_extension;
+use function JundFauz\EloquentKompact\add_php_extension;
 use function JundFauz\EloquentKompact\add_tab;
-use function JundFauz\EloquentKompact\array_filter_filled;
-use function JundFauz\EloquentKompact\array_key_change;
-use function JundFauz\EloquentKompact\array_key_values;
-use function JundFauz\EloquentKompact\array_normalize;
-use function JundFauz\EloquentKompact\assign_as;
-use function JundFauz\EloquentKompact\array_flat;
-use function JundFauz\EloquentKompact\array_get;
-use function JundFauz\EloquentKompact\array_get_as_collection;
-use function JundFauz\EloquentKompact\array_get_or;
-use function JundFauz\EloquentKompact\get_array_list;
-use function JundFauz\EloquentKompact\merge;
-use function JundFauz\EloquentKompact\array_pull;
-use function JundFauz\EloquentKompact\array_pull_list;
-use function JundFauz\EloquentKompact\array_wrap;
+use function JundFauz\EloquentKompact\build_class;
+use function JundFauz\EloquentKompact\build_class_docblock;
+use function JundFauz\EloquentKompact\cast_as;
 use function JundFauz\EloquentKompact\comment;
+use function JundFauz\EloquentKompact\comment_doc;
+use function JundFauz\EloquentKompact\create_php_content;
+use function JundFauz\EloquentKompact\ensure_directory_exists;
 use function JundFauz\EloquentKompact\full_path_on_app;
-use function JundFauz\EloquentKompact\higher_than;
-use function JundFauz\EloquentKompact\higher_than_or_same_with;
-use function JundFauz\EloquentKompact\is_all_not_null;
-use function JundFauz\EloquentKompact\is_not_dir;
-use function JundFauz\EloquentKompact\is_all_null;
-use function JundFauz\EloquentKompact\is_one_of_them_null;
-use function JundFauz\EloquentKompact\is_array_or_collection;
-use function JundFauz\EloquentKompact\is_one_of_them_not_null;
-use function JundFauz\EloquentKompact\is_associative_array;
-use function JundFauz\EloquentKompact\is_count_many;
-use function JundFauz\EloquentKompact\is_count_one;
-use function JundFauz\EloquentKompact\is_count_zero;
-use function JundFauz\EloquentKompact\is_app_local_or_test;
-use function JundFauz\EloquentKompact\is_natural_number;
-use function JundFauz\EloquentKompact\is_negative_number;
-use function JundFauz\EloquentKompact\is_positive_number;
-use function JundFauz\EloquentKompact\is_all_numeric;
-use function JundFauz\EloquentKompact\is_any_numeric;
-use function JundFauz\EloquentKompact\is_not_numeric;
-use function JundFauz\EloquentKompact\is_all_not_numeric;
-use function JundFauz\EloquentKompact\is_any_not_numeric;
-use function JundFauz\EloquentKompact\num_same_with;
-use function JundFauz\EloquentKompact\plus;
-use function JundFauz\EloquentKompact\minus;
-use function JundFauz\EloquentKompact\multiply;
-use function JundFauz\EloquentKompact\divide;
-use function JundFauz\EloquentKompact\is_whole_number;
-use function JundFauz\EloquentKompact\is_zero;
-use function JundFauz\EloquentKompact\is_not_array;
-use function JundFauz\EloquentKompact\is_not_null;
-use function JundFauz\EloquentKompact\lower_than;
-use function JundFauz\EloquentKompact\lower_than_or_same_with;
-use function JundFauz\EloquentKompact\merge_as_array;
-use function JundFauz\EloquentKompact\model_compact;
-use function JundFauz\EloquentKompact\merge_mixed_array;
-use function JundFauz\EloquentKompact\array_compact;
-use function JundFauz\EloquentKompact\array_compact_and_unset;
-use function JundFauz\EloquentKompact\namespace_concat;
-use function JundFauz\EloquentKompact\array_cast;
-use function JundFauz\EloquentKompact\elvis;
-use function JundFauz\EloquentKompact\not;
-use function JundFauz\EloquentKompact\not_defined;
-use function JundFauz\EloquentKompact\not_in;
-use function JundFauz\EloquentKompact\in;
-use function JundFauz\EloquentKompact\not_in_array;
-use function JundFauz\EloquentKompact\null_coalescing;
 use function JundFauz\EloquentKompact\if_not_null;
-use function JundFauz\EloquentKompact\str_constant;
-use function JundFauz\EloquentKompact\ternary;
+use function JundFauz\EloquentKompact\is;
+use function JundFauz\EloquentKompact\is_all;
+use function JundFauz\EloquentKompact\is_all_not;
+use function JundFauz\EloquentKompact\is_all_type_of;
+use function JundFauz\EloquentKompact\is_any;
+use function JundFauz\EloquentKompact\is_any_not;
+use function JundFauz\EloquentKompact\is_any_not_type_of;
+use function JundFauz\EloquentKompact\is_any_of;
+use function JundFauz\EloquentKompact\is_app_local_or_test;
+use function JundFauz\EloquentKompact\is_file_exist;
+use function JundFauz\EloquentKompact\is_not;
+use function JundFauz\EloquentKompact\is_not_null;
+use function JundFauz\EloquentKompact\model_compact;
+use function JundFauz\EloquentKompact\namespace_concat;
+use function JundFauz\EloquentKompact\namespace_trim;
+use function JundFauz\EloquentKompact\not;
+use function JundFauz\EloquentKompact\not_in;
+use function JundFauz\EloquentKompact\not_in_array;
 use function JundFauz\EloquentKompact\not_same_with;
 use function JundFauz\EloquentKompact\path_concat;
 use function JundFauz\EloquentKompact\relation_concat;
 use function JundFauz\EloquentKompact\same_with;
-use function JundFauz\EloquentKompact\cast_as;
 use function JundFauz\EloquentKompact\same_with_one_of;
 use function JundFauz\EloquentKompact\schema_concat;
-use function JundFauz\EloquentKompact\str_before_last;
-use function JundFauz\EloquentKompact\stringify;
-use function JundFauz\EloquentKompact\str_concat;
-use function JundFauz\EloquentKompact\str_empty_if_false;
-use function JundFauz\EloquentKompact\str_lower;
-use function JundFauz\EloquentKompact\str_upper;
+use function JundFauz\EloquentKompact\syntax;
 use function JundFauz\EloquentKompact\word_concat;
+use function JundFauz\EloquentKompact\write_file;
 use function JundFauz\EloquentKompact\write_line;
-
 use const JundFauz\EloquentKompact\DISTANCE_LINE;
 use const JundFauz\EloquentKompact\NAMESPACE_DELIMITER;
 use const JundFauz\EloquentKompact\NEW_LINE;
@@ -104,42 +65,42 @@ class FunctionsTest extends TestCase
     #[Test]
     public function it_assigns_one_value_to_several_keys(): void
     {
-        $this->assertSame(['created_by' => 1, 'updated_by' => 1], assign_as(1, 'created_by', 'updated_by'));
-        $this->assertSame(['a' => null], assign_as(null, 'a'));
-        $this->assertSame(['a' => ['x'], 'b' => ['x']], assign_as(['x'], 'a', 'b'));
+        $this->assertSame(['created_by' => 1, 'updated_by' => 1], Arr\assign_as(1, 'created_by', 'updated_by'));
+        $this->assertSame(['a' => null], Arr\assign_as(null, 'a'));
+        $this->assertSame(['a' => ['x'], 'b' => ['x']], Arr\assign_as(['x'], 'a', 'b'));
     }
 
     #[Test]
     public function it_gives_an_empty_array_without_keys_to_assign(): void
     {
-        $this->assertSame([], assign_as(1));
+        $this->assertSame([], Arr\assign_as(1));
     }
 
     #[Test]
     public function it_gets_the_key_and_the_value_of_a_single_item_array(): void
     {
-        $this->assertSame(['latest', 'a'], array_key_values(['latest' => 'a']));
-        $this->assertSame([0, 'a'], array_key_values(['a']));
+        $this->assertSame(['latest', 'a'], Arr\key_values(['latest' => 'a']));
+        $this->assertSame([0, 'a'], Arr\key_values(['a']));
     }
 
     #[Test]
     public function it_gets_every_key_then_every_value_of_several_items(): void
     {
-        $this->assertSame(['a', 'b', 1, 2], array_key_values(['a' => 1, 'b' => 2]));
-        $this->assertSame([], array_key_values([]));
+        $this->assertSame(['a', 'b', 1, 2], Arr\key_values(['a' => 1, 'b' => 2]));
+        $this->assertSame([], Arr\key_values([]));
     }
 
     #[Test]
     public function it_normalizes_a_single_item_list_to_its_item(): void
     {
-        $this->assertSame('a', array_normalize(['a']));
+        $this->assertSame('a', Arr\normalize(['a']));
     }
 
     #[Test]
     public function it_keeps_a_list_with_another_count_when_normalizing(): void
     {
-        $this->assertSame(['a', 'b'], array_normalize(['a', 'b']));
-        $this->assertSame([], array_normalize([]));
+        $this->assertSame(['a', 'b'], Arr\normalize(['a', 'b']));
+        $this->assertSame([], Arr\normalize([]));
     }
 
     public static function strConcatProvider(): iterable
@@ -157,7 +118,7 @@ class FunctionsTest extends TestCase
     #[DataProvider('strConcatProvider')]
     public function it_concatenates_strings(array $values, string $expected): void
     {
-        $this->assertSame($expected, str_concat(...$values));
+        $this->assertSame($expected, Str\concat(...$values));
     }
 
     #[Test]
@@ -169,6 +130,8 @@ class FunctionsTest extends TestCase
         $this->assertSame('a/b/c', path_concat('a', ['b', 'c']));
         $this->assertSame('a.b.c', relation_concat('a', ['b', 'c']));
         $this->assertSame('// a', comment('a'));
+        $this->assertSame(' * a', comment_doc('a'));
+        $this->assertSame('use A;', syntax('use A'));
     }
 
     #[Test]
@@ -190,6 +153,21 @@ class FunctionsTest extends TestCase
     }
 
     #[Test]
+    public function it_trims_a_namespace(): void
+    {
+        $this->assertSame('App\Models', namespace_trim('\App\Models\\'));
+        $this->assertSame('App/Models', namespace_trim('/App/Models/'));
+        $this->assertSame('App', namespace_trim('App'));
+    }
+
+    #[Test]
+    public function it_adds_a_file_extension(): void
+    {
+        $this->assertSame('config.json', add_extension('config', 'json'));
+        $this->assertSame('Money.php', add_php_extension('Money'));
+    }
+
+    #[Test]
     public function it_builds_full_paths_on_the_app_directory(): void
     {
         $this->assertSame(app_path('Models'), full_path_on_app('App\Models'));
@@ -199,13 +177,71 @@ class FunctionsTest extends TestCase
     }
 
     #[Test]
+    public function it_writes_and_finds_a_file(): void
+    {
+        $directory = sys_get_temp_dir() . DIRECTORY_SEPARATOR . 'kompact-functions-' . uniqid() . '/nested';
+
+        try {
+            ensure_directory_exists($directory);
+            $this->assertDirectoryExists($directory);
+            $this->assertFalse(is_file_exist($directory, 'a.txt'));
+
+            write_file($directory, 'a.txt', 'content');
+
+            $this->assertTrue(is_file_exist($directory, 'a.txt'));
+            $this->assertSame('content', File::get($directory . '/a.txt'));
+        } finally {
+            File::deleteDirectory(dirname($directory));
+        }
+    }
+
+    #[Test]
+    public function it_builds_a_class(): void
+    {
+        $this->assertSame('class X {}', build_class('X'));
+        $this->assertSame('class X extends P {}', build_class('X', parent: 'P'));
+        $this->assertSame("class X extends P\n{\n}", build_class('X', "\n{\n}", 'P'));
+        $this->assertSame("/**\n * a\n */\nclass X {}", build_class('X', docblock: "/**\n * a\n */\n"));
+    }
+
+    #[Test]
+    public function it_builds_a_class_docblock(): void
+    {
+        $docblock = build_class_docblock(['a', 'b' => 'int'], 'string', true, 'int $x', 'Generated');
+
+        $this->assertStringStartsWith("/**\n * Generated\n", $docblock);
+        $this->assertStringContainsString("\n * @method static string a(int \$x)\n", $docblock);
+        $this->assertStringContainsString("\n * @method static int b(int \$x)\n", $docblock);
+        $this->assertStringEndsWith("\n */\n", $docblock);
+        $this->assertStringContainsString(' * @method mixed a', build_class_docblock(['a']));
+    }
+
+    #[Test]
+    public function it_creates_the_content_of_a_php_file(): void
+    {
+        $this->assertSame(
+            "<?php\n\nnamespace App\Logic;\n\nuse A\B;\nuse C\D as E;\n\nclass X {}",
+            create_php_content('App\Logic', ['A\B', 'C\D' => 'E'], 'class X {}')
+        );
+        $this->assertSame("<?php\n\nnamespace App;\n\nuse A\B;\n\nclass X {}", create_php_content('App', 'A\B', 'class X {}'));
+    }
+
+    #[Test]
     public function it_flattens_arrays_in_place(): void
     {
         $array = ['a', ['b', ['c']]];
 
-        array_flat($array);
+        Arr\flat($array);
 
         $this->assertSame(['a', 'b', 'c'], $array);
+    }
+
+    #[Test]
+    public function it_maps_with_the_keys(): void
+    {
+        $this->assertSame(['a=1', 'b=2'], Arr\map(fn ($value, $key) => "$key=$value", ['a' => 1, 'b' => 2]));
+        $this->assertSame([2, 4], Arr\map(fn ($value) => $value * 2, [1, 2]));
+        $this->assertSame([], Arr\map(fn ($value) => $value, []));
     }
 
     #[Test]
@@ -213,7 +249,7 @@ class FunctionsTest extends TestCase
     {
         $array = ['name' => 'Ana', 'email' => 'ana@example.com'];
 
-        $this->assertSame('Ana', array_pull($array, 'name'));
+        $this->assertSame('Ana', Arr\pull($array, 'name'));
         $this->assertSame(['email' => 'ana@example.com'], $array);
     }
 
@@ -222,7 +258,7 @@ class FunctionsTest extends TestCase
     {
         $array = ['name' => 'Ana', 'email' => 'ana@example.com', 'role' => 'admin'];
 
-        $this->assertSame(['name' => 'Ana', 'role' => 'admin'], array_pull($array, 'name', 'role'));
+        $this->assertSame(['name' => 'Ana', 'role' => 'admin'], Arr\pull($array, 'name', 'role'));
         $this->assertSame(['email' => 'ana@example.com'], $array);
     }
 
@@ -231,9 +267,18 @@ class FunctionsTest extends TestCase
     {
         $array = ['name' => 'Ana'];
 
-        $this->assertNull(array_pull($array, 'email'));
-        $this->assertSame(['name' => 'Ana', 'email' => null], array_pull($array, 'name', 'email'));
+        $this->assertNull(Arr\pull($array, 'email'));
+        $this->assertSame(['name' => 'Ana', 'email' => null], Arr\pull($array, 'name', 'email'));
         $this->assertSame([], $array);
+    }
+
+    #[Test]
+    public function it_pulls_with_dot_notation(): void
+    {
+        $array = ['user' => ['name' => 'Ana', 'email' => 'ana@example.com']];
+
+        $this->assertSame('Ana', Arr\pull($array, 'user.name'));
+        $this->assertSame(['user' => ['email' => 'ana@example.com']], $array);
     }
 
     #[Test]
@@ -241,7 +286,7 @@ class FunctionsTest extends TestCase
     {
         $array = ['name' => 'Ana', 'email' => 'ana@example.com', 'role' => 'admin'];
 
-        $this->assertSame(['admin', 'Ana'], array_pull_list($array, 'role', 'name'));
+        $this->assertSame(['admin', 'Ana'], Arr\pull_list($array, 'role', 'name'));
         $this->assertSame(['email' => 'ana@example.com'], $array);
     }
 
@@ -250,8 +295,8 @@ class FunctionsTest extends TestCase
     {
         $array = ['name' => 'Ana', 'tags' => ['a' => 1]];
 
-        $this->assertSame('Ana', array_pull_list($array, 'name'));
-        $this->assertSame(['a' => 1], array_pull_list($array, 'tags'));
+        $this->assertSame('Ana', Arr\pull_list($array, 'name'));
+        $this->assertSame(['a' => 1], Arr\pull_list($array, 'tags'));
         $this->assertSame([], $array);
     }
 
@@ -260,90 +305,90 @@ class FunctionsTest extends TestCase
     {
         $array = ['name' => 'Ana'];
 
-        $this->assertNull(array_pull_list($array, 'email'));
-        $this->assertSame(['Ana', null], array_pull_list($array, 'name', 'email'));
-        $this->assertSame([], array_pull_list($array));
+        $this->assertNull(Arr\pull_list($array, 'email'));
+        $this->assertSame(['Ana', null], Arr\pull_list($array, 'name', 'email'));
+        $this->assertSame([], Arr\pull_list($array));
     }
 
     #[Test]
     public function it_merges_values_as_a_flat_list(): void
     {
-        $this->assertSame(['a', 'b', 'c', 'd', null], merge_as_array('a', ['b', ['c']], ['k' => 'd'], null, []));
-        $this->assertSame([1, 2], merge_as_array(collect([1, 2])));
-        $this->assertSame([1, 2, 'b'], merge_as_array(collect([1, 2]), ['k' => 'b']));
-        $this->assertSame([], merge_as_array());
+        $this->assertSame(['a', 'b', 'c', 'd', null], Arr\merge_as_array('a', ['b', ['c']], ['k' => 'd'], null, []));
+        $this->assertSame([1, 2], Arr\merge_as_array(collect([1, 2])));
+        $this->assertSame([1, 2, 'b'], Arr\merge_as_array(collect([1, 2]), ['k' => 'b']));
+        $this->assertSame([], Arr\merge_as_array());
     }
 
     #[Test]
     public function it_merges_associative_arrays_with_their_keys(): void
     {
-        $this->assertSame(['a' => 1, 'b' => 2], merge_as_array(['a' => 1], ['b' => 2]));
-        $this->assertSame(['a' => 1], merge_as_array(['a' => 1]));
-        $this->assertSame(['a' => 9, 'b' => 2], merge_as_array(['a' => 1, 'b' => 2], ['a' => 9]));
-        $this->assertSame(['a' => ['x' => [1, 2]], 'b' => [3]], merge_as_array(['a' => ['x' => [1, 2]]], ['b' => [3]]));
-        $this->assertSame(['a' => null, 'b' => 2], merge_as_array(['a' => null], ['b' => 2]));
+        $this->assertSame(['a' => 1, 'b' => 2], Arr\merge_as_array(['a' => 1], ['b' => 2]));
+        $this->assertSame(['a' => 1], Arr\merge_as_array(['a' => 1]));
+        $this->assertSame(['a' => 9, 'b' => 2], Arr\merge_as_array(['a' => 1, 'b' => 2], ['a' => 9]));
+        $this->assertSame(['a' => ['x' => [1, 2]], 'b' => [3]], Arr\merge_as_array(['a' => ['x' => [1, 2]]], ['b' => [3]]));
+        $this->assertSame(['a' => null, 'b' => 2], Arr\merge_as_array(['a' => null], ['b' => 2]));
     }
 
     #[Test]
     public function it_merges_associative_collections_with_their_keys(): void
     {
-        $this->assertSame(['a' => 1, 'b' => 2], merge_as_array(collect(['a' => 1]), ['b' => 2]));
-        $this->assertSame(['a' => 1, 'b' => 2], merge_as_array(new SupportCollection(['a' => 1]), new SupportCollection(['b' => 2])));
+        $this->assertSame(['a' => 1, 'b' => 2], Arr\merge_as_array(collect(['a' => 1]), ['b' => 2]));
+        $this->assertSame(['a' => 1, 'b' => 2], Arr\merge_as_array(new SupportCollection(['a' => 1]), new SupportCollection(['b' => 2])));
     }
 
     #[Test]
     public function it_ignores_blank_values_when_merging_associative_arrays(): void
     {
-        $this->assertSame(['a' => 1], merge_as_array([], ['a' => 1], []));
-        $this->assertSame(['a' => 1], merge_as_array(['a' => 1], null, '', '   ', collect()));
+        $this->assertSame(['a' => 1], Arr\merge_as_array([], ['a' => 1], []));
+        $this->assertSame(['a' => 1], Arr\merge_as_array(['a' => 1], null, '', '   ', collect()));
     }
 
     #[Test]
     public function it_drops_the_keys_when_an_associative_array_is_mixed_with_other_values(): void
     {
-        $this->assertSame([1, 'x'], merge_as_array(['a' => 1], 'x'));
-        $this->assertSame([1, 5, 6], merge_as_array(['a' => 1], [5, 6]));
-        $this->assertSame([1, false], merge_as_array(['a' => 1], false));
-        $this->assertSame([1, 0], merge_as_array(['a' => 1], 0));
+        $this->assertSame([1, 'x'], Arr\merge_as_array(['a' => 1], 'x'));
+        $this->assertSame([1, 5, 6], Arr\merge_as_array(['a' => 1], [5, 6]));
+        $this->assertSame([1, false], Arr\merge_as_array(['a' => 1], false));
+        $this->assertSame([1, 0], Arr\merge_as_array(['a' => 1], 0));
     }
 
     #[Test]
     public function it_merges_named_arguments_without_an_error(): void
     {
-        $this->assertSame([1, 2], merge_as_array(a: 1, b: 2));
-        $this->assertSame(['k' => 1, 'j' => 2], merge_as_array(a: ['k' => 1], b: ['j' => 2]));
+        $this->assertSame([1, 2], Arr\merge_as_array(a: 1, b: 2));
+        $this->assertSame(['k' => 1, 'j' => 2], Arr\merge_as_array(a: ['k' => 1], b: ['j' => 2]));
     }
 
     #[Test]
     public function it_renumbers_numeric_keys_when_merging(): void
     {
-        $this->assertSame(['x', 'y'], merge_as_array([5 => 'x'], [7 => 'y']));
+        $this->assertSame(['x', 'y'], Arr\merge_as_array([5 => 'x'], [7 => 'y']));
     }
 
     #[Test]
     public function it_keeps_array_key_values_flat_when_the_value_is_associative(): void
     {
-        $this->assertSame(['k', 1], array_key_values(['k' => ['a' => 1]]));
+        $this->assertSame(['k', 1], Arr\key_values(['k' => ['a' => 1]]));
     }
 
     #[Test]
     public function it_checks_whether_a_value_is_an_associative_array(): void
     {
-        $this->assertTrue(is_associative_array(['a' => 1]));
-        $this->assertTrue(is_associative_array([5 => 'x']));
-        $this->assertFalse(is_associative_array([]));
-        $this->assertFalse(is_associative_array([1, 2]));
-        $this->assertFalse(is_associative_array('a'));
-        $this->assertFalse(is_associative_array(null));
-        $this->assertFalse(is_associative_array(collect(['a' => 1])));
+        $this->assertTrue(Arr\is_associative(['a' => 1]));
+        $this->assertTrue(Arr\is_associative([5 => 'x']));
+        $this->assertFalse(Arr\is_associative([]));
+        $this->assertFalse(Arr\is_associative([1, 2]));
+        $this->assertFalse(Arr\is_associative('a'));
+        $this->assertFalse(Arr\is_associative(null));
+        $this->assertFalse(Arr\is_associative(collect(['a' => 1])));
     }
 
     #[Test]
     public function it_wraps_values_in_arrays(): void
     {
-        $this->assertSame(['a'], array_wrap('a'));
-        $this->assertSame(['a', 'b'], array_wrap(['a', 'b']));
-        $this->assertSame([], array_wrap(null));
+        $this->assertSame(['a'], Arr\wrap('a'));
+        $this->assertSame(['a', 'b'], Arr\wrap(['a', 'b']));
+        $this->assertSame([], Arr\wrap(null));
     }
 
     #[Test]
@@ -351,13 +396,13 @@ class FunctionsTest extends TestCase
     {
         $array = ['nickname' => null, 'name' => 'Ana', 'empty' => '', 'zero' => 0, 'user' => ['name' => 'Budi']];
 
-        $this->assertSame('Ana', array_get_or($array, 'nickname', 'name'));
-        $this->assertSame('', array_get_or($array, 'empty', 'name'));
-        $this->assertSame(0, array_get_or($array, 'zero', 'name'));
-        $this->assertSame('Ana', array_get_or($array, 'missing', 'name'));
-        $this->assertSame('Budi', array_get_or($array, 'user.name'));
-        $this->assertNull(array_get_or($array, 'nickname', 'missing'));
-        $this->assertNull(array_get_or($array));
+        $this->assertSame('Ana', Arr\get_or($array, 'nickname', 'name'));
+        $this->assertSame('', Arr\get_or($array, 'empty', 'name'));
+        $this->assertSame(0, Arr\get_or($array, 'zero', 'name'));
+        $this->assertSame('Ana', Arr\get_or($array, 'missing', 'name'));
+        $this->assertSame('Budi', Arr\get_or($array, 'user.name'));
+        $this->assertNull(Arr\get_or($array, 'nickname', 'missing'));
+        $this->assertNull(Arr\get_or($array));
     }
 
     #[Test]
@@ -365,10 +410,10 @@ class FunctionsTest extends TestCase
     {
         $this->assertSame(
             [0 => 'a', 4 => 0, 5 => '0', 6 => false, 'k' => 'v'],
-            array_filter_filled(['a', '', '  ', null, 0, '0', false, [], 'k' => 'v', 'e' => ''])
+            Arr\filter_filled(['a', '', '  ', null, 0, '0', false, [], 'k' => 'v', 'e' => ''])
         );
-        $this->assertSame([[0]], array_filter_filled([[0], collect()]));
-        $this->assertSame([], array_filter_filled([]));
+        $this->assertSame([[0]], Arr\filter_filled([[0], collect()]));
+        $this->assertSame([], Arr\filter_filled([]));
     }
 
     #[Test]
@@ -376,8 +421,8 @@ class FunctionsTest extends TestCase
     {
         $data = ['a' => 1, 'b' => null];
 
-        array_key_change($data, 'a', 'c');
-        array_key_change($data, 'b', 'd');
+        Arr\key_change($data, 'a', 'c');
+        Arr\key_change($data, 'b', 'd');
 
         $this->assertSame(['c' => 1, 'd' => null], $data);
     }
@@ -387,7 +432,7 @@ class FunctionsTest extends TestCase
     {
         $data = ['a' => 1, 'b' => 2];
 
-        array_key_change($data, 'a', 'a');
+        Arr\key_change($data, 'a', 'a');
 
         $this->assertSame(['a' => 1, 'b' => 2], $data);
     }
@@ -397,7 +442,7 @@ class FunctionsTest extends TestCase
     {
         $data = ['a' => 1, 'b' => 2];
 
-        array_key_change($data, 'a', 'b');
+        Arr\key_change($data, 'a', 'b');
 
         $this->assertSame(['b' => 1], $data);
     }
@@ -409,7 +454,7 @@ class FunctionsTest extends TestCase
 
         $this->expectException(\ErrorException::class);
 
-        array_key_change($data, 'missing', 'b');
+        Arr\key_change($data, 'missing', 'b');
     }
 
     #[Test]
@@ -417,21 +462,106 @@ class FunctionsTest extends TestCase
     {
         $this->assertTrue(is_not_null(''));
         $this->assertFalse(is_not_null(null));
-        $this->assertTrue(is_all_null(null, [null, [null]]));
-        $this->assertFalse(is_all_null(null, [0]));
-        $this->assertTrue(is_all_not_null(0, ['', [false]]));
-        $this->assertFalse(is_all_not_null(0, [null]));
-        $this->assertTrue(is_one_of_them_not_null(null, [null, 0]));
-        $this->assertFalse(is_one_of_them_not_null(null, [null]));
-        $this->assertTrue(is_one_of_them_null(1, null));
-        $this->assertFalse(is_one_of_them_null(1, 0, ''));
-        $this->assertTrue(is_array_or_collection([]));
-        $this->assertTrue(is_array_or_collection(new SupportCollection));
-        $this->assertFalse(is_array_or_collection(new ArrayObject));
-        $this->assertTrue(is_not_array('a'));
-        $this->assertFalse(is_not_array([]));
+        $this->assertTrue(Arr\is_array_or_collection([]));
+        $this->assertTrue(Arr\is_array_or_collection(new SupportCollection));
+        $this->assertFalse(Arr\is_array_or_collection(new ArrayObject));
         $this->assertTrue(not(false));
         $this->assertFalse(not(true));
+    }
+
+    #[Test]
+    public function it_builds_the_name_of_an_is_function(): void
+    {
+        $this->assertSame('is_int', is('int'));
+        $this->assertSame('is_not_null', is('not_null'));
+    }
+
+    #[Test]
+    public function it_checks_every_value(): void
+    {
+        $this->assertTrue(is_all('null', null, [null, [null]]));
+        $this->assertFalse(is_all('null', null, [0]));
+        $this->assertTrue(is_all('numeric', 1, '2.5', 1e3));
+        $this->assertFalse(is_all('numeric', 1, 'abc'));
+        $this->assertTrue(is_all('not_null', 1, ''));
+        $this->assertTrue(is_all('null'));
+    }
+
+    #[Test]
+    public function it_checks_any_value(): void
+    {
+        $this->assertTrue(is_any('null', 1, null));
+        $this->assertFalse(is_any('null', 1, 0, ''));
+        $this->assertTrue(is_any('numeric', 'abc', '2'));
+        $this->assertFalse(is_any('numeric', 'abc', null));
+        $this->assertFalse(is_any('null'));
+    }
+
+    #[Test]
+    public function it_checks_every_value_and_any_value_negated(): void
+    {
+        $this->assertTrue(is_all_not('null', 0, ['', [false]]));
+        $this->assertFalse(is_all_not('null', 0, [null]));
+        $this->assertTrue(is_all_not('numeric', 'abc', null));
+        $this->assertFalse(is_all_not('numeric', 'abc', 1));
+
+        $this->assertTrue(is_any_not('null', null, [null, 0]));
+        $this->assertFalse(is_any_not('null', null, [null]));
+        $this->assertTrue(is_any_not('numeric', 1, null));
+        $this->assertFalse(is_any_not('numeric', 1, '2'));
+    }
+
+    #[Test]
+    public function it_negates_a_check(): void
+    {
+        $this->assertTrue(is_not('array', 'a'));
+        $this->assertFalse(is_not('array', []));
+        $this->assertTrue(is_not('numeric', 'abc'));
+        $this->assertFalse(is_not('numeric', '1'));
+        $this->assertTrue(is_not('dir', __DIR__ . '/missing'));
+        $this->assertFalse(is_not('dir', __DIR__));
+        $this->assertTrue(is_not('dir', __FILE__));
+    }
+
+    #[Test]
+    public function it_checks_a_value_against_several_checks(): void
+    {
+        $this->assertTrue(is_any_of('x', 'int', 'string'));
+        $this->assertTrue(is_any_of(null, 'null', 'numeric'));
+        $this->assertFalse(is_any_of(1.5, 'int', 'string'));
+        $this->assertFalse(is_any_of('x'));
+    }
+
+    #[Test]
+    public function it_fails_on_an_unknown_check(): void
+    {
+        $this->expectException(BadMethodCallException::class);
+
+        is_all('unknown_check', 1);
+    }
+
+    #[Test]
+    public function it_skips_a_function_that_does_not_return_a_bool(): void
+    {
+        // count() returns an int and file() array|false, so their is_ functions are used instead
+        $this->assertTrue(is_any_of(__FILE__, 'file'));
+        $this->assertFalse(is_any_of(__DIR__ . '/missing', 'file'));
+        $this->expectException(BadMethodCallException::class);
+
+        is_all('count', [1]);
+    }
+
+    #[Test]
+    public function it_checks_the_type_of_every_value(): void
+    {
+        $this->assertTrue(is_all_type_of('int', 1, 2));
+        $this->assertTrue(is_all_type_of('int', [1, [2]]));
+        $this->assertFalse(is_all_type_of('int', 1, 'a'));
+        $this->assertTrue(is_all_type_of(['int', 'string'], 1, 'a'));
+        $this->assertFalse(is_all_type_of(['int', 'string'], 1, 1.5));
+
+        $this->assertTrue(is_any_not_type_of('int', 1, 'a'));
+        $this->assertFalse(is_any_not_type_of(['int', 'string'], 1, 'a'));
     }
 
     #[Test]
@@ -496,69 +626,21 @@ class FunctionsTest extends TestCase
     }
 
     #[Test]
-    public function it_compares_numbers(): void
-    {
-        $this->assertTrue(higher_than(2, 1));
-        $this->assertTrue(higher_than(1.5, 1));
-        $this->assertTrue(higher_than('2.50', '2.00'));
-        $this->assertTrue(higher_than('10', '9'));
-        $this->assertFalse(higher_than(1, 1));
-        $this->assertFalse(higher_than(0.2, 0.9));
-
-        $this->assertTrue(lower_than(1, 2));
-        $this->assertTrue(lower_than(0.2, 0.9));
-        $this->assertTrue(lower_than('9', '10'));
-        $this->assertTrue(lower_than(-1, '0.5'));
-        $this->assertFalse(lower_than(1, 1));
-        $this->assertFalse(lower_than('2.50', 2));
-    }
-
-    #[Test]
-    public function it_compares_numbers_or_same(): void
-    {
-        $this->assertTrue(higher_than_or_same_with(2, 1));
-        $this->assertTrue(higher_than_or_same_with(1, 1));
-        $this->assertTrue(higher_than_or_same_with('2.50', 2.5));
-        $this->assertTrue(higher_than_or_same_with('10', '9'));
-        $this->assertFalse(higher_than_or_same_with(0.2, 0.9));
-
-        $this->assertTrue(lower_than_or_same_with(1, 2));
-        $this->assertTrue(lower_than_or_same_with(1, 1));
-        $this->assertTrue(lower_than_or_same_with('2.50', 2.5));
-        $this->assertTrue(lower_than_or_same_with('9', '10'));
-        $this->assertFalse(lower_than_or_same_with(0.9, 0.2));
-    }
-
-    #[Test]
-    public function it_checks_zero(): void
-    {
-        $this->assertTrue(is_zero(0));
-        $this->assertTrue(is_zero(0.0));
-        $this->assertTrue(is_zero('0.00'));
-        $this->assertFalse(is_zero('abc'));
-        $this->assertFalse(is_zero(null));
-        $this->assertTrue(is_zero(-0.0));
-        $this->assertFalse(is_zero(1));
-        $this->assertFalse(is_zero(0.1));
-        $this->assertFalse(is_zero(-1));
-    }
-
-    #[Test]
     public function it_checks_the_count(): void
     {
-        $this->assertTrue(is_count_zero([]));
-        $this->assertTrue(is_count_zero(new ArrayObject));
-        $this->assertFalse(is_count_zero([null]));
+        $this->assertTrue(Arr\is_count_zero([]));
+        $this->assertTrue(Arr\is_count_zero(new ArrayObject));
+        $this->assertFalse(Arr\is_count_zero([null]));
 
-        $this->assertTrue(is_count_one([null]));
-        $this->assertTrue(is_count_one(new ArrayObject(['a' => 1])));
-        $this->assertFalse(is_count_one([]));
-        $this->assertFalse(is_count_one([1, 2]));
+        $this->assertTrue(Arr\is_count_one([null]));
+        $this->assertTrue(Arr\is_count_one(new ArrayObject(['a' => 1])));
+        $this->assertFalse(Arr\is_count_one([]));
+        $this->assertFalse(Arr\is_count_one([1, 2]));
 
-        $this->assertTrue(is_count_many([1, 2]));
-        $this->assertTrue(is_count_many(new ArrayObject([1, 2, 3])));
-        $this->assertFalse(is_count_many([1]));
-        $this->assertFalse(is_count_many([]));
+        $this->assertTrue(Arr\is_count_many([1, 2]));
+        $this->assertTrue(Arr\is_count_many(new ArrayObject([1, 2, 3])));
+        $this->assertFalse(Arr\is_count_many([1]));
+        $this->assertFalse(Arr\is_count_many([]));
     }
 
     #[Test]
@@ -566,17 +648,25 @@ class FunctionsTest extends TestCase
     {
         $this->assertSame(
             ['user.name', 'k' => ['posts', '1'], '1.5', '1', '', ''],
-            stringify([Relation::arrange('name')->relation('user'), 'k' => [Relation::arrange()->relations('posts'), 1], 1.5, true, false, null])
+            Str\stringify([Relation::arrange('name')->relation('user'), 'k' => [Relation::arrange()->relations('posts'), 1], 1.5, true, false, null])
         );
-        $this->assertSame([], stringify([]));
+        $this->assertSame([], Str\stringify([]));
     }
 
     #[Test]
     public function it_wraps_laravel_str_methods(): void
     {
-        $this->assertSame('App\Models', str_before_last('App\Models\User', '\\'));
-        $this->assertSame('äöü', str_lower('ÄÖÜ'));
-        $this->assertSame('ÄÖÜ', str_upper('äöü'));
+        $this->assertSame('App\Models', Str\before_last('App\Models\User', '\\'));
+        $this->assertSame('äöü', Str\lower('ÄÖÜ'));
+        $this->assertSame('ÄÖÜ', Str\upper('äöü'));
+    }
+
+    #[Test]
+    public function it_trims_the_end_of_every_line(): void
+    {
+        $this->assertSame("a\n b\n", Str\rtrim_multiline("a  \n b \n"));
+        $this->assertSame("a\t\nb", Str\rtrim_multiline("a\t \nb ", ' '));
+        $this->assertSame('', Str\rtrim_multiline(''));
     }
 
     #[Test]
@@ -594,130 +684,14 @@ class FunctionsTest extends TestCase
     }
 
     #[Test]
-    public function it_checks_natural_and_whole_numbers(): void
-    {
-        $this->assertTrue(is_natural_number(1));
-        $this->assertTrue(is_natural_number(PHP_INT_MAX));
-        $this->assertFalse(is_natural_number(0));
-        $this->assertFalse(is_natural_number(-1));
-
-        $this->assertTrue(is_whole_number(0));
-        $this->assertTrue(is_whole_number(1));
-        $this->assertFalse(is_whole_number(-1));
-        $this->assertFalse(is_whole_number(PHP_INT_MIN));
-    }
-
-    #[Test]
-    public function it_checks_negative_and_positive_numbers(): void
-    {
-        $this->assertTrue(is_negative_number(-1));
-        $this->assertFalse(is_negative_number(0));
-        $this->assertFalse(is_negative_number(1));
-
-        $this->assertTrue(is_positive_number(1));
-        $this->assertFalse(is_positive_number(0));
-        $this->assertFalse(is_positive_number(-1));
-    }
-
-    #[Test]
-    public function it_checks_numeric_values(): void
-    {
-        $this->assertTrue(is_all_numeric(1, '2.5', 1e3));
-        $this->assertFalse(is_all_numeric(1, 'abc'));
-        $this->assertTrue(is_any_numeric('abc', '2'));
-        $this->assertFalse(is_any_numeric('abc', null));
-        $this->assertTrue(is_not_numeric('abc'));
-        $this->assertFalse(is_not_numeric('1'));
-        $this->assertTrue(is_all_not_numeric('abc', null));
-        $this->assertFalse(is_all_not_numeric('abc', 1));
-        $this->assertTrue(is_any_not_numeric(1, null));
-        $this->assertFalse(is_any_not_numeric(1, '2'));
-    }
-
-    #[Test]
-    public function it_calculates_with_bcmath(): void
-    {
-        $this->assertSame('2.700', plus('1.5', '1.2'));
-        $this->assertSame('0.300', plus(0.1, 0.2));
-        $this->assertSame('3.000', plus(1, 2));
-        $this->assertSame('2.70', plus('1.5', '1.2', 2));
-        $this->assertSame('-0.750', minus(1.5, 2.25));
-        $this->assertSame('3.75', minus('5', '1.25', 2));
-        $this->assertSame('2469.000', multiply(1234.5, 2));
-        $this->assertSame('100.50', multiply('1.005', '100', 2));
-        $this->assertSame('0.400', multiply('0.0004', '1000'));
-        $this->assertSame('3.333', divide('10', '3'));
-        $this->assertSame('0.33333', divide(1, 3, 5));
-        $this->assertSame('16666.666', divide('10', '0.0006'));
-        $this->assertSame('2500.000', divide('1', '0.0004'));
-    }
-
-    #[Test]
-    public function it_reads_floats_exponents_and_padded_numbers(): void
-    {
-        $this->assertSame('100000000000000000001.000', plus(1e20, 1));
-        $this->assertSame('0.0000001500', plus(1.5e-7, 0, 10));
-        $this->assertSame('1001.000', plus('1e3', '1'));
-        $this->assertSame('1001.000', plus('1E3', '1'));
-        $this->assertSame('-150.000', plus('-1.5e2', '0'));
-        $this->assertSame('5.000', plus('.5e1', '0'));
-        $this->assertSame('3.000', plus(' 2 ', '1'));
-        $this->assertTrue(higher_than('1E5', '1'));
-        $this->assertTrue(higher_than(1e20, 1));
-    }
-
-    #[Test]
-    public function it_rejects_non_numbers_in_calculations(): void
-    {
-        $this->expectException(\InvalidArgumentException::class);
-
-        plus('abc', '1');
-    }
-
-    #[Test]
-    public function it_rejects_a_negative_precision_in_calculations(): void
-    {
-        $this->expectException(\InvalidArgumentException::class);
-
-        divide(1, 2, -1);
-    }
-
-    #[Test]
-    public function it_compares_numbers_with_a_precision(): void
-    {
-        $this->assertTrue(num_same_with('2.50', 2.5));
-        $this->assertTrue(num_same_with(1.9996, '1.9996'));
-        $this->assertTrue(num_same_with(0.1 + 0.2, 0.3));
-        $this->assertFalse(num_same_with('1.5', '1.2'));
-        $this->assertTrue(num_same_with('1.2344', '1.2345'));
-        $this->assertFalse(num_same_with('1.2344', '1.2345', 4));
-        $this->assertFalse(higher_than('0.0005', '0'));
-        $this->assertTrue(higher_than('0.0005', '0', 4));
-        $this->assertFalse(lower_than('1.2344', '1.2345'));
-        $this->assertTrue(lower_than('1.2344', '1.2345', 4));
-        $this->assertTrue(higher_than(1234.5, 1));
-    }
-
-    #[Test]
-    public function it_does_not_compare_non_numbers(): void
-    {
-        $this->assertFalse(higher_than('abc', '1'));
-        $this->assertFalse(lower_than('abc', '1'));
-        $this->assertFalse(num_same_with('abc', 'abc'));
-        $this->assertFalse(higher_than(null, 1));
-        $this->assertFalse(higher_than_or_same_with(1, 1, -1));
-        $this->assertFalse(lower_than_or_same_with(1, 1, -1));
-    }
-
-    #[Test]
     public function str_empty_if_false_keeps_the_value_only_when_the_condition_is_truthy(): void
     {
-        $this->assertSame('a', str_empty_if_false(true, 'a'));
-        $this->assertSame('a', str_empty_if_false('x', 'a'));
-        $this->assertSame('a', str_empty_if_false([1], 'a'));
+        $this->assertSame('a', Str\empty_if_false(true, 'a'));
+        $this->assertSame('a', Str\empty_if_false('x', 'a'));
+        $this->assertSame('a', Str\empty_if_false([1], 'a'));
 
         foreach ([false, null, 0, '', '0', []] as $condition) {
-            $this->assertSame('', str_empty_if_false($condition, 'a'));
+            $this->assertSame('', Str\empty_if_false($condition, 'a'));
         }
     }
 
@@ -755,8 +729,8 @@ class FunctionsTest extends TestCase
     #[Test]
     public function it_merges_strings_and_arrays_keeping_the_string_keys(): void
     {
-        $this->assertSame(['a', 'k' => 'b', 'c', 'x' => 'y'], merge_mixed_array(['a', ['k' => 'b'], ['c'], 'x' => 'y']));
-        $this->assertSame([], merge_mixed_array([]));
+        $this->assertSame(['a', 'k' => 'b', 'c', 'x' => 'y'], Arr\merge_mixed(['a', ['k' => 'b'], ['c'], 'x' => 'y']));
+        $this->assertSame([], Arr\merge_mixed([]));
     }
 
     #[Test]
@@ -764,9 +738,9 @@ class FunctionsTest extends TestCase
     {
         $array = ['a' => 1, 'b' => 2];
 
-        $this->assertSame(['a' => 1, 'c' => null], array_compact($array, 'a', 'c'));
-        $this->assertSame(['a' => 1, 'x' => 2], array_compact($array, 'a', x: 'b'));
-        $this->assertSame([], array_compact($array));
+        $this->assertSame(['a' => 1, 'c' => null], Arr\compact($array, 'a', 'c'));
+        $this->assertSame(['a' => 1, 'x' => 2], Arr\compact($array, 'a', x: 'b'));
+        $this->assertSame([], Arr\compact($array));
         $this->assertSame(['a' => 1, 'b' => 2], $array);
     }
 
@@ -774,15 +748,15 @@ class FunctionsTest extends TestCase
     public function it_compacts_an_array_and_unsets_the_keys(): void
     {
         $array = ['a' => 1, 'b' => 2, 'c' => 3];
-        $this->assertSame(['a' => 1, 'x' => null], array_compact_and_unset($array, 'a', 'x'));
+        $this->assertSame(['a' => 1, 'x' => null], Arr\compact_and_unset($array, 'a', 'x'));
         $this->assertSame(['b' => 2, 'c' => 3], $array);
 
         $array = ['a' => 1, 'b' => 2, 'c' => 3];
-        $this->assertSame(['a' => 1, 'y' => 2], array_compact_and_unset($array, 'a', y: 'b'));
+        $this->assertSame(['a' => 1, 'y' => 2], Arr\compact_and_unset($array, 'a', y: 'b'));
         $this->assertSame(['c' => 3], $array);
 
         $array = ['a' => 1];
-        $this->assertSame([], array_compact_and_unset($array));
+        $this->assertSame([], Arr\compact_and_unset($array));
         $this->assertSame(['a' => 1], $array);
     }
 
@@ -832,44 +806,30 @@ class FunctionsTest extends TestCase
     #[Test]
     public function it_checks_a_value_is_in_a_list(): void
     {
-        $this->assertTrue(in('a', ['a', 'b']));
-        $this->assertTrue(in('a', collect(['a'])));
-        $this->assertTrue(in('a', new SupportCollection(['a'])));
-        $this->assertFalse(in('c', ['a', 'b']));
-        $this->assertTrue(in('1', [1]));
-        $this->assertFalse(in('1', collect([1]), true));
+        $this->assertTrue(Arr\in('a', ['a', 'b']));
+        $this->assertTrue(Arr\in('a', collect(['a'])));
+        $this->assertTrue(Arr\in('a', new SupportCollection(['a'])));
+        $this->assertFalse(Arr\in('c', ['a', 'b']));
+        $this->assertTrue(Arr\in('1', [1]));
+        $this->assertFalse(Arr\in('1', collect([1]), true));
     }
 
     #[Test]
     public function it_casts_a_value_to_an_array(): void
     {
-        $this->assertSame(['a', 'b'], array_cast(collect(['a', 'b'])));
-        $this->assertSame(['a' => 1], array_cast(new SupportCollection(['a' => 1])));
-        $this->assertSame(['a'], array_cast('a'));
-        $this->assertSame([], array_cast(null));
-        $this->assertSame([1, 2], array_cast([1, 2]));
+        $this->assertSame(['a', 'b'], Arr\cast(collect(['a', 'b'])));
+        $this->assertSame(['a' => 1], Arr\cast(new SupportCollection(['a' => 1])));
+        $this->assertSame(['a'], Arr\cast('a'));
+        $this->assertSame([], Arr\cast(null));
+        $this->assertSame([1, 2], Arr\cast([1, 2]));
     }
 
     #[Test]
     public function it_builds_and_checks_a_constant_name(): void
     {
-        $this->assertSame('Foo\Bar::Baz', str_constant('Foo\Bar', 'Baz'));
-        $this->assertFalse(not_defined(str_constant(\JundFauz\EloquentKompact\Column\ColumnCreator::class, 'Relation')));
-        $this->assertTrue(not_defined(str_constant(\JundFauz\EloquentKompact\Column\ColumnCreator::class, 'Unknown')));
-    }
-
-    #[Test]
-    public function it_picks_a_value_like_the_operators(): void
-    {
-        $this->assertSame('yes', ternary(1, 'yes', 'no'));
-        $this->assertSame('no', ternary('', 'yes', 'no'));
-
-        $this->assertSame('a', elvis('a', 'b'));
-        $this->assertSame('b', elvis(0, 'b'));
-        $this->assertSame('b', elvis(null, 'b'));
-
-        $this->assertSame(0, null_coalescing(0, 'b'));
-        $this->assertSame('b', null_coalescing(null, 'b'));
+        $this->assertSame('Foo\Bar::Baz', Str\constant('Foo\Bar', 'Baz'));
+        $this->assertFalse(is_not('defined', Str\constant(\JundFauz\EloquentKompact\Column\ColumnCreator::class, 'Relation')));
+        $this->assertTrue(is_not('defined', Str\constant(\JundFauz\EloquentKompact\Column\ColumnCreator::class, 'Unknown')));
     }
 
     #[Test]
@@ -894,16 +854,16 @@ class FunctionsTest extends TestCase
     {
         $array = ['a' => 1, 'empty' => null, 'zero' => 0];
 
-        $this->assertSame(1, array_get($array['a'], 'x'));
-        $this->assertSame(0, array_get($array['zero'], 'x'));
-        $this->assertSame('x', array_get($array['empty'], 'x'));
-        $this->assertSame('x', array_get($array['missing'], 'x'));
-        $this->assertSame([], array_get($array['missing']['nested'], []));
-        $this->assertSame(1, array_get($array['a']));
-        $this->assertNull(array_get($array['other']));
+        $this->assertSame(1, Arr\get($array['a'], 'x'));
+        $this->assertSame(0, Arr\get($array['zero'], 'x'));
+        $this->assertSame('x', Arr\get($array['empty'], 'x'));
+        $this->assertSame('x', Arr\get($array['missing'], 'x'));
+        $this->assertSame([], Arr\get($array['missing']['nested'], []));
+        $this->assertSame(1, Arr\get($array['a']));
+        $this->assertNull(Arr\get($array['other']));
 
         $null = null;
-        $this->assertSame('x', array_get($null['key'], 'x'));
+        $this->assertSame('x', Arr\get($null['key'], 'x'));
     }
 
     #[Test]
@@ -911,22 +871,22 @@ class FunctionsTest extends TestCase
     {
         $array = ['a' => '5', 'empty' => null, 'status' => 'paid', 'json' => '[1,2]'];
 
-        $this->assertSame(5, array_get($array['a'], 0, 'integer'));
-        $this->assertSame(7, array_get($array['missing'], '7', 'integer'));
-        $this->assertSame(0, array_get($array['empty'], '0', 'integer'));
-        $this->assertNull(array_get($array['other'], null, 'integer'));
-        $this->assertSame([1, 2], array_get($array['json'], null, 'array'));
-        $this->assertSame(FunctionsTestStatus::Paid, array_get($array['status'], null, FunctionsTestStatus::class));
+        $this->assertSame(5, Arr\get($array['a'], 0, 'integer'));
+        $this->assertSame(7, Arr\get($array['missing'], '7', 'integer'));
+        $this->assertSame(0, Arr\get($array['empty'], '0', 'integer'));
+        $this->assertNull(Arr\get($array['other'], null, 'integer'));
+        $this->assertSame([1, 2], Arr\get($array['json'], null, 'array'));
+        $this->assertSame(FunctionsTestStatus::Paid, Arr\get($array['status'], null, FunctionsTestStatus::class));
 
         // Without a cast the value is taken as it is
-        $this->assertSame('5', array_get($array['a'], 0));
+        $this->assertSame('5', Arr\get($array['a'], 0));
     }
 
     #[Test]
     public function it_concatenates_collections(): void
     {
-        $this->assertSame('abcd', str_concat('a', collect(['b', 'c']), new SupportCollection(['d'])));
-        $this->assertSame('abc', str_concat('a', [collect(['b']), ['c']]));
+        $this->assertSame('abcd', Str\concat('a', collect(['b', 'c']), new SupportCollection(['d'])));
+        $this->assertSame('abc', Str\concat('a', [collect(['b']), ['c']]));
     }
 
     #[Test]
@@ -942,8 +902,10 @@ class FunctionsTest extends TestCase
     #[Test]
     public function it_is_only_available_in_the_package_namespace(): void
     {
-        $this->assertTrue(function_exists('JundFauz\EloquentKompact\str_concat'));
-        $this->assertFalse(function_exists('str_concat'));
+        $this->assertTrue(function_exists('JundFauz\EloquentKompact\String\concat'));
+        $this->assertTrue(function_exists('JundFauz\EloquentKompact\Array\pull'));
+        $this->assertFalse(function_exists('concat'));
+        $this->assertFalse(function_exists('pull'));
     }
 
     #[Test]
@@ -951,33 +913,25 @@ class FunctionsTest extends TestCase
     {
         $config = ['token' => ['a', 'b']];
 
-        $this->assertInstanceOf(\JundFauz\EloquentKompact\Builder\Collection::class, array_get_as_collection($config['token'], []));
-        $this->assertSame(['a', 'b'], array_get_as_collection($config['token'], [])->all());
-        $this->assertSame([], array_get_as_collection($config['missing'], [])->all());
-        $this->assertSame(['x'], array_get_as_collection($config['other'], ['x'])->all());
-        $this->assertSame([], array_get_as_collection($config['missing'])->all());
+        $this->assertInstanceOf(\JundFauz\EloquentKompact\Builder\Collection::class, Arr\array_get_as_collection($config['token'], []));
+        $this->assertSame(['a', 'b'], Arr\array_get_as_collection($config['token'], [])->all());
+        $this->assertSame([], Arr\array_get_as_collection($config['missing'], [])->all());
+        $this->assertSame(['x'], Arr\array_get_as_collection($config['other'], ['x'])->all());
+        $this->assertSame([], Arr\array_get_as_collection($config['missing'])->all());
     }
 
     #[Test]
     public function it_gets_the_list_items_of_an_array(): void
     {
-        $this->assertSame([0 => 'a', 5 => 'c'], get_array_list(['a', 'k' => 'b', 5 => 'c']));
-        $this->assertSame([], get_array_list(['k' => 'b']));
+        $this->assertSame([0 => 'a', 5 => 'c'], Arr\get_array_list(['a', 'k' => 'b', 5 => 'c']));
+        $this->assertSame([], Arr\get_array_list(['k' => 'b']));
     }
 
     #[Test]
     public function it_merges_arrays(): void
     {
-        $this->assertSame(['a' => 2, 0 => 'x', 1 => 'y'], merge(['a' => 1, 'x'], ['a' => 2, 'y']));
-        $this->assertSame([], merge());
-    }
-
-    #[Test]
-    public function it_checks_a_missing_directory(): void
-    {
-        $this->assertFalse(is_not_dir(__DIR__));
-        $this->assertTrue(is_not_dir(__DIR__ . '/missing'));
-        $this->assertTrue(is_not_dir(__FILE__));
+        $this->assertSame(['a' => 2, 0 => 'x', 1 => 'y'], Arr\merge(['a' => 1, 'x'], ['a' => 2, 'y']));
+        $this->assertSame([], Arr\merge());
     }
 }
 
