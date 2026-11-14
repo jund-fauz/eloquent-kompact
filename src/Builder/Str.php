@@ -6,12 +6,13 @@ use Illuminate\Support\Stringable;
 use JundFauz\EloquentKompact\Column\ColumnCreator;
 use JundFauz\EloquentKompact\Query\RawQuery;
 use JundFauz\EloquentKompact\Regex\Regex;
+use function JundFauz\EloquentKompact\Array\flat;
 use function JundFauz\EloquentKompact\namespace_concat;
 use function JundFauz\EloquentKompact\not_same_with;
 use function JundFauz\EloquentKompact\path_concat;
 use function JundFauz\EloquentKompact\same_with;
-use function JundFauz\EloquentKompact\str_concat;
-use function JundFauz\EloquentKompact\str_constant;
+use function JundFauz\EloquentKompact\String\concat;
+use function JundFauz\EloquentKompact\String\constant;
 use function JundFauz\EloquentKompact\word_concat;
 use const JundFauz\EloquentKompact\NEW_LINE;
 use const JundFauz\EloquentKompact\PATH_DELIMITER;
@@ -49,63 +50,73 @@ class Str extends Stringable
         return $this->replaceByRegex($search, '');
     }
 
-    public function join(string $delimiter, string ...$otherStrings): static
+    public function join(string $delimiter, string|array ...$otherStrings): static
     {
+        flat($otherStrings);
         return $this->set(join($delimiter, [$this->value, ...$otherStrings]));
     }
 
-    public function concat(string ...$otherStrings): static
+    public function concat(string|array ...$otherStrings): static
     {
+        flat($otherStrings);
         return $this->add(...$otherStrings);
     }
 
-    public function add(string ...$otherStrings): static
+    public function add(string|array ...$otherStrings): static
     {
+        flat($otherStrings);
         return $this->join('', ...$otherStrings);
     }
 
-    public function addWord(string ...$otherWords): static
+    public function addWord(string|array ...$otherWords): static
     {
+        flat($otherWords);
         return $this->set(self::joinWords([$this->value, ...$otherWords]));
     }
 
     public function addConstant(string $constantName): static
     {
-        return $this->set(str_constant($this->value, $constantName));
+        return $this->set(constant($this->value, $constantName));
     }
 
-    public function addNamespace(string ...$otherNamespace): static
+    public function addNamespace(string|array ...$otherNamespace): static
     {
+        flat($otherNamespace);
         return $this->set(namespace_concat($this->value, $otherNamespace));
     }
 
-    public function addPath(string ...$otherPath): static
+    public function addPath(string|array ...$otherPath): static
     {
+        flat($otherPath);
         return $this->set(self::joinPaths([$this->value, ...$otherPath]));
     }
 
-    public function addAtStart(string ...$otherStrings): static
+    public function addAtStart(string|array ...$otherStrings): static
     {
-        return $this->set(str_concat($otherStrings, $this->value));
+        flat($otherStrings);
+        return $this->set(concat($otherStrings, $this->value));
     }
 
-    public function addWordAtStart(string ...$otherWords): static
+    public function addWordAtStart(string|array ...$otherWords): static
     {
+        flat($otherWords);
         return $this->set(self::joinWords([...$otherWords, $this->value]));
     }
 
     public function addConstantAtStart(string $className): static
     {
-        return $this->set(str_constant($className, $this->value));
+        return $this->set(constant($className, $this->value));
     }
 
-    public function addNamespaceAtStart(string ...$otherNamespace): static
+    public function addNamespaceAtStart(string|array ...$otherNamespace): static
     {
+        flat($otherNamespace);
         return $this->set(namespace_concat($otherNamespace, $this->value));
     }
 
-    public function addPathAtStart(string ...$otherPath): static
+    public function addPathAtStart(string|array ...$otherPath): static
     {
+        flat($otherPath);
         return $this->set(self::joinPaths([...$otherPath, $this->value]));
     }
 
