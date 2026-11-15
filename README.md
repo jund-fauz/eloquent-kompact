@@ -60,6 +60,7 @@ Order::create($request->only('customer_user_id', 'status_enum', 'weight_gram', '
 
 See [AutoFillable](#autofillable), [AutoCast](#autocast) and [AutoRelation](#autorelation) for the details, and [IDE helper](#ide-helper) for autocomplete of the dynamic relations.
 
+- [Background](#background)
 - [Versioning](#versioning)
 - [Configuration](#configuration)
 - [Column naming convention](#column-naming-convention)
@@ -73,6 +74,22 @@ See [AutoFillable](#autofillable), [AutoCast](#autocast) and [AutoRelation](#aut
 - [Helper functions](#helper-functions)
 - [Other helpers](#other-helpers)
 - [AI-assisted development](#ai-assisted-development)
+
+## Background
+
+Eloquent Kompact started as boilerplate I kept rewriting while building a Laravel + Filament ERP: the same `$fillable` lists, `$casts` arrays and `belongsTo()` methods in every model, and the chore of keeping them in sync whenever a migration changed a column. Instead of copying that code into each new model, I moved the rules into one place: a [column naming convention](#column-naming-convention) (`*_user_id`, `*_enum`, `*_is`, `*_gram`, ...) that the model reads at runtime.
+
+Design decisions:
+
+- **Read the schema, generate nothing.** Generated code drifts after every migration. Reading the table at runtime (with a [column cache](#column-cache)) keeps the model and the database in step by construction.
+- **Convention first, with escape hatches.** Custom tokens, delimiters and column builders let a project adapt the convention instead of fighting it.
+- **Predictable releases.** Semantic versioning since `1.0.0`, an [upgrade guide](UPGRADE.md) for `2.0.0`, and tests running in GitHub Actions.
+
+Where it is used: it is the model layer of the production ERP it was extracted from, and the base of [Filament Kompact](https://github.com/jund-fauz/filament-kompact).
+
+Scope: this package contains generic tooling only. It holds no business rules, data or credentials from any project that uses it.
+
+Timeline (from the git history): repository created on 2026-10-22, `1.0.0` released on 2026-11-09, `2.0.0` on 2026-11-14. See [CHANGELOG.md](CHANGELOG.md) for every release.
 
 ## Versioning
 

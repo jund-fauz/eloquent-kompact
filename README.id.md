@@ -60,6 +60,7 @@ Order::create($request->only('customer_user_id', 'status_enum', 'weight_gram', '
 
 Lihat [AutoFillable](#autofillable), [AutoCast](#autocast) dan [AutoRelation](#autorelation) untuk detailnya, dan [IDE helper](#ide-helper) untuk autocomplete relasi dinamis.
 
+- [Latar belakang](#latar-belakang)
 - [Versi](#versi)
 - [Konfigurasi](#konfigurasi)
 - [Konvensi penamaan kolom](#konvensi-penamaan-kolom)
@@ -73,6 +74,22 @@ Lihat [AutoFillable](#autofillable), [AutoCast](#autocast) dan [AutoRelation](#a
 - [Fungsi helper](#fungsi-helper)
 - [Helper lain](#helper-lain)
 - [Pengembangan dengan bantuan AI](#pengembangan-dengan-bantuan-ai)
+
+## Latar belakang
+
+Eloquent Kompact berawal dari boilerplate yang terus saya tulis ulang saat membangun ERP berbasis Laravel + Filament: daftar `$fillable`, array `$casts`, dan method `belongsTo()` yang sama di setiap model, ditambah repotnya menyelaraskan semuanya setiap kali migration mengubah kolom. Daripada menyalin kode itu ke setiap model baru, aturannya saya pindahkan ke satu tempat: [konvensi penamaan kolom](#konvensi-penamaan-kolom) (`*_user_id`, `*_enum`, `*_is`, `*_gram`, ...) yang dibaca model saat runtime.
+
+Keputusan desain:
+
+- **Baca skema, tidak men-generate apa pun.** Kode hasil generate akan tertinggal setiap kali ada migration. Membaca tabel saat runtime (dengan [cache kolom](#cache-kolom)) membuat model dan database selalu selaras.
+- **Konvensi dulu, tetap ada jalan keluar.** Token kustom, delimiter, dan column builder membuat sebuah project bisa menyesuaikan konvensi, bukan melawannya.
+- **Rilis yang bisa diprediksi.** Semantic versioning sejak `1.0.0`, [panduan upgrade](UPGRADE.id.md) untuk `2.0.0`, dan test yang berjalan di GitHub Actions.
+
+Dipakai di: lapisan model ERP produksi tempat library ini diekstrak, dan fondasi [Filament Kompact](https://github.com/jund-fauz/filament-kompact).
+
+Cakupan: package ini hanya berisi tooling generik. Tidak ada aturan bisnis, data, atau kredensial dari project mana pun yang memakainya.
+
+Linimasa (dari riwayat git): repository dibuat 2026-10-22, `1.0.0` dirilis 2026-11-09, `2.0.0` pada 2026-11-14. Lihat [CHANGELOG.md](CHANGELOG.md) untuk semua rilis.
 
 ## Versi
 
