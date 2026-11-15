@@ -79,13 +79,20 @@ See [AutoFillable](#autofillable), [AutoCast](#autocast) and [AutoRelation](#aut
 
 Eloquent Kompact started as boilerplate I kept rewriting while building a Laravel + Filament ERP: the same `$fillable` lists, `$casts` arrays and `belongsTo()` methods in every model, and the chore of keeping them in sync whenever a migration changed a column. Instead of copying that code into each new model, I moved the rules into one place: a [column naming convention](#column-naming-convention) (`*_user_id`, `*_enum`, `*_is`, `*_gram`, ...) that the model reads at runtime.
 
+It then grew past the model definition. The same ERP kept needing the same query and comparison patterns, so the package also ships:
+
+- **`AdditionalQueries` on `KompactModel`**: read nested relations without null checks (`getVia()`), strict comparisons after casting (`sameWith()`, `match()`, plus `AndDirty` variants for unsaved changes), conditional assignment (`assignIfBlank()`, `assignIfNull()`), `wereChanged()`, `copyRelationsTo()` and more.
+- **An extended query `Builder`**: `whereSameWith()`, `whereMorphType()` and `whereInRelation()`.
+- **[`RawQuery`](#rawquery)**: a fluent, immutable builder for raw SQL expressions that works on MySQL, MariaDB, PostgreSQL and SQLite.
+- **[Check helpers](#checks)**: `is_not()`, `is_all()`, `is_any()` and their variants, which take a check by name, e.g. `is_all('null', $a, $b)`.
+
 Design decisions:
 
 - **Read the schema, generate nothing.** Generated code drifts after every migration. Reading the table at runtime (with a [column cache](#column-cache)) keeps the model and the database in step by construction.
 - **Convention first, with escape hatches.** Custom tokens, delimiters and column builders let a project adapt the convention instead of fighting it.
 - **Predictable releases.** Semantic versioning since `1.0.0`, an [upgrade guide](UPGRADE.md) for `2.0.0`, and tests running in GitHub Actions.
 
-Where it is used: it is the model layer of the production ERP it was extracted from, and the base of [Filament Kompact](https://github.com/jund-fauz/filament-kompact).
+Where it is used: it is the model and query layer of the production ERP it was extracted from, and the base of [Filament Kompact](https://github.com/jund-fauz/filament-kompact).
 
 Scope: this package contains generic tooling only. It holds no business rules, data or credentials from any project that uses it.
 
