@@ -115,6 +115,54 @@ class MathTest extends TestCase
     }
 
     #[Test]
+    public function it_sums_numbers(): void
+    {
+        $this->assertSame('6.000', Math::sum(1, '2', 3.0));
+        $this->assertSame('1.000', Math::sum('1'));
+        $this->assertSame('0', Math::sum());
+        $this->assertSame('-0.750', Math::sum(1.5, '-2.25'));
+        $this->assertSame('1001.000', Math::sum('1e3', ' 1 '));
+        $this->assertSame('0.000', Math::sum('0.0001', '0.0002'));
+    }
+
+    #[Test]
+    public function it_sums_numbers_before_cutting_off_the_decimals(): void
+    {
+        $this->assertSame('0.001', Math::sum('0.0005', '0.0005'));
+        $this->assertSame('0.002', Math::sum('0.0005', '0.0005', '0.0005', '0.0005'));
+        $this->assertSame('5.999', Math::sum('1.9999', '1.9999', '1.9999'));
+        $this->assertSame(Math::plus('1.9999', '1.9999'), Math::sum('1.9999', '1.9999'));
+    }
+
+    #[Test]
+    public function it_sums_numbers_with_the_precision(): void
+    {
+        $this->assertSame('6.00', MathTestTwo::sum('1.555', '1.555', '2.89'));
+        $this->assertSame('5', MathTestZero::sum('1.9', '1.9', '1.9'));
+        $this->assertSame('0.0000001500', MathTestTen::sum(1.5e-7));
+
+        config(['eloquent-kompact.decimal.default-precision' => 1]);
+
+        $this->assertSame('3.7', Math::sum('1.25', '1.25', '1.25'));
+    }
+
+    #[Test]
+    public function it_rejects_a_non_number_to_sum(): void
+    {
+        $this->expectException(InvalidArgumentException::class);
+
+        Math::sum('1', 'abc');
+    }
+
+    #[Test]
+    public function it_rejects_a_negative_precision_to_sum(): void
+    {
+        $this->expectException(InvalidArgumentException::class);
+
+        MathTestNegative::sum(1, 2);
+    }
+
+    #[Test]
     public function it_rejects_a_non_number(): void
     {
         $this->expectException(InvalidArgumentException::class);
