@@ -958,6 +958,7 @@ Math::divide('10', '3');            // '3.333'
 Math::higherThan('2.50', '2.00');   // true
 Math::equalTo('2.50', 2.5);         // true
 Math::higherThan('0.0005', '0');    // false, cut off at 3 decimals
+Math::sum('1.9999', '1.9999', '1.9999'); // '5.999', cut off only on the total
 ```
 
 | Method | Result |
@@ -965,8 +966,9 @@ Math::higherThan('0.0005', '0');    // false, cut off at 3 decimals
 | `plus($a, $b)` / `minus($a, $b)` / `multiply($a, $b)` / `divide($a, $b)` | `$a + $b` / `$a - $b` / `$a * $b` / `$a / $b` as a numeric string with the precision as its number of decimals |
 | `higherThan($a, $b)` / `lowerThan($a, $b)` / `equalTo($a, $b)` | `$a > $b` / `$a < $b` / `$a == $b` as numbers |
 | `higherThanOrEqualTo($a, $b)` / `lowerThanOrEqualTo($a, $b)` | `$a >= $b` / `$a <= $b` as numbers |
+| `sum(...$numbers)` | The total of any amount of numbers as a numeric string with the precision as its number of decimals, cut off only on the total; `'0'` without a number |
 
-Every method takes exactly two numbers. It throws an `InvalidArgumentException` for another number of arguments, a value that is not a `float`, an `int` or a numeric string, or a negative precision, a `DivisionByZeroError` for `divide()` by zero and a `BadMethodCallException` for another method.
+Every method except `sum()` takes exactly two numbers. It throws an `InvalidArgumentException` for another number of arguments, a value that is not a `float`, an `int` or a numeric string, or a negative precision, a `DivisionByZeroError` for `divide()` by zero and a `BadMethodCallException` for another method.
 
 The precision is the `$precision` of the class, or the config `decimal.default-precision` (`3`) when it is `null`. For another precision, extend `Math`:
 

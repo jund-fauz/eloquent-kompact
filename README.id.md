@@ -958,6 +958,7 @@ Math::divide('10', '3');            // '3.333'
 Math::higherThan('2.50', '2.00');   // true
 Math::equalTo('2.50', 2.5);         // true
 Math::higherThan('0.0005', '0');    // false, dipotong di 3 desimal
+Math::sum('1.9999', '1.9999', '1.9999'); // '5.999', dipotong hanya pada totalnya
 ```
 
 | Method | Hasil |
@@ -965,8 +966,9 @@ Math::higherThan('0.0005', '0');    // false, dipotong di 3 desimal
 | `plus($a, $b)` / `minus($a, $b)` / `multiply($a, $b)` / `divide($a, $b)` | `$a + $b` / `$a - $b` / `$a * $b` / `$a / $b` sebagai string numerik dengan jumlah desimal sebanyak precision |
 | `higherThan($a, $b)` / `lowerThan($a, $b)` / `equalTo($a, $b)` | `$a > $b` / `$a < $b` / `$a == $b` sebagai angka |
 | `higherThanOrEqualTo($a, $b)` / `lowerThanOrEqualTo($a, $b)` | `$a >= $b` / `$a <= $b` sebagai angka |
+| `sum(...$numbers)` | Total dari angka sebanyak apa pun sebagai string numerik dengan jumlah desimal sebanyak precision, dipotong hanya pada totalnya; `'0'` tanpa angka |
 
-Setiap method menerima tepat dua angka. Method melempar `InvalidArgumentException` untuk jumlah argumen lain, nilai yang bukan `float`, `int` atau string numerik, atau precision negatif, `DivisionByZeroError` untuk `divide()` dengan nol, dan `BadMethodCallException` untuk method lain.
+Setiap method kecuali `sum()` menerima tepat dua angka. Method melempar `InvalidArgumentException` untuk jumlah argumen lain, nilai yang bukan `float`, `int` atau string numerik, atau precision negatif, `DivisionByZeroError` untuk `divide()` dengan nol, dan `BadMethodCallException` untuk method lain.
 
 Precision-nya adalah `$precision` milik class, atau config `decimal.default-precision` (`3`) kalau bernilai `null`. Untuk precision lain, extend `Math`:
 
