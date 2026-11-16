@@ -33,7 +33,6 @@
             "src/Helper/Logic/Comparison/Basic.php",
             "src/Helper/Logic/Comparison/Main.php",
             "src/Helper/Logic/Comparison/Type.php",
-            "src/Helper/Logic/Math.php",
             "src/Helper/Logic/Negation.php",
             "src/Helper/File/Concatenation.php",
             "src/Helper/File/ExtensionAdding.php",
