@@ -139,7 +139,7 @@ The comparisons now throw an `InvalidArgumentException` for a value that is not 
 | `is_positive_number($n)` / `is_natural_number($n)` | `$n > 0` |
 | `is_negative_number($n)` | `$n < 0` |
 | `is_whole_number($n)` | `$n >= 0` |
-| `is_zero($value)` | `is_numeric($value) && (float) $value === 0.0` |
+| `is_zero($value)` | `same_with($value, 0.0, 'float')` |
 
 ### Removed classes
 
