@@ -67,7 +67,7 @@ function raw(&$value): void
  * @return bool
  * @throws BadMethodCallException When no function returning a bool is found for $what
  */
-function is_not($what, $value): bool
+function is_not(string $what, mixed $value): bool
 {
     return not(what_to_function($what)($value));
 }
@@ -76,12 +76,12 @@ function is_not($what, $value): bool
  * Whether the check is true for every value, nested arrays flattened; true without a value.
  * E.g. is_all('null', $a, $b) for is_null($a) && is_null($b)
  *
- * @param string|null $what See is_not()
+ * @param string $what See is_not()
  * @param mixed ...$values
  * @return bool
  * @throws BadMethodCallException When no function returning a bool is found for $what
  */
-function is_all(?string $what, ...$values): bool
+function is_all(string $what, ...$values): bool
 {
     $function = what_to_function($what);
     flat($values);
@@ -91,12 +91,12 @@ function is_all(?string $what, ...$values): bool
 /**
  * Whether the check is true for at least one value, nested arrays flattened; false without a value
  *
- * @param string|null $what See is_not()
+ * @param string $what See is_not()
  * @param mixed ...$values
  * @return bool
  * @throws BadMethodCallException When no function returning a bool is found for $what
  */
-function is_any(?string $what, ...$values): bool
+function is_any(string $what, ...$values): bool
 {
     $function = what_to_function($what);
     flat($values);
@@ -106,12 +106,12 @@ function is_any(?string $what, ...$values): bool
 /**
  * Whether the check is false for every value, nested arrays flattened
  *
- * @param string|null $what See is_not()
+ * @param string $what See is_not()
  * @param mixed ...$values
  * @return bool
  * @throws BadMethodCallException When no function returning a bool is found for $what
  */
-function is_all_not(?string $what, ...$values): bool
+function is_all_not(string $what, ...$values): bool
 {
     return not(is_any($what, ...$values));
 }
@@ -119,12 +119,12 @@ function is_all_not(?string $what, ...$values): bool
 /**
  * Whether the check is false for at least one value, nested arrays flattened
  *
- * @param string|null $what See is_not()
+ * @param string $what See is_not()
  * @param mixed ...$values
  * @return bool
  * @throws BadMethodCallException When no function returning a bool is found for $what
  */
-function is_any_not(?string $what, ...$values): bool
+function is_any_not(string $what, ...$values): bool
 {
     return not(is_all($what, ...$values));
 }

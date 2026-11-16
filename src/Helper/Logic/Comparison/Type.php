@@ -18,7 +18,7 @@ function is_all_type_of(string|array $type, ...$values): bool
     return array_all(
         $values,
         fn ($value) => is_array($type)
-            ? array_any($type, fn ($type) => ($method = is($type)) && $method($value))
+            ? array_any($type, fn ($type) => is($type)($value))
             : is($type)($value)
     );
 }
