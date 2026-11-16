@@ -7,6 +7,27 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [2.1.0] - 2026-11-16
+
+### Added
+
+- `Math::sum(...$numbers)`: adds any amount of numbers with bcmath, e.g. `Math::sum('1.9999', '1.9999', '1.9999')` → `'5.999'`. The numbers are added in full and the decimals after the precision of the class (or the config `decimal.default-precision`) are cut off only on the total. Without a number it returns `'0'`. It throws an `InvalidArgumentException` for a value that is not numeric or a negative precision.
+
+### Changed
+
+- `is_not()`, `is_all()`, `is_any()`, `is_all_not()` and `is_any_not()` type the check name `$what` as a `string`.
+- The internal number helpers of `Math` moved from `src/Helper/Logic/Math.php` to `src/Math/Math.php`, in the `JundFauz\EloquentKompact\Math` namespace.
+
+### Documentation
+
+- Documented `Math::sum()`.
+- Added the background section to the README: the origin, design decisions, scope and timeline of the package, with the query helpers, `Builder`, `RawQuery` and the check helpers.
+- The migration guide replaces `is_zero($value)` with `same_with($value, 0.0, 'float')`.
+
+### Tests
+
+- Added tests for `Math::sum()`: totals with the default precision, the precision of a child class and of the config, cutting off only on the total, and the rejected arguments.
+
 ## [2.0.0] - 2026-11-14
 
 A major release: the helpers moved to namespaces, the number helpers became the `Math` class, and the deprecated classes are removed. See [UPGRADE.md](UPGRADE.md) for the old name of every helper and what replaces the removed ones.
@@ -2400,7 +2421,8 @@ The first stable release: from now on, breaking changes only come in a major rel
 - `RawQuery` static helpers for raw SQL expressions.
 - Translations for `en` and `id`.
 
-[Unreleased]: https://github.com/jund-fauz/eloquent-kompact/compare/v2.0.0...HEAD
+[Unreleased]: https://github.com/jund-fauz/eloquent-kompact/compare/v2.1.0...HEAD
+[2.1.0]: https://github.com/jund-fauz/eloquent-kompact/compare/v2.0.0...v2.1.0
 [2.0.0]: https://github.com/jund-fauz/eloquent-kompact/compare/v1.21.0...v2.0.0
 [1.21.0]: https://github.com/jund-fauz/eloquent-kompact/compare/v1.20.0...v1.21.0
 [1.20.0]: https://github.com/jund-fauz/eloquent-kompact/compare/v1.19.0...v1.20.0
