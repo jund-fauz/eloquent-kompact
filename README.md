@@ -911,6 +911,7 @@ RawQuery::create('paid')->sum()->divide(RawQuery::create('total')->sum())->as('p
 | `asRawQuery()` | A [`RawQuery`](#rawquery) started with the value |
 | `asRegex()` | A [`Regex`](#regex) started with the value, e.g. `Str::of('_id')->asRegex()->endsWith()` → `/_id$/` |
 | `sameWith($value)` / `notSameWith($value)` | Strict `===` / `!==`, a Laravel `Stringable` is compared by its value |
+| `sameWithOneOf(...$values)` | Strict `===` to one of the values, nested arrays flattened, a Laravel `Stringable` compared by its value; `false` without a value |
 
 The methods that take several strings, words, namespaces or paths also take arrays of them, which are flattened: `Str::of('a')->add(['b', ['c']])` → `abc`.
 
@@ -925,6 +926,7 @@ Str::of('App')->addNamespace('Models', 'User')->toString();        // App\Models
 Str::of('Models')->addPath('User.php')->appPath()->toString();     // {app_path}/Models/User.php
 Str::of('app/Models/app')->removeStart('app/')->toString();       // Models/app
 Str::of('a')->sameWith(Str::of('a'));                              // true
+Str::of('draft')->sameWithOneOf('draft', 'published');             // true
 ```
 
 Unlike `Stringable::replace()`, whose third argument is about case sensitivity, regexes always go through `replaceByRegex()` / `removeByRegex()`.

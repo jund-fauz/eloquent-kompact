@@ -911,6 +911,7 @@ RawQuery::create('paid')->sum()->divide(RawQuery::create('total')->sum())->as('p
 | `asRawQuery()` | [`RawQuery`](#rawquery) yang diawali nilainya |
 | `asRegex()` | [`Regex`](#regex) yang diawali nilainya, misalnya `Str::of('_id')->asRegex()->endsWith()` → `/_id$/` |
 | `sameWith($value)` / `notSameWith($value)` | `===` / `!==` ketat, `Stringable` Laravel dibandingkan berdasarkan nilainya |
+| `sameWithOneOf(...$values)` | `===` ketat dengan salah satu nilai, array bersarang diratakan, `Stringable` Laravel dibandingkan berdasarkan nilainya; `false` tanpa nilai |
 
 Method yang menerima beberapa string, kata, namespace atau path juga menerima array-nya, yang akan diratakan: `Str::of('a')->add(['b', ['c']])` → `abc`.
 
@@ -925,6 +926,7 @@ Str::of('App')->addNamespace('Models', 'User')->toString();        // App\Models
 Str::of('Models')->addPath('User.php')->appPath()->toString();     // {app_path}/Models/User.php
 Str::of('app/Models/app')->removeStart('app/')->toString();       // Models/app
 Str::of('a')->sameWith(Str::of('a'));                              // true
+Str::of('draft')->sameWithOneOf('draft', 'published');             // true
 ```
 
 Berbeda dengan `Stringable::replace()`, yang argumen ketiganya soal case sensitivity, regex selalu lewat `replaceByRegex()` / `removeByRegex()`.
