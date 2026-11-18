@@ -222,6 +222,32 @@ b"];
     }
 
     #[Test]
+    public function it_compares_strictly_with_one_of_the_values(): void
+    {
+        $this->assertTrue(Str::of('a')->sameWithOneOf('b', 'a'));
+        $this->assertTrue(Str::of('a')->sameWithOneOf(['b', ['a']]));
+        $this->assertTrue(Str::of('a')->sameWithOneOf('b', Str::of('a')));
+        $this->assertTrue(Str::of('a')->sameWithOneOf(new Stringable('a')));
+        $this->assertFalse(Str::of('a')->sameWithOneOf('b', 'c'));
+        $this->assertFalse(Str::of('1')->sameWithOneOf(1, 1.0, true));
+        $this->assertFalse(Str::of('')->sameWithOneOf(null, false));
+        $this->assertFalse(Str::of('a')->sameWithOneOf());
+    }
+
+    #[Test]
+    public function it_does_not_unwrap_other_stringable_objects_in_one_of_the_values(): void
+    {
+        $other = new class implements \Stringable {
+            public function __toString(): string
+            {
+                return 'a';
+            }
+        };
+
+        $this->assertFalse(Str::of('a')->sameWithOneOf($other));
+    }
+
+    #[Test]
     public function it_does_not_unwrap_other_stringable_objects(): void
     {
         $other = new class implements \Stringable {
