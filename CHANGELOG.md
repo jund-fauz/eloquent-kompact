@@ -7,6 +7,20 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [2.2.0] - 2026-11-18
+
+### Added
+
+- `Str::sameWithOneOf(...$values)`: whether the value is identical (`===`) to one of the values, e.g. `Str::of('draft')->sameWithOneOf('draft', 'published')`. Nested arrays are flattened and a Laravel `Stringable` is compared by its value, like `sameWith()`; it is `false` without a value.
+
+### Documentation
+
+- Documented `Str::sameWithOneOf()`.
+
+### Tests
+
+- Added tests for `Str::sameWithOneOf()`: strict comparison, nested arrays, Laravel `Stringable` values, other `Stringable` objects and no value.
+
 ## [2.1.0] - 2026-11-16
 
 ### Added
@@ -2421,7 +2435,8 @@ The first stable release: from now on, breaking changes only come in a major rel
 - `RawQuery` static helpers for raw SQL expressions.
 - Translations for `en` and `id`.
 
-[Unreleased]: https://github.com/jund-fauz/eloquent-kompact/compare/v2.1.0...HEAD
+[Unreleased]: https://github.com/jund-fauz/eloquent-kompact/compare/v2.2.0...HEAD
+[2.2.0]: https://github.com/jund-fauz/eloquent-kompact/compare/v2.1.0...v2.2.0
 [2.1.0]: https://github.com/jund-fauz/eloquent-kompact/compare/v2.0.0...v2.1.0
 [2.0.0]: https://github.com/jund-fauz/eloquent-kompact/compare/v1.21.0...v2.0.0
 [1.21.0]: https://github.com/jund-fauz/eloquent-kompact/compare/v1.20.0...v1.21.0
