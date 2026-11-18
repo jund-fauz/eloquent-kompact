@@ -11,6 +11,7 @@ use function JundFauz\EloquentKompact\namespace_concat;
 use function JundFauz\EloquentKompact\not_same_with;
 use function JundFauz\EloquentKompact\path_concat;
 use function JundFauz\EloquentKompact\same_with;
+use function JundFauz\EloquentKompact\same_with_one_of;
 use function JundFauz\EloquentKompact\String\concat;
 use function JundFauz\EloquentKompact\String\constant;
 use function JundFauz\EloquentKompact\word_concat;
@@ -566,6 +567,19 @@ class Str extends Stringable
     public function notSameWith(mixed $otherValue): bool
     {
         return not_same_with($this->value, $otherValue instanceof Stringable ? $otherValue->value : $otherValue);
+    }
+
+    /**
+     * Whether the value is identical (===) to one of the values, nested arrays flattened;
+     * a Laravel Stringable is compared by its value, like sameWith()
+     *
+     * @param mixed ...$values
+     * @return bool False without a value
+     */
+    public function sameWithOneOf(mixed ...$values): bool
+    {
+        flat($values);
+        return same_with_one_of($this->value, ...array_map(fn ($value) => $value instanceof Stringable ? $value->value : $value, $values));
     }
 
     public function newLineIfNotEmpty(int $count = 1): static
