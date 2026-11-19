@@ -398,7 +398,7 @@ protected function defineRules(?Model $record = null): array
 }
 ```
 
-Isinya `required()`, `integer()`, `numeric()`, `boolean()`, `min($number)`, `max($number)`, `decimal($min = null, $max = null)`, `regex($regex)` dan `unique($column = null, $model = null, $record = null)`, dan `build()` mengembalikan aturannya sebagai array. `unique()` dengan kolom dan model adalah `uniqueRule($column, $record)` dari model itu; tanpa salah satunya, yang ditambahkan adalah aturan `'unique'` polos. Setiap method mengembalikan instance baru, jadi satu base bisa dipakai ulang. `decimal()` butuh setidaknya satu argumen, atau akan melempar `BadMethodCallException`.
+Isinya `required()`, `integer()`, `numeric()`, `boolean()`, `min($number)`, `max($number)`, `digits($digits)`, `digitsBetween($from, $until)`, `decimal($min = null, $max = null)`, `regex($regex)` dan `unique($column = null, $model = null, $record = null)`, dan `build()` mengembalikan aturannya sebagai array. `unique()` dengan kolom dan model adalah `uniqueRule($column, $record)` dari model itu; tanpa salah satunya, yang ditambahkan adalah aturan `'unique'` polos. Setiap method mengembalikan instance baru, jadi satu base bisa dipakai ulang. `decimal()` butuh setidaknya satu argumen, atau akan melempar `BadMethodCallException`. `min()` dan `max()` menerima satu angka (string numerik juga), `digits()` satu `int` dan `digitsBetween()` dua `int`, misalnya `digitsBetween(4, 6)` → `'digits_between:4,6'`; `regex()` menerima satu string atau `Regex`. Argumen lain melempar `InvalidArgumentException`.
 
 ### AutoCast
 
@@ -1047,11 +1047,11 @@ Upgrade dari `1.x`? Lihat [UPGRADE.id.md](UPGRADE.id.md) untuk nama lama setiap 
 
 Di `JundFauz\EloquentKompact`.
 
-`is_not()`, `is_all()`, `is_any()`, `is_all_not()`, `is_any_not()` dan `is_any_of()` menerima pengecekan lewat namanya. Pengecekannya adalah fungsi yang mengembalikan `bool`, dicari dengan urutan ini: namanya sendiri (`'defined'` → `defined()`), `is_` + namanya (`'null'` → `is_null()`), lalu dua hal yang sama di package ini (`'not_null'` → `is_not_null()`). Fungsi yang mengembalikan hal lain dilewati, jadi `'file'` adalah `is_file()`, bukan `file()`. Nama yang tidak punya fungsi seperti itu melempar `BadMethodCallException`.
+`is_not()`, `is_all()`, `is_any()`, `is_all_not()`, `is_any_not()` dan `is_any_of()` menerima pengecekan lewat namanya. Pengecekannya adalah fungsi yang mengembalikan `bool`, dicari dengan urutan ini: namanya sendiri (`'defined'` → `defined()`), `is_` + namanya (`'null'` → `is_null()`), lalu dua hal yang sama di package ini (`'not_null'` → `is_not_null()`), lalu dua hal yang sama di helper [string](#string) dan [array](#array)-nya (`'count_one'` → `Array\is_count_one()`, `'in'` → `Array\in()`). Fungsi yang mengembalikan hal lain dilewati, jadi `'file'` adalah `is_file()`, bukan `file()`. Nama yang tidak punya fungsi seperti itu melempar `BadMethodCallException`.
 
 | Fungsi | Hasil |
 |---|---|
-| `is_not($check, $value)` | Pengecekannya `false` untuk nilai itu: `is_not('array', $value)` → `! is_array($value)`, `is_not('defined', 'FOO')` → `! defined('FOO')` |
+| `is_not($check, ...$arguments)` | Pengecekannya `false` untuk nilai itu: `is_not('array', $value)` → `! is_array($value)`, `is_not('defined', 'FOO')` → `! defined('FOO')`. Setiap argumen diteruskan ke pengecekannya, jadi `is_not('in', $needle, $haystack)` → `! in($needle, $haystack)` |
 | `is_all($check, ...$values)` / `is_any($check, ...$values)` | Pengecekannya `true` untuk semua nilai / minimal satu nilai, termasuk array bersarang: `is_all('null', $a, $b)`, `is_any('numeric', 'abc', '2')` → `true`. Tanpa nilai `true` / `false` |
 | `is_all_not($check, ...$values)` / `is_any_not($check, ...$values)` | Pengecekannya `false` untuk semua nilai / minimal satu nilai, termasuk array bersarang: `is_all_not('null', $a, $b)` |
 | `is_any_of($value, ...$checks)` | Minimal satu pengecekan bernilai `true` untuk nilai itu, berhenti di yang pertama: `is_any_of($value, 'int', 'string')` |
@@ -1113,7 +1113,7 @@ Di `JundFauz\EloquentKompact\Array`.
 | `map($callback, $array)` | `array_map()` yang juga memberikan key: `map(fn ($value, $key) => "$key=$value", $array)`. Hasilnya berupa list |
 | `flat(&$array)` | Meratakan array di tempat |
 | `wrap($value)` | `Arr::wrap()` Laravel: nilainya sebagai array, `[]` untuk `null` |
-| `cast($value)` | Item-item sebuah collection, atau `wrap()` dari nilai lain |
+| `cast($value, $delimiter = null)` | Item-item sebuah collection, string atau `Stringable` yang dipecah dengan `$delimiter` kalau diberikan (`cast('a,b', ',')` → `['a', 'b']`), atau `wrap()` dari nilai lain |
 | `filter_filled($array)` | Nilai yang `filled()` menurut Laravel, key dipertahankan: `null`, string kosong dan array atau collection kosong dihapus; `0`, `'0'` dan `false` dipertahankan |
 | `key_change(&$array, $oldKey, $newKey)` | Mengganti nama key di tempat. Key pindah ke akhir array, `$newKey` yang sudah ada diganti, dan `$oldKey` yang tidak ada memunculkan warning `Undefined array key` dari PHP |
 | `key_values($array)` | `[key, value]` dari array dengan satu item; dengan beberapa item, semua key lalu semua value dalam satu list datar |
@@ -1124,7 +1124,7 @@ Di `JundFauz\EloquentKompact\Array`.
 | `is_associative($value)` | Apakah nilainya array yang bukan list, jadi `[5 => 'x']` juga termasuk; `[]` tidak |
 | `is_array_or_collection($value)` | Apakah nilainya array atau `Collection` Laravel |
 | `is_count_zero($value)` / `is_count_one($value)` / `is_count_many($value)` | Apakah array atau `Countable`-nya tidak punya item / punya satu item / lebih dari satu item |
-| `in($needle, $haystack, $strict = false)` | `in_array()` untuk array atau collection |
+| `in($needle, $haystack, $strict = false, $delimiter = ',')` | `in_array()` untuk array, collection, atau string maupun `Stringable` yang dipecah dengan `$delimiter`: `in('max', 'min,max')` → `true` |
 
 ### String
 
@@ -1138,6 +1138,7 @@ Di `JundFauz\EloquentKompact\String`.
 | `constant($class, $constant)` | `Class::Constant`, misalnya untuk `defined()` atau `constant()` bawaan PHP |
 | `stringify($array)` | Setiap nilai di-cast ke `string`, termasuk array bersarang, key dipertahankan; `null` dan `false` menjadi `''` |
 | `rtrim_multiline($value, $characters = " \n\r\t\v\0")` | `rtrim()` pada setiap baris. `@experimental` |
+| `str($method, ...$parameters)` | Method static dari `Str` Laravel lewat namanya, dalam camel case atau snake case: `str('replace_first', 'a', 'b', 'aa')` → `Str::replaceFirst('a', 'b', 'aa')` → `'ba'`. Method yang tidak ada melempar `BadMethodCallException` |
 
 ### Konstanta
 

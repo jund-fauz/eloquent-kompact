@@ -398,7 +398,7 @@ protected function defineRules(?Model $record = null): array
 }
 ```
 
-It has `required()`, `integer()`, `numeric()`, `boolean()`, `min($number)`, `max($number)`, `decimal($min = null, $max = null)`, `regex($regex)` and `unique($column = null, $model = null, $record = null)`, and `build()` returns the rules as an array. `unique()` with a column and a model is the `uniqueRule($column, $record)` of that model; without either of them it adds the plain `'unique'` rule. Every method returns a new instance, so one base can be reused. `decimal()` needs at least one of its arguments, or it throws a `BadMethodCallException`.
+It has `required()`, `integer()`, `numeric()`, `boolean()`, `min($number)`, `max($number)`, `digits($digits)`, `digitsBetween($from, $until)`, `decimal($min = null, $max = null)`, `regex($regex)` and `unique($column = null, $model = null, $record = null)`, and `build()` returns the rules as an array. `unique()` with a column and a model is the `uniqueRule($column, $record)` of that model; without either of them it adds the plain `'unique'` rule. Every method returns a new instance, so one base can be reused. `decimal()` needs at least one of its arguments, or it throws a `BadMethodCallException`. `min()` and `max()` take one number (a numeric string too), `digits()` one `int` and `digitsBetween()` two `int`s, e.g. `digitsBetween(4, 6)` → `'digits_between:4,6'`; `regex()` takes one string or `Regex`. Other arguments throw an `InvalidArgumentException`.
 
 ### AutoCast
 
@@ -1047,11 +1047,11 @@ Upgrading from `1.x`? See [UPGRADE.md](UPGRADE.md) for the old name of every hel
 
 In `JundFauz\EloquentKompact`.
 
-`is_not()`, `is_all()`, `is_any()`, `is_all_not()`, `is_any_not()` and `is_any_of()` take a check by its name. The check is a function that returns a `bool`, found in this order: the name itself (`'defined'` → `defined()`), `is_` + the name (`'null'` → `is_null()`), then the same two in this package (`'not_null'` → `is_not_null()`). A function that returns something else is skipped, so `'file'` is `is_file()`, not `file()`. A name without such a function throws a `BadMethodCallException`.
+`is_not()`, `is_all()`, `is_any()`, `is_all_not()`, `is_any_not()` and `is_any_of()` take a check by its name. The check is a function that returns a `bool`, found in this order: the name itself (`'defined'` → `defined()`), `is_` + the name (`'null'` → `is_null()`), then the same two in this package (`'not_null'` → `is_not_null()`), then the same two in its [string](#strings) and [array](#arrays) helpers (`'count_one'` → `Array\is_count_one()`, `'in'` → `Array\in()`). A function that returns something else is skipped, so `'file'` is `is_file()`, not `file()`. A name without such a function throws a `BadMethodCallException`.
 
 | Function | Result |
 |---|---|
-| `is_not($check, $value)` | The check is `false` for the value: `is_not('array', $value)` → `! is_array($value)`, `is_not('defined', 'FOO')` → `! defined('FOO')` |
+| `is_not($check, ...$arguments)` | The check is `false` for the value: `is_not('array', $value)` → `! is_array($value)`, `is_not('defined', 'FOO')` → `! defined('FOO')`. Every argument goes to the check, so `is_not('in', $needle, $haystack)` → `! in($needle, $haystack)` |
 | `is_all($check, ...$values)` / `is_any($check, ...$values)` | The check is `true` for every value / at least one value, nested arrays included: `is_all('null', $a, $b)`, `is_any('numeric', 'abc', '2')` → `true`. Without values `true` / `false` |
 | `is_all_not($check, ...$values)` / `is_any_not($check, ...$values)` | The check is `false` for every value / at least one value, nested arrays included: `is_all_not('null', $a, $b)` |
 | `is_any_of($value, ...$checks)` | At least one of the checks is `true` for the value, stopping at the first one: `is_any_of($value, 'int', 'string')` |
@@ -1113,7 +1113,7 @@ In `JundFauz\EloquentKompact\Array`.
 | `map($callback, $array)` | `array_map()` that also passes the key: `map(fn ($value, $key) => "$key=$value", $array)`. The result is a list |
 | `flat(&$array)` | Flattens the array in place |
 | `wrap($value)` | Laravel's `Arr::wrap()`: the value as an array, `[]` for `null` |
-| `cast($value)` | The items of a collection, or `wrap()` of any other value |
+| `cast($value, $delimiter = null)` | The items of a collection, a string or a `Stringable` split by `$delimiter` when it is given (`cast('a,b', ',')` → `['a', 'b']`), or `wrap()` of any other value |
 | `filter_filled($array)` | The values that are Laravel's `filled()`, keeping the keys: `null`, blank strings and empty arrays or collections are removed; `0`, `'0'` and `false` are kept |
 | `key_change(&$array, $oldKey, $newKey)` | Renames a key in place. The key moves to the end of the array, an existing `$newKey` is replaced, and a missing `$oldKey` gives PHP's `Undefined array key` warning |
 | `key_values($array)` | `[key, value]` of an array with one item; with several items, every key and then every value in one flat list |
@@ -1124,7 +1124,7 @@ In `JundFauz\EloquentKompact\Array`.
 | `is_associative($value)` | Whether the value is an array that is not a list, so also `[5 => 'x']`; `[]` is not |
 | `is_array_or_collection($value)` | Whether the value is an array or a Laravel `Collection` |
 | `is_count_zero($value)` / `is_count_one($value)` / `is_count_many($value)` | Whether the array or `Countable` has no item / one item / more than one item |
-| `in($needle, $haystack, $strict = false)` | `in_array()` for an array or a collection |
+| `in($needle, $haystack, $strict = false, $delimiter = ',')` | `in_array()` for an array, a collection, or a string or `Stringable` split by `$delimiter`: `in('max', 'min,max')` → `true` |
 
 ### Strings
 
@@ -1138,6 +1138,7 @@ In `JundFauz\EloquentKompact\String`.
 | `constant($class, $constant)` | `Class::Constant`, e.g. for `defined()` or PHP's `constant()` |
 | `stringify($array)` | Every value cast to a `string`, nested arrays included, keeping the keys; `null` and `false` become `''` |
 | `rtrim_multiline($value, $characters = " \n\r\t\v\0")` | `rtrim()` on every line. `@experimental` |
+| `str($method, ...$parameters)` | A static method of Laravel's `Str` by its name, in camel or snake case: `str('replace_first', 'a', 'b', 'aa')` → `Str::replaceFirst('a', 'b', 'aa')` → `'ba'`. An unknown method throws a `BadMethodCallException` |
 
 ### Constants
 
