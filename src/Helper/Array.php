@@ -5,7 +5,9 @@ namespace JundFauz\EloquentKompact\Array;
 use Countable;
 use Illuminate\Support\Arr;
 use Illuminate\Support\Collection as SupportCollection;
+use Illuminate\Support\Stringable;
 use JundFauz\EloquentKompact\Builder\Collection;
+use JundFauz\EloquentKompact\Builder\Str;
 use function JundFauz\EloquentKompact\cast_as;
 use function JundFauz\EloquentKompact\collect as collect;
 use function JundFauz\EloquentKompact\is_not_null;
@@ -146,14 +148,20 @@ function normalize(array $data): mixed
 }
 
 /**
- * The value as an array: a collection as its items, any other value wrapped by wrap()
+ * The value as an array: a collection as its items, a string or a Stringable split by $delimiterIfString
+ * when it is given, any other value wrapped by wrap()
  *
  * @param mixed $data
+ * @param string|null $delimiterIfString The delimiter to split a string or a Stringable by; null wraps a string as is
  * @return array
  */
-function cast(mixed $data): array
+function cast(mixed $data, ?string $delimiterIfString = null): array
 {
+    if ($data instanceof Stringable) {
+        $data = $delimiterIfString ? $data->explode($delimiterIfString) : $data->value();
+    }
     return match (true) {
+        is_string($data) && is_not_null($delimiterIfString) => explode($delimiterIfString, $data),
         $data instanceof SupportCollection => $data->toArray(),
         default => wrap($data)
     };
@@ -341,16 +349,18 @@ function is_array_or_collection(mixed $data): bool
 }
 
 /**
- * in_array() that also takes a collection
+ * in_array() that also takes a collection, or a string or a Stringable split by $delimiterIfString,
+ * e.g. in('max', 'min,max') is true
  *
  * @param mixed $needle
- * @param array|SupportCollection|Collection $haystack
+ * @param array|SupportCollection|Collection|Stringable|Str|string $haystack
  * @param bool $strict
+ * @param string $delimiterIfString The delimiter to split a string or a Stringable haystack by
  * @return bool
  */
-function in(mixed $needle, array|SupportCollection|Collection $haystack, bool $strict = false): bool
+function in(mixed $needle, array|SupportCollection|Collection|Stringable|Str|string $haystack, bool $strict = false, string $delimiterIfString = ','): bool
 {
-    return in_array($needle, cast($haystack), $strict);
+    return in_array($needle, cast($haystack, $delimiterIfString), $strict);
 }
 
 /**
