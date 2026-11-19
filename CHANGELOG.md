@@ -7,6 +7,29 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [2.3.0] - 2026-11-19
+
+### Added
+
+- `Validation::digits($digits)` and `Validation::digitsBetween($from, $until)`, e.g. `Validation::init()->digitsBetween(4, 6)` → `['digits_between:4,6']`. Both take only `int`s.
+- `String\str($method, ...$parameters)`: calls a static method of Laravel's `Str` by its name, in camel or snake case, e.g. `str('replace_first', 'a', 'b', 'aa')` → `'ba'`.
+- `Array\in()` also takes a string or a `Stringable` as the haystack, split by the new `$delimiter` argument (`','` by default): `in('max', 'min,max')` → `true`.
+- `Array\cast()` takes a `$delimiter`: with it, a string or a `Stringable` is split by it, e.g. `cast('a,b', ',')` → `['a', 'b']`. Without it, a string is wrapped as before.
+- The checks by name (`is_not()`, `is_all()`, …) also find the bool functions of the `String` and `Array` helpers, e.g. `is_not('count_one', $value)` and `is_not('in', $needle, $haystack)`.
+
+### Changed
+
+- `is_not($what, ...$arguments)` passes every argument to the check, so a check with several arguments works, e.g. `is_not('in', $needle, $haystack)`. A check that takes one argument now throws on extra arguments instead of ignoring them.
+- `Validation::min()`, `max()` and `regex()` are handled by `__call()`, like `digits()` and `digitsBetween()`, and check their argument: `min()` and `max()` need one number (a numeric string too) and `regex()` one string or `Regex`, otherwise they throw an `InvalidArgumentException`. Named arguments keep working.
+
+### Documentation
+
+- Documented `Validation::digits()`, `digitsBetween()` and the argument checks, `String\str()`, the string haystack of `Array\in()`, the delimiter of `Array\cast()` and `is_not()` with several arguments.
+
+### Tests
+
+- Added tests for `Validation::digits()`, `digitsBetween()`, `regex()` with a string, named arguments and the rejected arguments; `Array\cast()` and `Array\in()` with strings, `Stringable`s and delimiters; `String\str()`; and `is_not()` with several arguments.
+
 ## [2.2.0] - 2026-11-18
 
 ### Added
@@ -2435,7 +2458,8 @@ The first stable release: from now on, breaking changes only come in a major rel
 - `RawQuery` static helpers for raw SQL expressions.
 - Translations for `en` and `id`.
 
-[Unreleased]: https://github.com/jund-fauz/eloquent-kompact/compare/v2.2.0...HEAD
+[Unreleased]: https://github.com/jund-fauz/eloquent-kompact/compare/v2.3.0...HEAD
+[2.3.0]: https://github.com/jund-fauz/eloquent-kompact/compare/v2.2.0...v2.3.0
 [2.2.0]: https://github.com/jund-fauz/eloquent-kompact/compare/v2.1.0...v2.2.0
 [2.1.0]: https://github.com/jund-fauz/eloquent-kompact/compare/v2.0.0...v2.1.0
 [2.0.0]: https://github.com/jund-fauz/eloquent-kompact/compare/v1.21.0...v2.0.0
