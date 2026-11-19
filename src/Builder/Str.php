@@ -22,7 +22,8 @@ class Str extends Stringable
 {
     private bool $isMutable;
 
-    public function __construct($value = '', bool $isMutable = false) {
+    public function __construct($value = '', bool $isMutable = false)
+    {
         parent::__construct($value);
         $this->isMutable = $isMutable;
     }
