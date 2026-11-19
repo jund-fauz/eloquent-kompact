@@ -30,4 +30,7 @@ To release a new version, use the `/release` slash command (see `.claude/command
 
 - A trailing newline at the end of a file does not need to be checked.
 - Re-read ALL involved files directly from disk on every check — including line numbers. Do not use reads or memory from a previous turn; findings must come from the fresh file contents.
-- During a "check", do not modify `src/` yet; report findings and wait for the user's decision before implementing.
+- During a "check", do not modify the logic in `src/` yet; report findings and wait for the user's decision before implementing.
+- Exceptions, which are Claude's job and are done directly, even during a check (list them in the report):
+  - Docblocks: write or update the PHPDoc of new or changed functions/methods. Return types: add a missing one or fix a wrong one (`: mixed` when unclear).
+  - Tests in `tests/` for new or changed behavior, `README.md` + `README.id.md`, and the `## [Unreleased]` entry in `CHANGELOG.md`. Do not report these as "not done yet" for the user. A test that fails because of a bug in `src/` stays failing; report the bug.
