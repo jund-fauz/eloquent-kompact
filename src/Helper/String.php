@@ -19,6 +19,19 @@ function concat(string|array|Collection|SupportCollection ...$values): string
 }
 
 /**
+ * Calls a static method of Laravel's Str, the method name converted to camel case first,
+ * e.g. str('replace_first', 'a', 'b', 'aa') for Str::replaceFirst('a', 'b', 'aa')
+ *
+ * @param string $methodName E.g. 'snake', 'replaceFirst' or 'replace_first'
+ * @param mixed ...$parameters
+ * @return mixed What the Str method returns
+ */
+function str(string $methodName, mixed ...$parameters): mixed
+{
+    return SupportStr::{SupportStr::camel($methodName)}(...$parameters);
+}
+
+/**
  * Shorthand for Str::beforeLast()
  *
  * @param string $subject
@@ -84,7 +97,7 @@ function constant(string $className, string $constantName): string
  */
 function stringify(array $data): array
 {
-    return \array_map(fn (mixed $data) => is_array($data) ? stringify($data) : (string) $data, $data);
+    return array_map(fn (mixed $data) => is_array($data) ? stringify($data) : (string) $data, $data);
 }
 
 /**
