@@ -6,6 +6,7 @@ use BadMethodCallException;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Support\Stringable;
 use Illuminate\Validation\Rules\Unique;
+use InvalidArgumentException;
 use JundFauz\EloquentKompact\Builder\Collection;
 use JundFauz\EloquentKompact\Builder\Str;
 use JundFauz\EloquentKompact\Helper\Error\ErrorThrow;
@@ -13,18 +14,30 @@ use JundFauz\EloquentKompact\Model\KompactModel;
 use JundFauz\EloquentKompact\Model\KompactPivot;
 use JundFauz\EloquentKompact\Model\KompactUser;
 use JundFauz\EloquentKompact\Regex\Regex;
+use function JundFauz\EloquentKompact\Array\in;
 use function JundFauz\EloquentKompact\collect;
 use function JundFauz\EloquentKompact\is_all;
 use function JundFauz\EloquentKompact\is_all_not;
 use function JundFauz\EloquentKompact\is_any;
+use function JundFauz\EloquentKompact\is_any_not;
+use function JundFauz\EloquentKompact\is_not;
 use function JundFauz\EloquentKompact\is_not_null;
-use function JundFauz\EloquentKompact\not_in;
+use function JundFauz\EloquentKompact\not;
+use function JundFauz\EloquentKompact\not_same_with;
+use function JundFauz\EloquentKompact\same_with;
+use function JundFauz\EloquentKompact\schema_concat;
+use function JundFauz\EloquentKompact\String\str;
 
 /**
  * @method $this integer()
  * @method $this numeric()
  * @method $this boolean()
  * @method $this required()
+ * @method $this min(float|int $num)
+ * @method $this max(float|int $num)
+ * @method $this digits(int $num)
+ * @method $this regex(string|Regex $regex)
+ * @method $this digitsBetween(int $from, int $until)
  */
 class Validation
 {
@@ -42,13 +55,32 @@ class Validation
         return new static();
     }
 
-    public function __call(string $name, array $arguments)
+    public function __call(string $name, array $arguments): static
     {
-        if (not_in($name, Str::of('integer,numeric,boolean,required')->explode(','))) {
-            self::methodNotFound($name);
+        if (in($name, 'integer,numeric,boolean,required')) {
+            return $this->add($name);
+        } elseif (in($name, 'min,max,digits,regex')) {
+            $argument = array_shift($arguments);
+            if (count($arguments)) {
+                throw new InvalidArgumentException("Argument should be exact one.");
+            } elseif (not_same_with($name, 'regex') && is_not('numeric', $argument)) {
+                throw new InvalidArgumentException("Argument should be a number.");
+            } elseif (same_with($name, 'digits') && is_not('int', $argument)) {
+                throw new InvalidArgumentException("Argument should be an integer.");
+            } elseif (same_with($name, 'regex') && is_not('string', $argument) && not($argument instanceof Regex)) {
+                throw new InvalidArgumentException("Argument should be a string or a Regex instance.");
+            }
+            return $this->add(schema_concat($name, $argument));
+        } elseif (in($name, 'digitsBetween')) {
+            if (not_same_with(count($arguments), 2)) {
+                throw new InvalidArgumentException("Argument should be exact two.");
+            } elseif (is_any_not('int', $arguments)) {
+                throw new InvalidArgumentException("All arguments should be an integer.");
+            }
+            return $this->add(schema_concat(str('snake', $name), implode(',', $arguments)));
         }
 
-        return $this->add($name);
+        self::methodNotFound($name);
     }
 
     public function decimal(?int $minDecimal = null, ?int $maxDecimal = null): static
@@ -67,21 +99,6 @@ class Validation
             $result->concat($maxDecimal);
         }
         return $this->add($result);
-    }
-
-    public function min(float|int $num): static
-    {
-        return $this->add("min:$num");
-    }
-
-    public function max(float|int $num): static
-    {
-        return $this->add("max:$num");
-    }
-
-    public function regex(string|Regex $regex): static
-    {
-        return $this->add("regex:$regex");
     }
 
     /**
