@@ -44,6 +44,10 @@ function what_to_function($what): string
         is_function_eligible($function = is($what)) => $function,
         is_function_eligible($function = namespace_concat(LIB_NAMESPACE, is($what))) => $function,
         is_function_eligible($function = namespace_concat(LIB_NAMESPACE, $what)) => $function,
+        is_function_eligible($function = namespace_concat(LIB_NAMESPACE, 'String', is($what))) => $function,
+        is_function_eligible($function = namespace_concat(LIB_NAMESPACE, 'String', $what)) => $function,
+        is_function_eligible($function = namespace_concat(LIB_NAMESPACE, 'Array', is($what))) => $function,
+        is_function_eligible($function = namespace_concat(LIB_NAMESPACE, 'Array', $what)) => $function,
         default => throw new BadMethodCallException("Function $function doesn't exists.")
     };
 }
@@ -61,15 +65,17 @@ function raw(&$value): void
 /**
  * Whether the check is false for the value, e.g. is_not('array', $value) for ! is_array($value).
  * The check is a function returning a bool: $what itself, is_$what, or one of this package
+ * (its String and Array helpers included). Every value is passed to the check as its argument,
+ * e.g. is_not('in', $needle, $haystack) for ! in($needle, $haystack)
  *
- * @param string $what E.g. 'null', 'array', 'numeric', 'dir' or 'defined'
- * @param mixed $value
+ * @param string $what E.g. 'null', 'array', 'numeric', 'dir', 'defined', 'count_one' or 'in'
+ * @param mixed ...$value The arguments of the check
  * @return bool
  * @throws BadMethodCallException When no function returning a bool is found for $what
  */
-function is_not(string $what, mixed $value): bool
+function is_not(string $what, mixed ...$value): bool
 {
-    return not(what_to_function($what)($value));
+    return not(what_to_function($what)(...$value));
 }
 
 /**
