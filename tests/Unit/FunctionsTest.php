@@ -392,6 +392,31 @@ class FunctionsTest extends TestCase
     }
 
     #[Test]
+    public function it_casts_values_to_arrays(): void
+    {
+        $this->assertSame(['a', 'b'], Arr\cast(collect(['a', 'b'])));
+        $this->assertSame(['a'], Arr\cast('a'));
+        $this->assertSame([], Arr\cast(null));
+        $this->assertSame(['a,b'], Arr\cast('a,b'));
+        $this->assertSame(['a', 'b'], Arr\cast('a,b', ','));
+        $this->assertSame(['a', 'b'], Arr\cast('a|b', '|'));
+        $this->assertSame(['a', 'b'], Arr\cast(str('a,b'), ','));
+        $this->assertSame(['a,b'], Arr\cast(str('a,b')));
+    }
+
+    #[Test]
+    public function it_finds_a_needle_in_a_string_haystack(): void
+    {
+        $this->assertTrue(Arr\in('max', 'min,max'));
+        $this->assertFalse(Arr\in('mi', 'min,max'));
+        $this->assertTrue(Arr\in('max', str('min,max')));
+        $this->assertTrue(Arr\in('max', 'min|max', delimiterIfString: '|'));
+        $this->assertFalse(Arr\in('max', 'min,max', delimiterIfString: '|'));
+        $this->assertTrue(Arr\in('b', collect(['a', 'b'])));
+        $this->assertFalse(Arr\in(1, ['1'], true));
+    }
+
+    #[Test]
     public function it_gets_the_first_non_null_value(): void
     {
         $array = ['nickname' => null, 'name' => 'Ana', 'empty' => '', 'zero' => 0, 'user' => ['name' => 'Budi']];
@@ -521,6 +546,16 @@ class FunctionsTest extends TestCase
         $this->assertTrue(is_not('dir', __DIR__ . '/missing'));
         $this->assertFalse(is_not('dir', __DIR__));
         $this->assertTrue(is_not('dir', __FILE__));
+    }
+
+    #[Test]
+    public function it_negates_a_check_with_several_arguments(): void
+    {
+        $this->assertTrue(is_not('in', 'x', 'a,b'));
+        $this->assertFalse(is_not('in', 'a', 'a,b'));
+        $this->assertTrue(is_not('in', 1, ['1'], true));
+        $this->assertTrue(is_not('count_one', [1, 2]));
+        $this->assertFalse(is_not('count_one', [1]));
     }
 
     #[Test]
@@ -659,6 +694,23 @@ class FunctionsTest extends TestCase
         $this->assertSame('App\Models', Str\before_last('App\Models\User', '\\'));
         $this->assertSame('äöü', Str\lower('ÄÖÜ'));
         $this->assertSame('ÄÖÜ', Str\upper('äöü'));
+    }
+
+    #[Test]
+    public function it_calls_a_laravel_str_method_by_name(): void
+    {
+        $this->assertSame('foo_bar', Str\str('snake', 'FooBar'));
+        $this->assertSame('ba', Str\str('replaceFirst', 'a', 'b', 'aa'));
+        $this->assertSame('ba', Str\str('replace_first', 'a', 'b', 'aa'));
+        $this->assertSame('digits_between', Str\str('snake', 'digitsBetween'));
+    }
+
+    #[Test]
+    public function it_throws_on_an_unknown_laravel_str_method(): void
+    {
+        $this->expectException(BadMethodCallException::class);
+
+        Str\str('notAStrMethod', 'a');
     }
 
     #[Test]

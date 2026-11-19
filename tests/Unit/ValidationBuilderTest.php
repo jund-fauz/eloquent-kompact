@@ -7,7 +7,9 @@ use Illuminate\Database\Eloquent\Model;
 use Illuminate\Validation\Rules\Unique;
 use JundFauz\EloquentKompact\Column\Validation;
 use JundFauz\EloquentKompact\Regex\Regex;
+use InvalidArgumentException;
 use JundFauz\EloquentKompact\Tests\TestCase;
+use PHPUnit\Framework\Attributes\DataProvider;
 use PHPUnit\Framework\Attributes\Test;
 
 class ValidationBuilderTest extends TestCase
@@ -19,6 +21,60 @@ class ValidationBuilderTest extends TestCase
             ['numeric', 'min:0.5', 'max:10', 'decimal:0,3', 'integer', 'boolean', 'regex:/^a$/'],
             Validation::init()->numeric()->min(0.5)->max(10)->decimal(0, 3)->integer()->boolean()->regex(Regex::create('a')->exact())->build(),
         );
+    }
+
+    #[Test]
+    public function it_builds_the_digits_rules(): void
+    {
+        $this->assertSame(['digits:3'], Validation::init()->digits(3)->build());
+        $this->assertSame(['digits_between:1,3'], Validation::init()->digitsBetween(1, 3)->build());
+        $this->assertSame(['numeric', 'digits:4'], Validation::init()->numeric()->digits(4)->build());
+    }
+
+    #[Test]
+    public function it_builds_the_regex_rule_from_a_string(): void
+    {
+        $this->assertSame(['regex:/^a$/'], Validation::init()->regex('/^a$/')->build());
+    }
+
+    #[Test]
+    public function it_takes_named_arguments(): void
+    {
+        $this->assertSame(['min:5'], Validation::init()->min(num: 5)->build());
+        $this->assertSame(['digits_between:1,3'], Validation::init()->digitsBetween(from: 1, until: 3)->build());
+    }
+
+    #[Test]
+    public function it_takes_a_numeric_string_for_min_and_max(): void
+    {
+        $this->assertSame(['min:5', 'max:10.5'], Validation::init()->min('5')->max('10.5')->build());
+    }
+
+    /**
+     * @return array<string, array{string, array}>
+     */
+    public static function invalidArguments(): array
+    {
+        return [
+            'min without an argument' => ['min', []],
+            'max with two arguments' => ['max', [1, 2]],
+            'min with a non-numeric string' => ['min', ['abc']],
+            'digits with a float' => ['digits', [3.5]],
+            'digits with a numeric string' => ['digits', ['3']],
+            'regex with an int' => ['regex', [123]],
+            'regex with an array' => ['regex', [['a']]],
+            'digitsBetween with one argument' => ['digitsBetween', [1]],
+            'digitsBetween with a numeric string' => ['digitsBetween', [1, '3']],
+        ];
+    }
+
+    #[Test]
+    #[DataProvider('invalidArguments')]
+    public function it_throws_on_invalid_arguments(string $method, array $arguments): void
+    {
+        $this->expectException(InvalidArgumentException::class);
+
+        Validation::init()->{$method}(...$arguments);
     }
 
     #[Test]
