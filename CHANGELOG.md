@@ -7,6 +7,47 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [2.4.0] - 2026-11-20
+
+### Added
+
+- `isAllOf($column, ...$what)` and `isAnyOf($column, ...$what)` on `AdditionalQueries`: several checks on one column, e.g. `$order->isAllOf('note', 'dirty', 'blank')`. A check is a bool method of the model (`$what` or `is_$what`, in camel case), otherwise a bool function run on the attribute, like `is_not()`. Extra parameters go in a named argument, e.g. `$order->isAnyOf('status', in: 'paid,sent')`, and the first argument can be the argument of a method that takes no column, e.g. `$user->isAllOf(['role' => 'admin'], 'match')`.
+- `isAll($what, ...$columns)` and `isAny($what, ...$columns)` on `AdditionalQueries`: one check on several columns, nested arrays flattened, like `is_all()` and `is_any()`, e.g. `$order->isAll('dirty', 'status', 'note')`. `isAll()` is `true` and `isAny()` is `false` without a column.
+- `isAllNot($what, ...$columns)` and `isAnyNot($what, ...$columns)` on `AdditionalQueries`: one check that is false on every column, or on at least one, like `is_all_not()` and `is_any_not()`, e.g. `$order->isAllNot('was_changed', 'status', 'note')`.
+- `not($what, ...$parameters)` on `AdditionalQueries`: the opposite of one check, e.g. `$order->not('null', 'note')`.
+- `String\str()` also calls a method of this package's `Str` that Laravel's `Str` does not have, on the first parameter, and gives back the string, e.g. `str('add_at_start', 'b', 'a')` → `'ab'`.
+- A check by name can already start with `is`, e.g. `is_not('is_list', $value)` like `is_not('list', $value)`.
+- `sameWithOther()` takes a logic word as its last column: `'and'` or `'all'` (the default) for every column, `'or'` or `'any'` for at least one, e.g. `$user->sameWithOther($other, 'tenant_id', 'branch_id', 'or')`.
+- The checks by name (`is_not()`, `is_all()`, …) also find `array_is_` + the name (`'list'` → `array_is_list()`), and a name starting with `not_` is the check without it, negated (`'not_in'` → `! Array\in()`).
+
+**Note:** a method without a native return type counts as a bool method when its docblock says `@return bool`, which is how Eloquent's `isDirty()` and `isClean()` are found. With `opcache.save_comments=0` the docblocks are stripped and those methods are not found anymore. A whitelist of the Eloquent methods may come later.
+
+### Changed
+
+- The checks by name (`is_not()`, `is_all()`, …) cache the function they find for each name, so the reflection runs once per name. A name that is not found is not cached and still throws.
+- The package uses `str()` and the mutable `Str` internally, e.g. in `ColumnCreator` and `Convert`.
+
+### Deprecated
+
+- Every `AndDirty` method, to be removed in 3.0: `sameWithAndDirty()`, `notSameWithAndDirty()`, `sameWithOtherAndDirty()`, `sameWithOtherOrAndDirty()`, `notSameWithOtherAndDirty()`, `notSameWithOtherOrAndDirty()`, `matchAndDirty()`, `isMorphModelSameAndDirty()`, `isBlankAndDirty()`, `isFilledAndDirty()`, `isNullAndDirty()` and `isNotNullAndDirty()`. Use `isAllOf()` for one column, e.g. `$order->isAllOf('note', 'dirty', 'blank')` or `isAllOf('a', 'dirty', sameWith: [5])`, and `isAll('dirty', ...)` with the comparison for several columns, e.g. `isAll('dirty', 'a', 'b') && sameWithOther($other, 'a', 'b')`. The docblock of each method gives its replacement.
+- `wereChanged()` and `wereNotChanged()`, to be removed in 3.0. Use `isAll('was_changed', ...$columns)` and `isAllNot('was_changed', ...$columns)`, or `wasChanged()` and `! wasChanged()` without a column.
+- `sameWithOtherOr()`, `notSameWithOther()` and `notSameWithOtherOr()`, to be removed in 3.0. Use `sameWithOther($other, ...$columns, ...['or'])`, `! sameWithOther($other, ...$columns, ...['or'])` and `! sameWithOther($other, ...$columns)` (the last two with at least one column).
+- `not_in()` and `not_in_array()`, to be removed in 3.0. Use `is_not('in', ...)` and `is_not('in_array', ...)`.
+- The `String` helpers `before_last()`, `lower()` and `upper()`, to be removed in 3.0. Use `str()` instead, e.g. `str('lower', $value)`; the package itself now uses `str()`.
+
+### Documentation
+
+- Documented the logic word of `sameWithOther()`, and `array_is_` and `not_` in the checks by name.
+- Marked `sameWithOtherOr()`, `notSameWithOther()`, `notSameWithOtherOr()`, `not_in()`, `not_in_array()`, `wereChanged()`, `wereNotChanged()`, the `AndDirty` methods and the `String` helpers `before_last()`, `lower()` and `upper()` as deprecated.
+- Documented `isAllOf()`, `isAnyOf()`, `isAll()`, `isAny()`, `isAllNot()`, `isAnyNot()` and `not()`, with a note on the docblocks they read.
+
+### Tests
+
+- Added tests for the cache of the checks by name, `array_is_` and `not_` in the checks by name, and that `is_not()` gives the same results as `not_in()` and `not_in_array()`.
+- Added tests for the methods of this package's `Str` in `str()` and for a check by name that starts with `is`.
+- Added tests for the logic word of `sameWithOther()` and that it gives the same results as `sameWithOtherOr()`, `notSameWithOther()` and `notSameWithOtherOr()`.
+- Added `IsAllOfTest` for `isAllOf()`, `isAnyOf()`, `isAll()`, `isAny()`, `isAllNot()`, `isAnyNot()` and `not()`, and checks that the replacements of the `AndDirty` methods, `wereChanged()` and `wereNotChanged()` give the same results.
+
 ## [2.3.0] - 2026-11-19
 
 ### Added
@@ -2458,7 +2499,8 @@ The first stable release: from now on, breaking changes only come in a major rel
 - `RawQuery` static helpers for raw SQL expressions.
 - Translations for `en` and `id`.
 
-[Unreleased]: https://github.com/jund-fauz/eloquent-kompact/compare/v2.3.0...HEAD
+[Unreleased]: https://github.com/jund-fauz/eloquent-kompact/compare/v2.4.0...HEAD
+[2.4.0]: https://github.com/jund-fauz/eloquent-kompact/compare/v2.3.0...v2.4.0
 [2.3.0]: https://github.com/jund-fauz/eloquent-kompact/compare/v2.2.0...v2.3.0
 [2.2.0]: https://github.com/jund-fauz/eloquent-kompact/compare/v2.1.0...v2.2.0
 [2.1.0]: https://github.com/jund-fauz/eloquent-kompact/compare/v2.0.0...v2.1.0
