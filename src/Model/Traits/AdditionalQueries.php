@@ -74,15 +74,6 @@ trait AdditionalQueries
         return $this->getVia('', ...$relationClasses);
     }
 
-    public function getManyVia(array $columnNames, string|array ...$relationClasses): array
-    {
-        $result = [];
-        foreach ($columnNames as $columnName) {
-            $result[] = $this->getVia($columnName, ...$relationClasses);
-        }
-        return $result;
-    }
-
     public function compact(string|array ...$columns): array
     {
         return model_compact($this, ...$columns);
@@ -751,5 +742,22 @@ trait AdditionalQueries
     public function notSameWith(string $columnName, mixed $value, ?string $cast = null): bool
     {
         return $this->castedAttribute($columnName, $cast) !== cast_as($value, $cast);
+    }
+
+    /**
+     * The columns of the model reached through the relations, see getVia(), in the given order
+     *
+     * @deprecated Will be removed in 3.0. Use $this->getVia($columnNames, ...$relationClasses), which keeps the keys of $columnNames
+     * @param array $columnNames
+     * @param string|array ...$relationClasses
+     * @return array
+     */
+    public function getManyVia(array $columnNames, string|array ...$relationClasses): array
+    {
+        $result = [];
+        foreach ($columnNames as $columnName) {
+            $result[] = $this->getVia($columnName, ...$relationClasses);
+        }
+        return $result;
     }
 }
