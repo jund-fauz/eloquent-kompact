@@ -159,6 +159,33 @@ class GetViaTest extends TestCase
     }
 
     #[Test]
+    public function it_gives_the_same_result_as_the_deprecated_get_many_via(): void
+    {
+        foreach ([1, 3] as $id) {
+            $comment = GetViaComment::find($id);
+            foreach ([[], ['name'], ['email', 'name']] as $columns) {
+                $this->assertSame(
+                    $comment->getManyVia($columns, GetViaPost::class, GetViaUser::class),
+                    $comment->getVia($columns, GetViaPost::class, GetViaUser::class),
+                );
+            }
+            $this->assertSame(
+                $comment->getManyVia(['title'], ['latest' => GetViaPost::class]),
+                $comment->getVia(['title'], ['latest' => GetViaPost::class]),
+            );
+        }
+    }
+
+    #[Test]
+    public function it_keeps_the_keys_of_the_columns(): void
+    {
+        $this->assertSame(
+            ['mail' => 'ana@example.com', 'who' => 'Ana'],
+            GetViaComment::find(1)->getVia(['mail' => 'email', 'who' => 'name'], GetViaPost::class, GetViaUser::class),
+        );
+    }
+
+    #[Test]
     public function it_has_the_methods_on_the_kompact_models(): void
     {
         foreach (['getVia', 'getRelVia', 'getManyVia'] as $method) {

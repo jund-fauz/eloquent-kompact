@@ -41,6 +41,7 @@ use function JundFauz\EloquentKompact\is_file_exist;
 use function JundFauz\EloquentKompact\is_not;
 use function JundFauz\EloquentKompact\is_not_null;
 use function JundFauz\EloquentKompact\model_compact;
+use function JundFauz\EloquentKompact\object_compact;
 use function JundFauz\EloquentKompact\namespace_concat;
 use function JundFauz\EloquentKompact\namespace_trim;
 use function JundFauz\EloquentKompact\not;
@@ -951,6 +952,28 @@ class FunctionsTest extends TestCase
 
         $this->assertSame(['name' => 'a', 'active' => true], model_compact($model, 'name', 'active'));
         $this->assertSame(['tags' => ['x']], model_compact($model, 'tags'));
+    }
+
+    #[Test]
+    public function it_compacts_the_properties_of_any_object(): void
+    {
+        $object = new stdClass;
+        $object->a = 1;
+        $object->b = null;
+
+        $this->assertSame(['a' => 1, 'x' => 1], object_compact($object, 'a', x: 'a'));
+        $this->assertSame(['b' => null, 'missing' => null], object_compact($object, 'b', 'missing'));
+        $this->assertSame([], object_compact($object));
+    }
+
+    #[Test]
+    public function it_gives_the_same_result_as_the_deprecated_model_compact(): void
+    {
+        $model = self::model(['name' => 'a', 'email' => 'a@b.c', 'active' => 1, 'tags' => ['x']]);
+
+        foreach ([['name', 'active'], ['tags'], [['name', 'email']], [['nama' => 'name'], 'email'], ['missing'], []] as $columns) {
+            $this->assertSame(model_compact($model, ...$columns), object_compact($model, ...$columns));
+        }
     }
 
     #[Test]
