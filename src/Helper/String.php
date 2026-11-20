@@ -4,8 +4,11 @@ namespace JundFauz\EloquentKompact\String;
 
 use Illuminate\Support\Collection as SupportCollection;
 use Illuminate\Support\Str as SupportStr;
+use Illuminate\Support\Stringable;
 use JundFauz\EloquentKompact\Builder\Collection;
 use JundFauz\EloquentKompact\Builder\Str;
+use function JundFauz\EloquentKompact\all;
+use function JundFauz\EloquentKompact\chain;
 
 /**
  * The values joined without a delimiter; arrays and collections are flattened
@@ -22,20 +25,44 @@ function concat(string|array|Collection|SupportCollection ...$values): string
  * Calls a static method of Laravel's Str, the method name converted to camel case first,
  * e.g. str('replace_first', 'a', 'b', 'aa') for Str::replaceFirst('a', 'b', 'aa').
  * When Str has no such method, calls it on this package's Str of the first parameter and gives
- * back the string, e.g. str('add_at_start', 'b', 'a') for Str::of('b')->addAtStart('a')->value()
+ * back the string, e.g. str('add_at_start', 'b', 'a') for Str::of('b')->addAtStart('a')->value().
+ * A plural method name runs the singular one on every parameter, e.g. str('camels', 'a_b', 'c_d')
+ * for [Str::camel('a_b'), Str::camel('c_d')]
  *
- * @param string $methodName E.g. 'snake', 'replaceFirst' or 'replace_first'
+ * @param string $methodName E.g. 'snake', 'replaceFirst', 'replace_first' or 'camels'
  * @param mixed ...$parameters The subject first when the method is not one of Laravel's Str
- * @return mixed What the Str method returns, or the string
+ * @return mixed What the Str method returns, or the string; an array for a plural method name
  */
 function str(string $methodName, mixed ...$parameters): mixed
 {
     $methodName = SupportStr::camel($methodName);
-    return match (true) {
-        method_exists(SupportStr::class, $methodName) => SupportStr::{$methodName}(...$parameters),
-        ($result = Str::of(array_shift($parameters))->{$methodName}(...$parameters)) instanceof Str => $result->value(),
+    $execute = fn ($method, ...$parameters) => match (true) {
+        method_exists(SupportStr::class, $method) => SupportStr::{$method}(...$parameters),
+        ($result = Str::of(array_shift($parameters))->{$method}(...$parameters)) instanceof Str => $result->value(),
         default => $result
     };
+    if (all(method_not_exists: [SupportStr::class, $methodName], same_with: [SupportStr::plural($methodName), $methodName])) {
+        $singularMethod = SupportStr::singular($methodName);
+        return array_map(fn ($parameter) => $execute($singularMethod, $parameter), $parameters);
+    } else {
+        return $execute($methodName, ...$parameters);
+    }
+}
+
+/**
+ * Chains the methods of this package's Str on the string, see chain(), and gives back the string,
+ * or what the last method returns when it is not a string, e.g. strs('isDirty', 'snake', startsWith: 'is')
+ *
+ * @param string $string
+ * @param mixed ...$methods A method name, or method name => its parameter(s)
+ * @return mixed
+ */
+function strs(string $string, mixed ...$methods): mixed
+{
+    $result = chain(Str::of($string), ...$methods);
+    return $result instanceof Stringable
+        ? $result->value()
+        : $result;
 }
 
 /**
@@ -70,7 +97,7 @@ function constant(string $className, string $constantName): string
  */
 function stringify(array $data): array
 {
-    return array_map(fn (mixed $data) => is_array($data) ? stringify($data) : (string) $data, $data);
+    return array_map(fn (mixed $data) => is_array($data) ? stringify($data) : (string)$data, $data);
 }
 
 /**
@@ -92,10 +119,10 @@ function rtrim_multiline(string $value, string $characters = " \n\r\t\v\0"): str
 /**
  * Shorthand for Str::beforeLast()
  *
- * @deprecated Will be removed in 3.0. Use str('before_last', $subject, $search)
  * @param string $subject
  * @param string $search
  * @return string
+ * @deprecated Will be removed in 3.0. Use str('before_last', $subject, $search)
  */
 function before_last(string $subject, string $search): string
 {
@@ -105,9 +132,9 @@ function before_last(string $subject, string $search): string
 /**
  * Shorthand for Str::lower()
  *
- * @deprecated Will be removed in 3.0. Use str('lower', $subject)
  * @param string $subject
  * @return string
+ * @deprecated Will be removed in 3.0. Use str('lower', $subject)
  */
 function lower(string $subject): string
 {
@@ -117,9 +144,9 @@ function lower(string $subject): string
 /**
  * Shorthand for Str::upper()
  *
- * @deprecated Will be removed in 3.0. Use str('upper', $subject)
  * @param string $subject
  * @return string
+ * @deprecated Will be removed in 3.0. Use str('upper', $subject)
  */
 function upper(string $subject): string
 {
