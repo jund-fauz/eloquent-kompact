@@ -27,9 +27,9 @@ use function JundFauz\EloquentKompact\full_path_on_app;
 use function JundFauz\EloquentKompact\namespace_concat;
 use function JundFauz\EloquentKompact\path_concat;
 use function JundFauz\EloquentKompact\same_with;
-use function JundFauz\EloquentKompact\String\before_last;
 use function JundFauz\EloquentKompact\String\concat;
 use function JundFauz\EloquentKompact\String\empty_if_false;
+use function JundFauz\EloquentKompact\String\str;
 use function JundFauz\EloquentKompact\word_concat;
 use function JundFauz\EloquentKompact\write_line;
 use const JundFauz\EloquentKompact\DISTANCE_LINE;
@@ -217,7 +217,7 @@ final class IdeHelperCommand extends Command
     {
         return namespace_concat(
             self::MixinNamespace,
-            before_last($class, NAMESPACE_DELIMITER),
+            str('before_last', $class, NAMESPACE_DELIMITER),
             Str::of($class)->classBasename()->addAtStart(self::MixinPrefix)
         );
     }
@@ -241,7 +241,7 @@ final class IdeHelperCommand extends Command
         }
 
         return write_line(
-            word_concat('namespace', before_last($mixin, '\\'), '{'),
+            word_concat('namespace', str('before_last', $mixin, '\\'), '{'),
             concat(self::Indentation, '/**'),
             $lines,
             word_concat(self::Indentation, '*/'),

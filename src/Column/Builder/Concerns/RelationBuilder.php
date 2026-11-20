@@ -5,6 +5,7 @@ namespace JundFauz\EloquentKompact\Column\Builder\Concerns;
 use JundFauz\EloquentKompact\Column\ColumnCreator;
 use JundFauz\EloquentKompact\Helper\Error\ErrorThrow;
 use function JundFauz\EloquentKompact\collect;
+use function JundFauz\EloquentKompact\is_not;
 use function JundFauz\EloquentKompact\not_in_array;
 
 class RelationBuilder
@@ -18,7 +19,7 @@ class RelationBuilder
     {
         $relation = static::$relation;
         $keys = collect($relation)->map(fn ($value, $key) => is_int($key) ? $value : $key)->toArray();
-        if (not_in_array($name, $keys)) {
+        if (is_not('in_array', $name, $keys)) {
             self::methodNotFound($name);
         }
 

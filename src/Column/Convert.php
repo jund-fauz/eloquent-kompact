@@ -5,6 +5,7 @@ namespace JundFauz\EloquentKompact\Column;
 use InvalidArgumentException;
 use JundFauz\EloquentKompact\Builder\Str;
 use function JundFauz\EloquentKompact\Array\key_values;
+use function JundFauz\EloquentKompact\is_any_of;
 
 final class Convert
 {
@@ -28,9 +29,9 @@ final class Convert
 
     public static function modelToColumn(string $model, ?string $prefix = null): string
     {
-        $result = Str::of($model)->classBasename()->snake()->relation();
+        $result = Str::of($model, true)->classBasename()->snake()->relation();
         if ($prefix) {
-            $result = $result->addAtStart($prefix, '_');
+            $result->addAtStart($prefix, '_');
         }
 
         return (string) $result;
@@ -40,17 +41,17 @@ final class Convert
     {
         $prefix = null;
         if (is_array($model)) {
-            if (count($model) !== 1 || array_is_list($model)) {
+            if (is_any_of($model, 'not_count_one', 'list')) {
                 throw new InvalidArgumentException('A prefixed model has to be [prefix => model class].');
             }
             [$prefix, $model] = key_values($model);
         }
-        $baseName = Str::of($model)->classBasename();
+        $baseName = Str::of($model, true)->classBasename();
         if ($prefix) {
-            $baseName = $baseName->addAtStart($prefix);
+            $baseName->addAtStart($prefix);
         }
         if ($isPlural) {
-            $baseName = $baseName->plural();
+            $baseName->plural();
         }
 
         return (string) ($isSnakeCase

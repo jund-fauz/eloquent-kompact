@@ -7,10 +7,12 @@ use JundFauz\EloquentKompact\Builder\Str;
 use JundFauz\EloquentKompact\Helper\Error\ErrorThrow;
 use ReflectionClass;
 use ReflectionClassConstant;
-use function JundFauz\EloquentKompact\collect;
 use function JundFauz\EloquentKompact\Array\in;
+use function JundFauz\EloquentKompact\collect;
 use function JundFauz\EloquentKompact\is_not_null;
 use function JundFauz\EloquentKompact\String\concat;
+use function JundFauz\EloquentKompact\String\constant;
+use function JundFauz\EloquentKompact\String\str;
 
 /**
  * @method static string enum(string $column)
@@ -71,13 +73,13 @@ final class ColumnCreator
 
     public static function __callStatic(string $method, array $parameters): string
     {
-        $constant = Str::of($method)->pascal()->addAtStart(self::class, '::');
+        $constant = constant(self::class, str('pascal', $method));
         $customToken = self::getCustomToken($method);
 
-        if ((defined($constant) && in(constant($constant), self::tokens(), true)) || $customToken) {
+        if ((defined($constant) && in(\constant($constant), self::tokens(), true)) || $customToken) {
             return concat($parameters[0], self::$delimiter, match (true) {
                 is_not_null($customToken) => $customToken,
-                defined($constant) => constant($constant),
+                defined($constant) => \constant($constant),
             });
         }
 
@@ -112,7 +114,7 @@ final class ColumnCreator
 
             foreach ($source as $name => $definition) {
                 [$token, $cast] = array_pad((array) $definition, 2, null);
-                self::$customTokens[(string) Str::of($name)->snake()] = ['token' => $token, 'cast' => $cast];
+                self::$customTokens[str('snake', $name)] = ['token' => $token, 'cast' => $cast];
             }
         }
 
@@ -121,7 +123,7 @@ final class ColumnCreator
 
     public static function getCustomToken(string $key): ?string
     {
-        return self::customTokens()[(string) Str::of($key)->snake()]['token'] ?? null;
+        return self::customTokens()[str('snake', $key)]['token'] ?? null;
     }
 
     public static function quantity(): array
@@ -180,9 +182,9 @@ final class ColumnCreator
      */
     public static function getColumnType(string $column, bool $withDelimiter = false): string
     {
-        $result = Str::of($column)->match(self::matcher());
+        $result = Str::of($column, true)->match(self::matcher());
         if ($withDelimiter && $result->isNotEmpty()) {
-            $result = $result->addAtStart(self::$delimiter);
+            $result->addAtStart(self::$delimiter);
         }
 
         return $result->value();

@@ -125,7 +125,7 @@ function key_change(array &$array, string $oldKey, string $newKey): void
  * @param array $array
  * @return array
  */
-function key_values($array): array
+function key_values(array $array): array
 {
     $keys = array_keys($array);
     $values = array_values($array);
@@ -161,7 +161,7 @@ function cast(mixed $data, ?string $delimiterIfString = null): array
         $data = $delimiterIfString ? $data->explode($delimiterIfString) : $data->value();
     }
     return match (true) {
-        is_string($data) && is_not_null($delimiterIfString) => explode($delimiterIfString, $data),
+        is_string($data) && $delimiterIfString => explode($delimiterIfString, $data),
         $data instanceof SupportCollection => $data->toArray(),
         default => wrap($data)
     };
