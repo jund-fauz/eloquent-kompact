@@ -4,16 +4,24 @@ namespace JundFauz\EloquentKompact;
 
 use BadMethodCallException;
 use ReflectionException;
+use ReflectionFunction;
+use ReflectionNamedType;
 use function JundFauz\EloquentKompact\Array\flat;
+use function JundFauz\EloquentKompact\Array\merge_as_array;
+use function JundFauz\EloquentKompact\String\str;
 
 /**
+ * is_$what, or $what itself when it already starts with is
+ *
  * @param string|null $what
  * @return string
  * @internal
  */
 function is(?string $what): string
 {
-    return "is_$what";
+    return str('startsWith', $what, 'is')
+        ? $what
+        : "is_$what";
 }
 
 /**
@@ -24,42 +32,64 @@ function is(?string $what): string
 function is_function_eligible(string $function): bool
 {
     try {
-        $returnType = ((new \ReflectionFunction($function))->getReturnType());
+        $returnType = (new ReflectionFunction($function))->getReturnType();
     } catch (ReflectionException) {
         return false;
     }
-    return function_exists($function) && same_with(not($returnType instanceof \ReflectionNamedType) ?: $returnType->getName(), 'bool');
+    return function_exists($function) && same_with(not($returnType instanceof ReflectionNamedType) ?: $returnType->getName(), 'bool');
 }
 
 /**
+ * Runs the function returning a bool that checks $what with the parameters. The function is found
+ * once and then cached. A $what starting with not_ runs the check without it, negated,
+ * e.g. execute_what_function('not_in', $needle, $haystack) for ! in($needle, $haystack)
+ *
  * @param $what
- * @return string
+ * @param mixed ...$parameters The arguments of the check
+ * @return bool
+ * @throws BadMethodCallException When no function returning a bool is found for $what
  * @internal
  */
-function what_to_function($what): string
+function execute_what_function($what, ...$parameters): bool
 {
-    raw($what);
-    return match (true) {
-        is_function_eligible($what) => $what,
-        is_function_eligible($function = is($what)) => $function,
-        is_function_eligible($function = namespace_concat(LIB_NAMESPACE, is($what))) => $function,
-        is_function_eligible($function = namespace_concat(LIB_NAMESPACE, $what)) => $function,
-        is_function_eligible($function = namespace_concat(LIB_NAMESPACE, 'String', is($what))) => $function,
-        is_function_eligible($function = namespace_concat(LIB_NAMESPACE, 'String', $what)) => $function,
-        is_function_eligible($function = namespace_concat(LIB_NAMESPACE, 'Array', is($what))) => $function,
-        is_function_eligible($function = namespace_concat(LIB_NAMESPACE, 'Array', $what)) => $function,
-        default => throw new BadMethodCallException("Function $function doesn't exists.")
-    };
+    static $cache = [];
+    $what = (string)$what;
+    $result = ($cache[$what] ??= resolve_what_function($what))(...$parameters);
+    return str('startsWith', $what, 'not_')
+        ? not($result)
+        : $result;
 }
 
 /**
- * @param $value
- * @return void
+ * The name of the function returning a bool that checks $what (a leading not_ removed), without the
+ * cache: $what, is_$what or array_is_$what, globally or in this package (its String and Array helpers included)
+ *
+ * @param string $what
+ * @return string
+ * @throws BadMethodCallException When no function returning a bool is found for $what
  * @internal
  */
-function raw(&$value): void
+function resolve_what_function(string $what): string
 {
-    $value = (string)$value;
+    $namespaceVariations = [null, '', 'String', 'Array'];
+    if (str('startsWith', $what, 'not_')) {
+        $what = str('removeStart', $what, 'not_');
+    }
+    $basicVariations = merge_as_array($what, not_same_with($isWhat = is($what), $what) ? $isWhat : [], "array_$isWhat");
+    foreach ($namespaceVariations as $namespaceVariation) {
+        foreach ($basicVariations as $basicVariation) {
+            if (is_not_null($namespaceVariation) && str('startsWith', $what, 'array_')) {
+                continue;
+            }
+            $function = is_not_null($namespaceVariation)
+                ? namespace_concat(...merge_as_array(LIB_NAMESPACE, $namespaceVariation ?: [], $basicVariation))
+                : $basicVariation;
+            if (is_function_eligible($function)) {
+                return $function;
+            }
+        }
+    }
+    throw new BadMethodCallException("$what doesn't found in any context.");
 }
 
 /**
@@ -75,7 +105,7 @@ function raw(&$value): void
  */
 function is_not(string $what, mixed ...$value): bool
 {
-    return not(what_to_function($what)(...$value));
+    return not(execute_what_function($what, ...$value));
 }
 
 /**
@@ -89,9 +119,8 @@ function is_not(string $what, mixed ...$value): bool
  */
 function is_all(string $what, ...$values): bool
 {
-    $function = what_to_function($what);
     flat($values);
-    return array_all($values, fn ($value) => $function($value));
+    return array_all($values, fn ($value) => execute_what_function($what, $value));
 }
 
 /**
@@ -104,9 +133,8 @@ function is_all(string $what, ...$values): bool
  */
 function is_any(string $what, ...$values): bool
 {
-    $function = what_to_function($what);
     flat($values);
-    return array_any($values, fn ($value) => $function($value));
+    return array_any($values, fn ($value) => execute_what_function($what, $value));
 }
 
 /**
@@ -146,5 +174,5 @@ function is_any_not(string $what, ...$values): bool
  */
 function is_any_of(mixed $value, string ...$whats): bool
 {
-    return array_any($whats, fn ($what) => what_to_function($what)($value));
+    return array_any($whats, fn ($what) => execute_what_function($what, $value));
 }
