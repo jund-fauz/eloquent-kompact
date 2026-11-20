@@ -113,20 +113,20 @@ function resolve_what_function(string $what): string
 }
 
 /**
- * One check of is_any_of() or is_all_of(): a named argument is the check with its extra parameters,
- * a positional one is the check alone; the value goes to the check first
+ * One check of is_any_of(), is_all_of(), all() or any(): a named argument is the check with its extra
+ * parameters, a positional one is the check alone; the value, when it is given, goes to the check first
  *
  * @param mixed $value The check, or the extra parameters of a named one
  * @param int|string $key The name of a named check
- * @param mixed $mainValue The value that is checked
+ * @param mixed $mainValue The value that is checked, null included; all() and any() give none
  * @return bool
  * @throws BadMethodCallException When no function returning a bool is found for the check
  * @internal
  */
-function execute(mixed $value, int|string $key, mixed $mainValue = EMPTY_VALUE): bool
+function execute(mixed $value, int|string $key, mixed $mainValue = null): bool
 {
     $arguments = [($isKeyString = is_string($key)) ? $key : $value];
-    if (not_same_with($mainValue, EMPTY_VALUE)) {
+    if (same_with(func_num_args(), 3)) {
         $arguments[] = $mainValue;
     }
     if ($isKeyString) {

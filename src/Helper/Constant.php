@@ -10,5 +10,3 @@ const TAB = "    ";
 
 /** @internal  */
 const LIB_NAMESPACE = 'JundFauz\EloquentKompact';
-/** @internal  */
-const EMPTY_VALUE = 'THIS_IS_AN_EMPTY_VALUE_TAG';
