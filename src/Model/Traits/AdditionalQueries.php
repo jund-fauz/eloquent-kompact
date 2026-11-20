@@ -2,19 +2,34 @@
 
 namespace JundFauz\EloquentKompact\Model\Traits;
 
+use BadMethodCallException;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\Relation;
-use JundFauz\EloquentKompact\Column\Convert;
 use JundFauz\EloquentKompact\Column\ColumnCreator;
+use JundFauz\EloquentKompact\Column\Convert;
+use ReflectionClass;
+use ReflectionException;
+use ReflectionNamedType;
 use function JundFauz\EloquentKompact\Array\filter_filled;
+use function JundFauz\EloquentKompact\Array\flat;
 use function JundFauz\EloquentKompact\Array\merge_as_array;
 use function JundFauz\EloquentKompact\cast_as;
+use function JundFauz\EloquentKompact\execute_what_function;
+use function JundFauz\EloquentKompact\is;
 use function JundFauz\EloquentKompact\is_not;
 use function JundFauz\EloquentKompact\is_not_null;
 use function JundFauz\EloquentKompact\model_compact;
+use function JundFauz\EloquentKompact\not;
+use function JundFauz\EloquentKompact\same_with;
+use function JundFauz\EloquentKompact\same_with_one_of;
+use function JundFauz\EloquentKompact\schema_concat;
+use function JundFauz\EloquentKompact\String\concat;
+use function JundFauz\EloquentKompact\String\str;
 
 trait AdditionalQueries
 {
+    protected static array $aqCache = [];
+
     public function copyRelationsTo(Model $target, array $relations): void
     {
         foreach ($relations as $relationName => $columns) {
@@ -36,14 +51,18 @@ trait AdditionalQueries
         return array_reduce($columnNames, fn ($acc, $column) => $acc ?? $this?->{$column});
     }
 
-    public function getVia(string $columnName = '', string|array ...$relationClasses)
+    public function getVia(string|array $columnName = '', string|array ...$relationClasses)
     {
         $result = $this;
         foreach ($relationClasses as $relationClass) {
             $result = $result?->{Convert::modelToRelation($relationClass)};
         }
 
-        return $columnName ? $result?->{$columnName} : $result;
+        return match (true) {
+            is_array($columnName) => array_map(fn (string $columnName) => $result?->{$columnName}, $columnName),
+            filled($columnName) => $result?->{$columnName},
+            default => $result
+        };
     }
 
     public function getRelVia(string|array ...$relationClasses)
@@ -75,6 +94,190 @@ trait AdditionalQueries
     }
 
     /**
+     * Runs the check $what: a method of the model returning a bool ($what or is_$what, in camel case),
+     * called with the parameters as they are; otherwise a bool function found by execute_what_function(),
+     * called with the attribute of the first parameter, then the other parameters
+     *
+     * @param string $what E.g. 'null', 'dirty', 'same_with' or 'in'
+     * @param mixed ...$parameters A column name first, or the argument of the method, e.g. the conditions of match()
+     * @return bool
+     * @throws BadMethodCallException When no method nor function returning a bool is found for $what
+     * @internal
+     */
+    private function executeWhatFunction(string $what, ...$parameters): bool
+    {
+        $whats = [str('camel', $what), str('camel', is($what))];
+        foreach ($whats as $whatValue) {
+            if ($this->isMethodEligible($whatValue)) {
+                return $this->{$whatValue}(...$parameters);
+            }
+        }
+        return execute_what_function($what, $this->{array_shift($parameters)}, ...$parameters);
+    }
+
+    /**
+     * Whether the model has the method and it returns a bool. The result is cached per class and
+     * method (case-insensitive, like PHP method names), so the reflection runs once for each
+     *
+     * @param string $function
+     * @return bool
+     * @internal
+     */
+    private function isMethodEligible(string $function): bool
+    {
+        return static::$aqCache[schema_concat(static::class, str('lower', $function))] ??= $this->resolveMethodEligible($function);
+    }
+
+    /**
+     * isMethodEligible() without the cache
+     *
+     * @param string $function
+     * @return bool
+     * @internal
+     */
+    private function resolveMethodEligible(string $function): bool
+    {
+        if (not(method_exists($this, $function))) {
+            return false;
+        }
+        try {
+            $returnType = ($method = (new ReflectionClass($this))->getMethod($function))->getReturnType();
+            if (is_null($returnType)) {
+                return (bool) preg_match('/@return\s+bool\b/', $method->getDocComment() ?: '');
+            }
+        } catch (ReflectionException) {
+            return false;
+        }
+        return same_with(not($returnType instanceof ReflectionNamedType) ?: $returnType->getName(), 'bool');
+    }
+
+    /**
+     * One check of isAllOf() or isAnyOf(): a named argument is the check with its extra parameters,
+     * a positional one is the check alone
+     *
+     * @param mixed $value
+     * @param int|string $key
+     * @param mixed $column
+     * @return bool
+     * @internal
+     */
+    private function execute(mixed $value, int|string $key, mixed $column): bool
+    {
+        $keyIsString = is_string($key);
+        $arguments = [$keyIsString ? $key : $value, $column];
+        if ($keyIsString) {
+            $arguments = merge_as_array($arguments, $value);
+        }
+        return $this->executeWhatFunction(...$arguments);
+    }
+
+    /**
+     * Whether the check is false, e.g. $order->not('null', 'note') for ! $order->isNull('note')
+     *
+     * @param string $what See isAllOf()
+     * @param mixed ...$parameters A column name first, or the argument of the method
+     * @return bool
+     * @throws BadMethodCallException When no method nor function returning a bool is found for $what
+     */
+    public function not(string $what, mixed ...$parameters): bool
+    {
+        return not($this->executeWhatFunction($what, ...$parameters));
+    }
+
+    /**
+     * Whether the check is true for every column, nested arrays flattened, stopping at the first false one;
+     * true without a column. The check is one of isAllOf(), e.g. $order->isAll('dirty', 'status', 'note')
+     *
+     * @param string $what See isAllOf()
+     * @param string|array ...$columns
+     * @return bool
+     * @throws BadMethodCallException When no method nor function returning a bool is found for $what and a column is given
+     */
+    public function isAll(string $what, string|array ...$columns): bool
+    {
+        flat($columns);
+        return array_all($columns, fn (string $column) => $this->executeWhatFunction($what, $column));
+    }
+
+    /**
+     * Whether the check is true for at least one column, nested arrays flattened, stopping at the first true one;
+     * false without a column. The check is one of isAllOf(), e.g. $order->isAny('null', 'status', 'note')
+     *
+     * @param string $what See isAllOf()
+     * @param string|array ...$columns
+     * @return bool
+     * @throws BadMethodCallException When no method nor function returning a bool is found for $what and a column is given
+     */
+    public function isAny(string $what, string|array ...$columns): bool
+    {
+        flat($columns);
+        return array_any($columns, fn (string $column) => $this->executeWhatFunction($what, $column));
+    }
+
+    /**
+     * Whether the check is false for every column, stopping at the first true one; true without a column.
+     * The check is one of isAllOf(), e.g. $order->isAllNot('was_changed', 'status', 'note')
+     *
+     * @param string $what See isAllOf()
+     * @param string|array ...$columns
+     * @return bool
+     * @throws BadMethodCallException When no method nor function returning a bool is found for $what and a column is given
+     */
+    public function isAllNot(string $what, string|array ...$columns): bool
+    {
+        flat($columns);
+        return not(array_any($columns, fn (string $column) => $this->executeWhatFunction($what, $column)));
+    }
+
+    /**
+     * Whether the check is false for at least one column, stopping at the first false one; false without a column.
+     * The check is one of isAllOf(), e.g. $order->isAnyNot('filled', 'status', 'note')
+     *
+     * @param string $what See isAllOf()
+     * @param string|array ...$columns
+     * @return bool
+     * @throws BadMethodCallException When no method nor function returning a bool is found for $what and a column is given
+     */
+    public function isAnyNot(string $what, string|array ...$columns): bool
+    {
+        flat($columns);
+        return not(array_all($columns, fn (string $column) => $this->executeWhatFunction($what, $column)));
+    }
+
+    /**
+     * Whether every check is true for the column, stopping at the first false one; true without a check.
+     * A check is a method of the model returning a bool ($what or is_$what in camel case, e.g. 'blank'
+     * for isBlank(), 'dirty' for isDirty()), otherwise a bool function of PHP or of this package run on
+     * the attribute (see is_not()). Extra parameters go in a named argument,
+     * e.g. $order->isAllOf('status', 'dirty', in: 'paid,sent')
+     *
+     * A method without a native return type counts when its docblock has `@return bool`
+     *
+     * @param mixed $columnOrParameters The column name, or the argument of a method such as the conditions of match()
+     * @param string|array ...$what
+     * @return bool
+     * @throws BadMethodCallException When no method nor function returning a bool is found for a check that is reached
+     */
+    public function isAllOf(mixed $columnOrParameters, string|array ...$what): bool
+    {
+        return array_all($what, fn ($value, $key) => $this->execute($value, $key, $columnOrParameters));
+    }
+
+    /**
+     * Whether at least one check is true for the column, stopping at the first true one; false without a check.
+     * The checks are the ones of isAllOf(), e.g. $order->isAnyOf('note', 'null', 'blank')
+     *
+     * @param mixed $columnOrParameters See isAllOf()
+     * @param string|array ...$what
+     * @return bool
+     * @throws BadMethodCallException When no method nor function returning a bool is found for a check that is reached
+     */
+    public function isAnyOf(mixed $columnOrParameters, string|array ...$what): bool
+    {
+        return array_any($what, fn ($value, $key) => $this->execute($value, $key, $columnOrParameters));
+    }
+
+    /**
      * Checks whether the model attributes match every given condition, using strict comparison
      *
      * An array value matches if the attribute equals one of its items, unless the attribute itself is an array
@@ -97,17 +300,6 @@ trait AdditionalQueries
     }
 
     /**
-     * match(), with every column of the conditions being dirty
-     *
-     * @param array<string, array|mixed> $conditions Column name => expected value, or a list of allowed values
-     * @return bool False if no condition is given
-     */
-    public function matchAndDirty(array $conditions): bool
-    {
-        return array_all(array_keys($conditions), fn ($column) => $this->isDirty($column)) && $this->match($conditions);
-    }
-
-    /**
      * Shorthand for: $this->{$columnName} === $value
      *
      * The attribute is compared after casting, so without $cast the value must have the cast type,
@@ -127,19 +319,6 @@ trait AdditionalQueries
     }
 
     /**
-     * sameWith(), with the column being dirty
-     *
-     * @param string $columnName
-     * @param mixed $value
-     * @param string|null $cast See sameWith()
-     * @return bool
-     */
-    public function sameWithAndDirty(string $columnName, mixed $value, ?string $cast = null): bool
-    {
-        return $this->isDirty($columnName) && $this->sameWith($columnName, $value, $cast);
-    }
-
-    /**
      * Shorthand for: $this->{$columnName} !== $value
      *
      * The attribute is compared after casting, like sameWith()
@@ -152,19 +331,6 @@ trait AdditionalQueries
     public function notSameWith(string $columnName, mixed $value, ?string $cast = null): bool
     {
         return $this->castedAttribute($columnName, $cast) !== cast_as($value, $cast);
-    }
-
-    /**
-     * notSameWith(), with the column being dirty
-     *
-     * @param string $columnName
-     * @param mixed $value
-     * @param string|null $cast See sameWith()
-     * @return bool
-     */
-    public function notSameWithAndDirty(string $columnName, mixed $value, ?string $cast = null): bool
-    {
-        return $this->isDirty($columnName) && $this->notSameWith($columnName, $value, $cast);
     }
 
     /**
@@ -182,86 +348,38 @@ trait AdditionalQueries
             : $this)->{$columnName};
     }
 
+    /**
+     * Whether the columns are the same as in the other model (see sameWith()). The last column can be a
+     * logic word instead: 'and' or 'all' (the default) for every column, 'or' or 'any' for at least one,
+     * e.g. $order->sameWithOther($other, 'status', 'note', 'or')
+     *
+     * @param Model $other
+     * @param string ...$columns
+     * @return bool False if no column is given
+     */
     public function sameWithOther(Model $other, string ...$columns): bool
     {
         if (blank($columns)) {
             return false;
         }
 
-        return array_reduce($columns, fn ($acc, string $column) => $acc && $this->sameWith($column, $other->{$column}), true);
-    }
-
-    public function sameWithOtherAndDirty(Model $other, string ...$columns): bool
-    {
-        if (blank($columns)) {
-            return false;
+        if (not(same_with_one_of($logic = array_pop($columns), 'and', 'or', 'all', 'any'))) {
+            $columns[] = $logic;
+            $logic = 'all';
+        }
+        if (same_with_one_of($logic, 'and', 'or')) {
+            $logic = match ($logic) {
+                'and' => 'all',
+                'or' => 'any'
+            };
         }
 
-        return array_reduce($columns, fn ($acc, string $column) => $acc && $this->sameWithAndDirty($column, $other->{$column}), true);
-    }
-
-    public function sameWithOtherOr(Model $other, string ...$columns): bool
-    {
-        if (blank($columns)) {
-            return false;
-        }
-
-        return array_reduce($columns, fn ($acc, string $column) => $acc || $this->sameWith($column, $other->{$column}), false);
-    }
-
-    public function sameWithOtherOrAndDirty(Model $other, string ...$columns): bool
-    {
-        if (blank($columns)) {
-            return false;
-        }
-
-        return array_reduce($columns, fn ($acc, string $column) => $acc || $this->sameWithAndDirty($column, $other->{$column}), false);
-    }
-
-    public function notSameWithOther(Model $other, string ...$columns): bool
-    {
-        if (blank($columns)) {
-            return false;
-        }
-
-        return array_reduce($columns, fn ($acc, string $column) => $acc && $this->notSameWith($column, $other->{$column}), true);
-    }
-
-    public function notSameWithOtherAndDirty(Model $other, string ...$columns): bool
-    {
-        if (blank($columns)) {
-            return false;
-        }
-
-        return array_reduce($columns, fn ($acc, string $column) => $acc && $this->notSameWithAndDirty($column, $other->{$column}), true);
-    }
-
-    public function notSameWithOtherOr(Model $other, string ...$columns): bool
-    {
-        if (blank($columns)) {
-            return false;
-        }
-
-        return array_reduce($columns, fn ($acc, string $column) => $acc || $this->notSameWith($column, $other->{$column}), false);
-    }
-
-    public function notSameWithOtherOrAndDirty(Model $other, string ...$columns): bool
-    {
-        if (blank($columns)) {
-            return false;
-        }
-
-        return array_reduce($columns, fn ($acc, string $column) => $acc || $this->notSameWithAndDirty($column, $other->{$column}), false);
+        return concat('array_', $logic)($columns, fn (string $column) => $this->sameWith($column, $other->{$column}));
     }
 
     public function isMorphModelSame(string $morphName, string $modelClass): bool
     {
         return $this->sameWith(ColumnCreator::type($morphName), Relation::getMorphAlias($modelClass));
-    }
-
-    public function isMorphModelSameAndDirty(string $morphName, string $modelClass): bool
-    {
-        return $this->sameWithAndDirty(ColumnCreator::type($morphName), Relation::getMorphAlias($modelClass));
     }
 
     public function getMany(string ...$columns): array
@@ -341,24 +459,9 @@ trait AdditionalQueries
         }
     }
 
-    /**
-     * @experimental
-     * @param string $column
-     * @return bool
-     */
     public function isBlank(string $column): bool
     {
         return blank($this->{$column});
-    }
-
-    /**
-     * @experimental
-     * @param string $column
-     * @return bool
-     */
-    public function isBlankAndDirty(string $column): bool
-    {
-        return $this->isDirty($column) && $this->isBlank($column);
     }
 
     public function isFilled(string $column): bool
@@ -366,45 +469,14 @@ trait AdditionalQueries
         return filled($this->{$column});
     }
 
-    public function isFilledAndDirty(string $column): bool
-    {
-        return $this->isDirty($column) && $this->isFilled($column);
-    }
-
     public function isNull(string $column): bool
     {
         return is_null($this->{$column});
     }
 
-    public function isNullAndDirty(string $column): bool
-    {
-        return $this->isDirty($column) && $this->isNull($column);
-    }
-
     public function isNotNull(string $column): bool
     {
         return is_not_null($this->{$column});
-    }
-
-    public function isNotNullAndDirty(string $column): bool
-    {
-        return $this->isDirty($column) && $this->isNotNull($column);
-    }
-
-    public function wereChanged(string ...$columns): bool
-    {
-        if (blank($columns)) {
-            return $this->wasChanged();
-        }
-        return array_reduce($columns, fn ($acc, $column) => $acc && $this->wasChanged($column), true);
-    }
-
-    public function wereNotChanged(string ...$columns): bool
-    {
-        if (blank($columns)) {
-            return ! $this->wasChanged();
-        }
-        return array_reduce($columns, fn ($acc, $column) => $acc && ! $this->wasChanged($column), true);
     }
 
     public function grep(string $columnName, mixed $defaultValue, ?string $cast = null): mixed
@@ -420,5 +492,255 @@ trait AdditionalQueries
             $result = static::inRandomOrder();
         }
         return $result->value('id');
+    }
+
+    /**
+     * match(), with every column of the conditions being dirty
+     *
+     * @deprecated Will be removed in 3.0. Use $this->isAll('dirty', array_keys($conditions)) && $this->match($conditions)
+     * @param array<string, array|mixed> $conditions Column name => expected value, or a list of allowed values
+     * @return bool False if no condition is given
+     */
+    public function matchAndDirty(array $conditions): bool
+    {
+        return array_all(array_keys($conditions), fn ($column) => $this->isDirty($column)) && $this->match($conditions);
+    }
+
+    /**
+     * sameWith(), with the column being dirty
+     *
+     * @deprecated Will be removed in 3.0. Use $this->isAllOf($columnName, 'dirty', sameWith: [$value, $cast])
+     * @param string $columnName
+     * @param mixed $value
+     * @param string|null $cast See sameWith()
+     * @return bool
+     */
+    public function sameWithAndDirty(string $columnName, mixed $value, ?string $cast = null): bool
+    {
+        return $this->isDirty($columnName) && $this->sameWith($columnName, $value, $cast);
+    }
+
+    /**
+     * notSameWith(), with the column being dirty
+     *
+     * @deprecated Will be removed in 3.0. Use $this->isAllOf($columnName, 'dirty', notSameWith: [$value, $cast])
+     * @param string $columnName
+     * @param mixed $value
+     * @param string|null $cast See sameWith()
+     * @return bool
+     */
+    public function notSameWithAndDirty(string $columnName, mixed $value, ?string $cast = null): bool
+    {
+        return $this->isDirty($columnName) && $this->notSameWith($columnName, $value, $cast);
+    }
+
+    /**
+     * sameWithOther(), with every column being dirty
+     *
+     * @deprecated Will be removed in 3.0. Use $this->isAll('dirty', ...$columns) && $this->sameWithOther($other, ...$columns)
+     * @param Model $other
+     * @param string ...$columns
+     * @return bool False if no column is given
+     */
+    public function sameWithOtherAndDirty(Model $other, string ...$columns): bool
+    {
+        if (blank($columns)) {
+            return false;
+        }
+
+        return array_reduce($columns, fn ($acc, string $column) => $acc && $this->sameWithAndDirty($column, $other->{$column}), true);
+    }
+
+    /**
+     * sameWithOtherOr(), with the matching column being dirty
+     *
+     * @deprecated Will be removed in 3.0. Use array_any($columns, fn ($column) => $this->isAllOf($column, 'dirty', sameWith: [$other->{$column}]))
+     * @param Model $other
+     * @param string ...$columns
+     * @return bool False if no column is given
+     */
+    public function sameWithOtherOrAndDirty(Model $other, string ...$columns): bool
+    {
+        if (blank($columns)) {
+            return false;
+        }
+
+        return array_reduce($columns, fn ($acc, string $column) => $acc || $this->sameWithAndDirty($column, $other->{$column}), false);
+    }
+
+    /**
+     * notSameWithOther(), with every column being dirty
+     *
+     * @deprecated Will be removed in 3.0. Use $this->isAll('dirty', ...$columns) && ! $this->sameWithOther($other, ...$columns, ...['or'])
+     * @param Model $other
+     * @param string ...$columns
+     * @return bool False if no column is given
+     */
+    public function notSameWithOtherAndDirty(Model $other, string ...$columns): bool
+    {
+        if (blank($columns)) {
+            return false;
+        }
+
+        return array_reduce($columns, fn ($acc, string $column) => $acc && $this->notSameWithAndDirty($column, $other->{$column}), true);
+    }
+
+    /**
+     * notSameWithOtherOr(), with the differing column being dirty
+     *
+     * @deprecated Will be removed in 3.0. Use array_any($columns, fn ($column) => $this->isAllOf($column, 'dirty', notSameWith: [$other->{$column}]))
+     * @param Model $other
+     * @param string ...$columns
+     * @return bool False if no column is given
+     */
+    public function notSameWithOtherOrAndDirty(Model $other, string ...$columns): bool
+    {
+        if (blank($columns)) {
+            return false;
+        }
+
+        return array_reduce($columns, fn ($acc, string $column) => $acc || $this->notSameWithAndDirty($column, $other->{$column}), false);
+    }
+
+    /**
+     * isMorphModelSame(), with the type column of the morph being dirty
+     *
+     * @deprecated Will be removed in 3.0. Use $this->isAllOf(ColumnCreator::type($morphName), 'dirty', sameWith: [Relation::getMorphAlias($modelClass)])
+     * @param string $morphName
+     * @param string $modelClass
+     * @return bool
+     */
+    public function isMorphModelSameAndDirty(string $morphName, string $modelClass): bool
+    {
+        return $this->sameWithAndDirty(ColumnCreator::type($morphName), Relation::getMorphAlias($modelClass));
+    }
+
+    /**
+     * isBlank(), with the column being dirty
+     *
+     * @deprecated Will be removed in 3.0. Use $this->isAllOf($column, 'dirty', 'blank')
+     * @param string $column
+     * @return bool
+     */
+    public function isBlankAndDirty(string $column): bool
+    {
+        return $this->isDirty($column) && $this->isBlank($column);
+    }
+
+    /**
+     * isFilled(), with the column being dirty
+     *
+     * @deprecated Will be removed in 3.0. Use $this->isAllOf($column, 'dirty', 'filled')
+     * @param string $column
+     * @return bool
+     */
+    public function isFilledAndDirty(string $column): bool
+    {
+        return $this->isDirty($column) && $this->isFilled($column);
+    }
+
+    /**
+     * isNull(), with the column being dirty
+     *
+     * @deprecated Will be removed in 3.0. Use $this->isAllOf($column, 'dirty', 'null')
+     * @param string $column
+     * @return bool
+     */
+    public function isNullAndDirty(string $column): bool
+    {
+        return $this->isDirty($column) && $this->isNull($column);
+    }
+
+    /**
+     * isNotNull(), with the column being dirty
+     *
+     * @deprecated Will be removed in 3.0. Use $this->isAllOf($column, 'dirty', 'not_null')
+     * @param string $column
+     * @return bool
+     */
+    public function isNotNullAndDirty(string $column): bool
+    {
+        return $this->isDirty($column) && $this->isNotNull($column);
+    }
+
+    /**
+     * Whether every column was changed by the last save; without a column, whether any column was
+     *
+     * @deprecated Will be removed in 3.0. Use $this->isAll('was_changed', ...$columns), or $this->wasChanged() without a column
+     * @param string ...$columns
+     * @return bool
+     */
+    public function wereChanged(string ...$columns): bool
+    {
+        if (blank($columns)) {
+            return $this->wasChanged();
+        }
+        return array_all($columns, fn ($column) => $this->wasChanged($column));
+    }
+
+    /**
+     * Whether no column was changed by the last save; without a column, whether no column at all was
+     *
+     * @deprecated Will be removed in 3.0. Use $this->isAllNot('was_changed', ...$columns), or ! $this->wasChanged() without a column
+     * @param string ...$columns
+     * @return bool
+     */
+    public function wereNotChanged(string ...$columns): bool
+    {
+        if (blank($columns)) {
+            return ! $this->wasChanged();
+        }
+        return array_all($columns, fn ($column) => ! $this->wasChanged($column));
+    }
+
+    /**
+     * Whether at least one column is the same as in the other model
+     *
+     * @deprecated Will be removed in 3.0. Use $this->sameWithOther($other, ...$columns, ...['or'])
+     * @param Model $other
+     * @param string ...$columns
+     * @return bool False if no column is given
+     */
+    public function sameWithOtherOr(Model $other, string ...$columns): bool
+    {
+        if (blank($columns)) {
+            return false;
+        }
+
+        return array_reduce($columns, fn ($acc, string $column) => $acc || $this->sameWith($column, $other->{$column}), false);
+    }
+
+    /**
+     * Whether every column is different from the other model
+     *
+     * @deprecated Will be removed in 3.0. Use ! $this->sameWithOther($other, ...$columns, ...['or']) when at least one column is given
+     * @param Model $other
+     * @param string ...$columns
+     * @return bool False if no column is given
+     */
+    public function notSameWithOther(Model $other, string ...$columns): bool
+    {
+        if (blank($columns)) {
+            return false;
+        }
+
+        return array_reduce($columns, fn ($acc, string $column) => $acc && $this->notSameWith($column, $other->{$column}), true);
+    }
+
+    /**
+     * Whether at least one column is different from the other model
+     *
+     * @deprecated Will be removed in 3.0. Use ! $this->sameWithOther($other, ...$columns) when at least one column is given
+     * @param Model $other
+     * @param string ...$columns
+     * @return bool False if no column is given
+     */
+    public function notSameWithOtherOr(Model $other, string ...$columns): bool
+    {
+        if (blank($columns)) {
+            return false;
+        }
+
+        return array_reduce($columns, fn ($acc, string $column) => $acc || $this->notSameWith($column, $other->{$column}), false);
     }
 }
