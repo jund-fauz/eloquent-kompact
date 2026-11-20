@@ -81,7 +81,7 @@ Eloquent Kompact berawal dari boilerplate yang terus saya tulis ulang saat memba
 
 Setelah itu cakupannya meluas melewati definisi model. ERP yang sama terus butuh pola query dan perbandingan yang sama, jadi package ini juga menyediakan:
 
-- **`AdditionalQueries` di `KompactModel`**: membaca relasi bertingkat tanpa cek null (`getVia()`), perbandingan ketat setelah casting (`sameWith()`, `match()`, plus varian `AndDirty` untuk perubahan yang belum disimpan), assignment bersyarat (`assignIfBlank()`, `assignIfNull()`), `wereChanged()`, `copyRelationsTo()`, dan lainnya.
+- **`AdditionalQueries` di `KompactModel`**: membaca relasi bertingkat tanpa cek null (`getVia()`), perbandingan ketat setelah casting (`sameWith()`, `match()`), assignment bersyarat (`assignIfBlank()`, `assignIfNull()`), beberapa cek sekaligus (`isAllOf()`, `isAll()`), `copyRelationsTo()`, dan lainnya.
 - **`Builder` query yang diperluas**: `whereSameWith()`, `whereMorphType()`, dan `whereInRelation()`.
 - **[`RawQuery`](#rawquery)**: builder fluent dan immutable untuk ekspresi SQL mentah yang berjalan di MySQL, MariaDB, PostgreSQL, dan SQLite.
 - **[Helper pengecekan](#pengecekan)**: `is_not()`, `is_all()`, `is_any()` beserta variannya, yang menerima nama pengecekan, misalnya `is_all('null', $a, $b)`.
@@ -491,13 +491,19 @@ $order->isNotNull('note');
 $user->sameWith('role', 'admin');
 $user->notSameWith('role', 'admin');
 $order->sameWith('qty', '5', 'integer');                         // dengan cast lain, hanya untuk perbandingan ini
-$user->sameWithOther($otherUser, 'tenant_id', 'branch_id');      // semua kolom sama
+$user->sameWithOther($otherUser, 'tenant_id', 'branch_id');        // semua kolom sama
+$user->sameWithOther($otherUser, 'tenant_id', 'branch_id', 'or');  // setidaknya satu kolom sama
+! $user->sameWithOther($otherUser, 'tenant_id', 'branch_id', 'or');// semua kolom berbeda
+! $user->sameWithOther($otherUser, 'tenant_id', 'branch_id');      // setidaknya satu kolom berbeda
+$user->match(['role' => ['admin', 'editor'], 'active_is' => true]);
+
+// Deprecated, dihapus di 3.0: pakai sameWithOther() dengan 'or' dan ! seperti di atas
 $user->sameWithOtherOr($otherUser, 'tenant_id', 'branch_id');    // setidaknya satu kolom sama
 $user->notSameWithOther($otherUser, 'tenant_id', 'branch_id');   // semua kolom berbeda
 $user->notSameWithOtherOr($otherUser, 'tenant_id', 'branch_id'); // setidaknya satu kolom berbeda
-$user->match(['role' => ['admin', 'editor'], 'active_is' => true]);
 
-// Perbandingan yang sama, untuk kolom yang berubah dan belum disimpan
+// Deprecated, dihapus di 3.0: perbandingan yang sama, untuk kolom yang berubah dan belum disimpan.
+// Pakai isAllOf() atau isDirty() bersama perbandingannya, misalnya $order->isAllOf('note', 'dirty', 'blank')
 $user->sameWithAndDirty('role', 'admin');
 $user->notSameWithAndDirty('role', 'admin');
 $user->sameWithOtherAndDirty($otherUser, 'tenant_id', 'branch_id');      // semua kolom sama dan dirty
@@ -511,7 +517,20 @@ $order->isFilledAndDirty('note');
 $order->isNullAndDirty('note');
 $order->isNotNullAndDirty('note');
 
-// Apakah kolom diubah oleh save terakhir
+// Beberapa cek pada satu kolom: method bool milik model ('blank' untuk isBlank(), 'dirty' untuk isDirty()),
+// kalau tidak ada, fungsi bool yang dijalankan pada atributnya ('numeric', 'in', …). Parameter tambahan lewat named argument
+$order->isAllOf('note', 'dirty', 'blank');      // semua cek bernilai true
+$order->isAnyOf('note', 'null', 'numeric');     // setidaknya satu cek bernilai true
+$order->isAnyOf('status', in: 'paid,sent');     // in($order->status, 'paid,sent')
+$user->isAllOf(['role' => 'admin'], 'match');   // argumen pertama diteruskan ke method yang tidak menerima kolom
+$order->not('null', 'note');                    // ! $order->isNull('note')
+$order->isAll('dirty', 'status', 'note');      // satu cek, true untuk semua kolom
+$order->isAny('null', ['status', 'note']);     // satu cek, true untuk setidaknya satu kolom
+$order->isAllNot('was_changed', 'status', 'note'); // satu cek, false untuk semua kolom
+$order->isAnyNot('filled', 'status', 'note');   // satu cek, false untuk setidaknya satu kolom
+
+// Deprecated, dihapus di 3.0: apakah kolom diubah oleh save terakhir.
+// Pakai isAll('was_changed', ...) dan isAllNot('was_changed', ...), atau wasChanged() tanpa kolom
 $order->wereChanged('status', 'note');    // semua kolom diubah
 $order->wereNotChanged('status', 'note'); // semua kolom tidak diubah
 $order->wereChanged();                    // ada kolom yang diubah
@@ -524,13 +543,17 @@ Order::randomId('status', 'paid'); // argumen untuk where()
 
 `assignIfBlank()`, `assignIfBlankFrom()` dan `isBlank()` memakai `blank()` dari Laravel, jadi `null`, string kosong (juga `'   '`) dan array kosong dihitung blank, sedangkan `0`, `'0'` dan `false` tidak. `isFilled()` memakai `filled()`, kebalikannya. `assignIfNull()` dan `assignIfNullFrom()` hanya mengganti `null`.
 
-`match()` dan keluarga `sameWithOther()` mengembalikan `false` kalau tidak ada kondisi atau kolom yang diberikan. `notSameWithOther()` bukan kebalikan `sameWithOther()`: kebalikannya adalah `notSameWithOtherOr()`. Object seperti tanggal Carbon dari kolom `datetime` dibandingkan berdasarkan identitas, jadi dua model tidak pernah punya tanggal yang sama. Nilai array cocok kalau atributnya sama dengan salah satu item-nya, kecuali atributnya sendiri berupa array.
+`match()` dan keluarga `sameWithOther()` mengembalikan `false` kalau tidak ada kondisi atau kolom yang diberikan. Kolom terakhir `sameWithOther()` bisa diganti kata logika: `'and'` atau `'all'` (default) untuk semua kolom, `'or'` atau `'any'` untuk setidaknya satu, jadi kolom yang namanya sama dengan salah satunya tidak bisa jadi kolom terakhir. `notSameWithOther()` yang deprecated bukan kebalikan `sameWithOther()`: kebalikannya adalah `notSameWithOtherOr()`. Object seperti tanggal Carbon dari kolom `datetime` dibandingkan berdasarkan identitas, jadi dua model tidak pernah punya tanggal yang sama. Nilai array cocok kalau atributnya sama dengan salah satu item-nya, kecuali atributnya sendiri berupa array.
 
 `sameWith()`, `notSameWith()`, `sameWithAndDirty()` dan `notSameWithAndDirty()` menerima cast Laravel sebagai argumen ketiga (`'integer'`, `'decimal:2'`, `'string'`, class enum, …), yang dipakai menggantikan cast kolom hanya untuk perbandingan itu, dan juga diterapkan ke nilainya dengan [`cast_as()`](#helper-lain); cast model tetap seperti semula. Tanpa cast, nilainya dibandingkan apa adanya. Accessor kolom tetap menang atasnya, dan cast tanggal tetap menghasilkan object yang dibandingkan berdasarkan identitas.
 
-Method `AndDirty` memakai `isDirty()` dari Eloquent pada setiap kolom, jadi `sameWithOtherOrAndDirty()` butuh satu kolom yang dirty sekaligus sama, sedangkan `sameWithOtherAndDirty()` dan `matchAndDirty()` bernilai `false` kalau salah satu kolom tidak dirty. Setiap atribut yang diisi pada model baru itu dirty. Kolom yang berubah masih dirty di event `saving`, `saved`, `updating`, `updated`, `creating` dan `created`, dan tidak ada yang dirty setelah `save()` selesai.
+Method `AndDirty` yang deprecated memakai `isDirty()` dari Eloquent pada setiap kolom, jadi `sameWithOtherOrAndDirty()` butuh satu kolom yang dirty sekaligus sama, sedangkan `sameWithOtherAndDirty()` dan `matchAndDirty()` bernilai `false` kalau salah satu kolom tidak dirty. Setiap atribut yang diisi pada model baru itu dirty. Kolom yang berubah masih dirty di event `saving`, `saved`, `updating`, `updated`, `creating` dan `created`, dan tidak ada yang dirty setelah `save()` selesai.
 
-`wereChanged()` dan `wereNotChanged()` memakai `wasChanged()` dari Eloquent pada setiap kolom. Berbeda dengan `wasChanged('a', 'b')` yang butuh satu kolom berubah, `wereChanged('a', 'b')` butuh semuanya. `wereNotChanged()` bukan kebalikan `wereChanged()` saat sebagian kolom berubah dan sebagian tidak: keduanya `false`. Seperti `wasChanged()`, keduanya tidak melihat perubahan tepat setelah `create()`, dan `save()` tanpa perubahan tetap menyimpan perubahan dari update terakhir.
+`isAll()` dan `isAny()` menjalankan satu cek pada beberapa kolom, array bersarang di-flatten, seperti [`is_all()`](#pengecekan); tanpa kolom `isAll()` bernilai `true` dan `isAny()` bernilai `false`. `isAllNot()` dan `isAnyNot()` adalah kebalikannya, seperti `is_all_not()` dan `is_any_not()`: tanpa kolom `isAllNot()` bernilai `true` dan `isAnyNot()` bernilai `false`. Keduanya menggantikan method `AndDirty` untuk beberapa kolom, misalnya `isAll('dirty', 'a', 'b') && sameWithOther($other, 'a', 'b')` untuk `sameWithOtherAndDirty($other, 'a', 'b')`.
+
+`isAllOf()`, `isAnyOf()` dan `not()` mencari method model lebih dulu (`$what`, lalu `is_$what`, dalam camel case) dan hanya memakainya kalau method itu mengembalikan `bool`; kalau tidak, dipakai fungsi bool, seperti [`is_not()`](#pengecekan). Method tanpa return type native tetap dihitung kalau docblock-nya menyebut `@return bool`, dan begitulah `isDirty()` dan `isClean()` dari Eloquent ditemukan. Catatan: kalau docblock dibuang (`opcache.save_comments=0`), method itu tidak ditemukan lagi dan cek-nya beralih ke fungsi, atau melempar `BadMethodCallException`. Parameter tambahan hanya lewat named argument, jadi satu cek tidak bisa dipakai dua kali dalam satu panggilan. Cek yang tidak dikenal melempar `BadMethodCallException` saat dijalankan.
+
+`wereChanged()` dan `wereNotChanged()` yang deprecated memakai `wasChanged()` dari Eloquent pada setiap kolom. Berbeda dengan `wasChanged('a', 'b')` yang butuh satu kolom berubah, `wereChanged('a', 'b')` butuh semuanya. `wereNotChanged()` bukan kebalikan `wereChanged()` saat sebagian kolom berubah dan sebagian tidak: keduanya `false`. Seperti `wasChanged()`, keduanya tidak melihat perubahan tepat setelah `create()`, dan `save()` tanpa perubahan tetap menyimpan perubahan dari update terakhir.
 
 `updateMany()` hanya menerima array dan mengabaikan yang kosong. Kalau salah satunya berupa list, method ini tidak mengubah apa pun dan mengembalikan `false` tanpa error, jadi cek hasilnya kalau datanya bisa berupa list. Seperti `update()`, method ini hanya mengisi kolom fillable dan mengembalikan `false` pada model yang belum disimpan.
 
@@ -1047,7 +1070,7 @@ Upgrade dari `1.x`? Lihat [UPGRADE.id.md](UPGRADE.id.md) untuk nama lama setiap 
 
 Di `JundFauz\EloquentKompact`.
 
-`is_not()`, `is_all()`, `is_any()`, `is_all_not()`, `is_any_not()` dan `is_any_of()` menerima pengecekan lewat namanya. Pengecekannya adalah fungsi yang mengembalikan `bool`, dicari dengan urutan ini: namanya sendiri (`'defined'` → `defined()`), `is_` + namanya (`'null'` → `is_null()`), lalu dua hal yang sama di package ini (`'not_null'` → `is_not_null()`), lalu dua hal yang sama di helper [string](#string) dan [array](#array)-nya (`'count_one'` → `Array\is_count_one()`, `'in'` → `Array\in()`). Fungsi yang mengembalikan hal lain dilewati, jadi `'file'` adalah `is_file()`, bukan `file()`. Nama yang tidak punya fungsi seperti itu melempar `BadMethodCallException`.
+`is_not()`, `is_all()`, `is_any()`, `is_all_not()`, `is_any_not()` dan `is_any_of()` menerima pengecekan lewat namanya. Pengecekannya adalah fungsi yang mengembalikan `bool`, dicari dengan urutan ini: namanya sendiri (`'defined'` → `defined()`), `is_` + namanya (`'null'` → `is_null()`), lalu `array_is_` + namanya (`'list'` → `array_is_list()`), lalu tiga hal yang sama di package ini (`'app_local_or_test'` → `is_app_local_or_test()`), lalu di helper [string](#string) dan [array](#array)-nya (`'count_one'` → `Array\is_count_one()`, `'in'` → `Array\in()`). Nama yang diawali `not_` adalah pengecekan tanpa awalan itu, dinegasikan: `'not_null'` → `! is_null()`, `'not_in'` → `! Array\in()`. Fungsi yang mengembalikan hal lain dilewati, jadi `'file'` adalah `is_file()`, bukan `file()`. Nama yang tidak punya fungsi seperti itu melempar `BadMethodCallException`.
 
 | Fungsi | Hasil |
 |---|---|
@@ -1061,8 +1084,8 @@ Di `JundFauz\EloquentKompact`.
 | `same_with($a, $b, $cast = null)` / `not_same_with($a, $b, $cast = null)` | `$a === $b` / `$a !== $b`. Dengan cast, kedua nilai di-cast dulu dengannya: `same_with('5', 5, 'integer')` → `true` |
 | `same_with_one_of($value, ...$others)` | Apakah `$value` `===` dengan salah satu nilai lain; `false` tanpa nilai lain |
 | `cast_as($value, $cast = null)` | Nilai yang di-cast dengan cast Laravel, seperti atribut model: `cast_as('10.5', 'decimal:2')` → `'10.50'`, `cast_as('paid', Status::class)` → `Status::Paid`. Cast tanggal menghasilkan object Carbon. Tanpa cast, nilainya dikembalikan apa adanya |
-| `not_in_array($needle, $haystack, $strict = false)` | `! in_array()` |
-| `not_in($needle, $haystack, $strict = false)` | `not_in_array()` untuk array atau collection |
+| `not_in_array($needle, $haystack, $strict = false)` | `! in_array()`. Deprecated, dihapus di 3.0: pakai `is_not('in_array', ...)` |
+| `not_in($needle, $haystack, $strict = false)` | `not_in_array()` untuk array atau collection. Deprecated, dihapus di 3.0: pakai `is_not('in', ...)` |
 | `if_not_null($value, $then)` | `$then` kalau `$value` tidak `null`, atau `null`: `if_not_null($paidAt, 'Lunas')`. `$then` dievaluasi sebelum fungsi dipanggil, juga saat `$value` bernilai `null`. `@experimental` |
 | `is_app_local_or_test()` | Apakah app berjalan di environment `local` atau `testing` |
 
@@ -1133,12 +1156,12 @@ Di `JundFauz\EloquentKompact\String`.
 | Fungsi | Hasil |
 |---|---|
 | `concat(...$values)` | Digabung tanpa delimiter. Array dan collection diratakan: `concat('a', ['b', collect(['c'])])` → `abc` |
-| `before_last()`, `lower()`, `upper()` | `Str::beforeLast()`, `lower()`, `upper()` dari Laravel |
+| `before_last()`, `lower()`, `upper()` | `Str::beforeLast()`, `lower()`, `upper()` dari Laravel. Deprecated, dihapus di 3.0: pakai `str('before_last', …)`, `str('lower', …)`, `str('upper', …)` |
 | `empty_if_false($condition, $value)` | `$value`, atau `''` kalau `$condition` falsy, seperti [`Str::emptyIfFalse()`](#str) |
 | `constant($class, $constant)` | `Class::Constant`, misalnya untuk `defined()` atau `constant()` bawaan PHP |
 | `stringify($array)` | Setiap nilai di-cast ke `string`, termasuk array bersarang, key dipertahankan; `null` dan `false` menjadi `''` |
 | `rtrim_multiline($value, $characters = " \n\r\t\v\0")` | `rtrim()` pada setiap baris. `@experimental` |
-| `str($method, ...$parameters)` | Method static dari `Str` Laravel lewat namanya, dalam camel case atau snake case: `str('replace_first', 'a', 'b', 'aa')` → `Str::replaceFirst('a', 'b', 'aa')` → `'ba'`. Method yang tidak ada melempar `BadMethodCallException` |
+| `str($method, ...$parameters)` | Method static dari `Str` Laravel lewat namanya, dalam camel case atau snake case: `str('replace_first', 'a', 'b', 'aa')` → `Str::replaceFirst('a', 'b', 'aa')` → `'ba'`. Method yang tidak dimiliki `Str` Laravel dipanggil pada [`Str`](#str) package ini dari parameter pertama, lalu string-nya dikembalikan: `str('add_at_start', 'b', 'a')` → `'ab'`. Method yang tidak ada melempar `BadMethodCallException` |
 
 ### Konstanta
 

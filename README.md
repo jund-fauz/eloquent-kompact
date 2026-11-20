@@ -81,7 +81,7 @@ Eloquent Kompact started as boilerplate I kept rewriting while building a Larave
 
 It then grew past the model definition. The same ERP kept needing the same query and comparison patterns, so the package also ships:
 
-- **`AdditionalQueries` on `KompactModel`**: read nested relations without null checks (`getVia()`), strict comparisons after casting (`sameWith()`, `match()`, plus `AndDirty` variants for unsaved changes), conditional assignment (`assignIfBlank()`, `assignIfNull()`), `wereChanged()`, `copyRelationsTo()` and more.
+- **`AdditionalQueries` on `KompactModel`**: read nested relations without null checks (`getVia()`), strict comparisons after casting (`sameWith()`, `match()`), conditional assignment (`assignIfBlank()`, `assignIfNull()`), several checks at once (`isAllOf()`, `isAll()`), `copyRelationsTo()` and more.
 - **An extended query `Builder`**: `whereSameWith()`, `whereMorphType()` and `whereInRelation()`.
 - **[`RawQuery`](#rawquery)**: a fluent, immutable builder for raw SQL expressions that works on MySQL, MariaDB, PostgreSQL and SQLite.
 - **[Check helpers](#checks)**: `is_not()`, `is_all()`, `is_any()` and their variants, which take a check by name, e.g. `is_all('null', $a, $b)`.
@@ -491,13 +491,19 @@ $order->isNotNull('note');
 $user->sameWith('role', 'admin');
 $user->notSameWith('role', 'admin');
 $order->sameWith('qty', '5', 'integer');                         // with another cast, for this comparison only
-$user->sameWithOther($otherUser, 'tenant_id', 'branch_id');      // every column is the same
+$user->sameWithOther($otherUser, 'tenant_id', 'branch_id');        // every column is the same
+$user->sameWithOther($otherUser, 'tenant_id', 'branch_id', 'or');  // at least one column is the same
+! $user->sameWithOther($otherUser, 'tenant_id', 'branch_id', 'or');// every column is different
+! $user->sameWithOther($otherUser, 'tenant_id', 'branch_id');      // at least one column is different
+$user->match(['role' => ['admin', 'editor'], 'active_is' => true]);
+
+// Deprecated, removed in 3.0: use sameWithOther() with 'or' and ! as above
 $user->sameWithOtherOr($otherUser, 'tenant_id', 'branch_id');    // at least one column is the same
 $user->notSameWithOther($otherUser, 'tenant_id', 'branch_id');   // every column is different
 $user->notSameWithOtherOr($otherUser, 'tenant_id', 'branch_id'); // at least one column is different
-$user->match(['role' => ['admin', 'editor'], 'active_is' => true]);
 
-// The same comparisons, for columns that have changed and are not saved yet
+// Deprecated, removed in 3.0: the same comparisons, for columns that have changed and are not saved yet.
+// Use isAllOf() or isDirty() with the comparison instead, e.g. $order->isAllOf('note', 'dirty', 'blank')
 $user->sameWithAndDirty('role', 'admin');
 $user->notSameWithAndDirty('role', 'admin');
 $user->sameWithOtherAndDirty($otherUser, 'tenant_id', 'branch_id');      // every column is the same and dirty
@@ -511,7 +517,20 @@ $order->isFilledAndDirty('note');
 $order->isNullAndDirty('note');
 $order->isNotNullAndDirty('note');
 
-// Whether columns were changed by the last save
+// Several checks on one column: a bool method of the model ('blank' for isBlank(), 'dirty' for isDirty()),
+// otherwise a bool function run on the attribute ('numeric', 'in', …). Extra parameters go in a named argument
+$order->isAllOf('note', 'dirty', 'blank');      // every check is true
+$order->isAnyOf('note', 'null', 'numeric');     // at least one check is true
+$order->isAnyOf('status', in: 'paid,sent');     // in($order->status, 'paid,sent')
+$user->isAllOf(['role' => 'admin'], 'match');   // the first argument goes to a method that takes no column
+$order->not('null', 'note');                    // ! $order->isNull('note')
+$order->isAll('dirty', 'status', 'note');      // one check, true for every column
+$order->isAny('null', ['status', 'note']);     // one check, true for at least one column
+$order->isAllNot('was_changed', 'status', 'note'); // one check, false for every column
+$order->isAnyNot('filled', 'status', 'note');   // one check, false for at least one column
+
+// Deprecated, removed in 3.0: whether columns were changed by the last save.
+// Use isAll('was_changed', ...) and isAllNot('was_changed', ...), or wasChanged() without a column
 $order->wereChanged('status', 'note');    // every column was changed
 $order->wereNotChanged('status', 'note'); // every column was not changed
 $order->wereChanged();                    // any column was changed
@@ -524,13 +543,17 @@ Order::randomId('status', 'paid'); // the arguments of where()
 
 `assignIfBlank()`, `assignIfBlankFrom()` and `isBlank()` use Laravel's `blank()`, so `null`, blank strings (also `'   '`) and empty arrays count as blank, while `0`, `'0'` and `false` do not. `isFilled()` uses `filled()`, its opposite. `assignIfNull()` and `assignIfNullFrom()` only replace `null`.
 
-`match()` and the `sameWithOther()` family return `false` when no condition or column is given. `notSameWithOther()` is not the opposite of `sameWithOther()`: that is `notSameWithOtherOr()`. Objects such as the Carbon dates of `datetime` columns are compared by identity, so two models never have the same date. An array value matches if the attribute equals one of its items, unless the attribute itself is an array.
+`match()` and the `sameWithOther()` family return `false` when no condition or column is given. The last column of `sameWithOther()` can be a logic word instead: `'and'` or `'all'` (the default) for every column, `'or'` or `'any'` for at least one, so a column named like one of them cannot be the last one. The deprecated `notSameWithOther()` is not the opposite of `sameWithOther()`: that is `notSameWithOtherOr()`. Objects such as the Carbon dates of `datetime` columns are compared by identity, so two models never have the same date. An array value matches if the attribute equals one of its items, unless the attribute itself is an array.
 
 `sameWith()`, `notSameWith()`, `sameWithAndDirty()` and `notSameWithAndDirty()` take a cast of Laravel as their third argument (`'integer'`, `'decimal:2'`, `'string'`, an enum class, …), used instead of the cast of the column for that comparison only, and also applied to the value with [`cast_as()`](#other-helpers); the casts of the model stay as they are. Without a cast the value is compared as it is. An accessor of the column still wins over it, and a date cast still gives an object, compared by identity.
 
-The `AndDirty` methods use Eloquent's `isDirty()` on each column, so `sameWithOtherOrAndDirty()` needs one column that is both dirty and the same, and `sameWithOtherAndDirty()` and `matchAndDirty()` are `false` if one of the columns is not dirty. Every attribute set on a new model is dirty. Changed columns are still dirty in the `saving`, `saved`, `updating`, `updated`, `creating` and `created` events, and nothing is dirty once `save()` has returned.
+The deprecated `AndDirty` methods use Eloquent's `isDirty()` on each column, so `sameWithOtherOrAndDirty()` needs one column that is both dirty and the same, and `sameWithOtherAndDirty()` and `matchAndDirty()` are `false` if one of the columns is not dirty. Every attribute set on a new model is dirty. Changed columns are still dirty in the `saving`, `saved`, `updating`, `updated`, `creating` and `created` events, and nothing is dirty once `save()` has returned.
 
-`wereChanged()` and `wereNotChanged()` use Eloquent's `wasChanged()` on each column. Unlike `wasChanged('a', 'b')`, which needs one changed column, `wereChanged('a', 'b')` needs all of them. `wereNotChanged()` is not the opposite of `wereChanged()` when some columns were changed and others were not: both are `false`. Like `wasChanged()`, they see no change right after `create()`, and a `save()` without changes keeps the changes of the last update.
+`isAll()` and `isAny()` run one check on several columns, nested arrays flattened, like [`is_all()`](#checks); without a column `isAll()` is `true` and `isAny()` is `false`. `isAllNot()` and `isAnyNot()` are their opposites, like `is_all_not()` and `is_any_not()`: `isAllNot()` is `true` and `isAnyNot()` is `false` without a column. They replace the `AndDirty` methods of several columns, e.g. `isAll('dirty', 'a', 'b') && sameWithOther($other, 'a', 'b')` for `sameWithOtherAndDirty($other, 'a', 'b')`.
+
+`isAllOf()`, `isAnyOf()` and `not()` look for a method of the model first (`$what`, then `is_$what`, in camel case) and only use it when it returns a `bool`; otherwise they use a bool function, like [`is_not()`](#checks). A method without a native return type counts when its docblock says `@return bool`, which is how Eloquent's `isDirty()` and `isClean()` are found. Note: when the docblocks are stripped (`opcache.save_comments=0`), those methods are not found anymore and the check falls back to a function, or throws a `BadMethodCallException`. Extra parameters only go in named arguments, so a check cannot be given twice in one call. An unknown check throws a `BadMethodCallException` when it is reached.
+
+The deprecated `wereChanged()` and `wereNotChanged()` use Eloquent's `wasChanged()` on each column. Unlike `wasChanged('a', 'b')`, which needs one changed column, `wereChanged('a', 'b')` needs all of them. `wereNotChanged()` is not the opposite of `wereChanged()` when some columns were changed and others were not: both are `false`. Like `wasChanged()`, they see no change right after `create()`, and a `save()` without changes keeps the changes of the last update.
 
 `updateMany()` only takes arrays and ignores the empty ones. If one of them is a list, it changes nothing and returns `false` without an error, so check the result when the data can be a list. Like `update()`, it only fills the fillable columns and returns `false` on a model that is not saved.
 
@@ -1047,7 +1070,7 @@ Upgrading from `1.x`? See [UPGRADE.md](UPGRADE.md) for the old name of every hel
 
 In `JundFauz\EloquentKompact`.
 
-`is_not()`, `is_all()`, `is_any()`, `is_all_not()`, `is_any_not()` and `is_any_of()` take a check by its name. The check is a function that returns a `bool`, found in this order: the name itself (`'defined'` → `defined()`), `is_` + the name (`'null'` → `is_null()`), then the same two in this package (`'not_null'` → `is_not_null()`), then the same two in its [string](#strings) and [array](#arrays) helpers (`'count_one'` → `Array\is_count_one()`, `'in'` → `Array\in()`). A function that returns something else is skipped, so `'file'` is `is_file()`, not `file()`. A name without such a function throws a `BadMethodCallException`.
+`is_not()`, `is_all()`, `is_any()`, `is_all_not()`, `is_any_not()` and `is_any_of()` take a check by its name. The check is a function that returns a `bool`, found in this order: the name itself (`'defined'` → `defined()`), `is_` + the name (`'null'` → `is_null()`), then `array_is_` + the name (`'list'` → `array_is_list()`), then the same three in this package (`'app_local_or_test'` → `is_app_local_or_test()`), then in its [string](#strings) and [array](#arrays) helpers (`'count_one'` → `Array\is_count_one()`, `'in'` → `Array\in()`). A name starting with `not_` is the check without it, negated: `'not_null'` → `! is_null()`, `'not_in'` → `! Array\in()`. A function that returns something else is skipped, so `'file'` is `is_file()`, not `file()`. A name without such a function throws a `BadMethodCallException`.
 
 | Function | Result |
 |---|---|
@@ -1061,8 +1084,8 @@ In `JundFauz\EloquentKompact`.
 | `same_with($a, $b, $cast = null)` / `not_same_with($a, $b, $cast = null)` | `$a === $b` / `$a !== $b`. With a cast, both values are cast with it first: `same_with('5', 5, 'integer')` → `true` |
 | `same_with_one_of($value, ...$others)` | Whether `$value` is `===` to one of the others; `false` without others |
 | `cast_as($value, $cast = null)` | The value cast with a cast of Laravel, like an attribute of a model: `cast_as('10.5', 'decimal:2')` → `'10.50'`, `cast_as('paid', Status::class)` → `Status::Paid`. A date cast gives a Carbon object. Without a cast the value is returned as it is |
-| `not_in_array($needle, $haystack, $strict = false)` | `! in_array()` |
-| `not_in($needle, $haystack, $strict = false)` | `not_in_array()` for an array or a collection |
+| `not_in_array($needle, $haystack, $strict = false)` | `! in_array()`. Deprecated, removed in 3.0: use `is_not('in_array', ...)` |
+| `not_in($needle, $haystack, $strict = false)` | `not_in_array()` for an array or a collection. Deprecated, removed in 3.0: use `is_not('in', ...)` |
 | `if_not_null($value, $then)` | `$then` if `$value` is not `null`, or `null`: `if_not_null($paidAt, 'Paid')`. `$then` is evaluated before the call, also when `$value` is `null`. `@experimental` |
 | `is_app_local_or_test()` | Whether the app runs in the `local` or `testing` environment |
 
@@ -1133,12 +1156,12 @@ In `JundFauz\EloquentKompact\String`.
 | Function | Result |
 |---|---|
 | `concat(...$values)` | Joined without a delimiter. Arrays and collections are flattened: `concat('a', ['b', collect(['c'])])` → `abc` |
-| `before_last()`, `lower()`, `upper()` | Laravel's `Str::beforeLast()`, `lower()`, `upper()` |
+| `before_last()`, `lower()`, `upper()` | Laravel's `Str::beforeLast()`, `lower()`, `upper()`. Deprecated, removed in 3.0: use `str('before_last', …)`, `str('lower', …)`, `str('upper', …)` |
 | `empty_if_false($condition, $value)` | `$value`, or `''` if `$condition` is falsy, like [`Str::emptyIfFalse()`](#str) |
 | `constant($class, $constant)` | `Class::Constant`, e.g. for `defined()` or PHP's `constant()` |
 | `stringify($array)` | Every value cast to a `string`, nested arrays included, keeping the keys; `null` and `false` become `''` |
 | `rtrim_multiline($value, $characters = " \n\r\t\v\0")` | `rtrim()` on every line. `@experimental` |
-| `str($method, ...$parameters)` | A static method of Laravel's `Str` by its name, in camel or snake case: `str('replace_first', 'a', 'b', 'aa')` → `Str::replaceFirst('a', 'b', 'aa')` → `'ba'`. An unknown method throws a `BadMethodCallException` |
+| `str($method, ...$parameters)` | A static method of Laravel's `Str` by its name, in camel or snake case: `str('replace_first', 'a', 'b', 'aa')` → `Str::replaceFirst('a', 'b', 'aa')` → `'ba'`. A method that Laravel's `Str` does not have is called on this package's [`Str`](#str) of the first parameter, and the string comes back: `str('add_at_start', 'b', 'a')` → `'ab'`. An unknown method throws a `BadMethodCallException` |
 
 ### Constants
 
