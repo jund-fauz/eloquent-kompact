@@ -457,11 +457,14 @@ $user->getMany('name', 'email'); // ['Ana', 'ana@example.com']
 
 // Atribut dari relasi bersarang tanpa cek null, dengan relasi diberikan sebagai class model
 $comment->getVia('name', Post::class, User::class);                // $comment->post?->user?->name
-$comment->getManyVia(['name', 'email'], Post::class, User::class); // [$comment->post?->user?->name, $comment->post?->user?->email]
+$comment->getVia(['name', 'email'], Post::class, User::class);    // [$comment->post?->user?->name, $comment->post?->user?->email]
 $comment->getVia('name', ['latest' => Post::class]);               // $comment->latestPost?->name
 
 // Model terkait dari relasi bersarang, tanpa kolom
 $comment->getRelVia(Post::class, User::class);                     // $comment->post?->user
+
+// Deprecated, dihapus di 3.0: pakai getVia() dengan array kolom, yang mempertahankan key-nya
+$comment->getManyVia(['name', 'email'], Post::class, User::class);
 
 // [kolom => nilai] untuk kolom yang diberikan, setelah casting (yang tidak ada bernilai null)
 $user->compact('name', 'email'); // ['name' => 'Ana', 'email' => 'ana@example.com']
@@ -1116,7 +1119,8 @@ Di `JundFauz\EloquentKompact`.
 | `build_class($name, $content = '{}', $parent = '', $docblock = '')` | `class Name extends Parent {}`, dengan docblock di atasnya; spasi di akhir setiap baris di-trim |
 | `build_class_docblock($methods, $returnType = 'mixed', $isStatic = false, $parameters = '', $prefix = '')` | Docblock class dengan baris `@method` untuk setiap method. `$methods` adalah list nama, atau `nama => return type` |
 | `collect(...$values)` | [`Builder\Collection`](#helper-lain) dari satu nilai, seperti `collect()` Laravel, atau dari beberapa nilai sebagai item-nya: `collect(1, 2)` → `[1, 2]`. Tanpa nilai hasilnya kosong. Import untuk memakainya sebagai pengganti milik Laravel |
-| `model_compact($model, ...$columns)` | `[kolom => nilai]` untuk kolom yang diberikan, setelah casting; atribut yang tidak ada bernilai `null` dan relasi yang sudah dimuat menjadi array. Kolom bisa diberikan dalam array, dan key string, di dalam array atau sebagai named argument, dipakai sebagai alias-nya: `model_compact($user, 'id', ['mail' => 'email'])` → `['id' => 1, 'mail' => '…']` |
+| `object_compact($object, ...$properties)` | `[properti => nilai]` untuk properti yang diberikan dari object apa saja, misalnya kolom model setelah casting; properti yang tidak ada bernilai `null` dan relasi yang sudah dimuat menjadi array. Properti bisa diberikan dalam array, dan key string, di dalam array atau sebagai named argument, dipakai sebagai alias-nya: `object_compact($user, 'id', ['mail' => 'email'])` → `['id' => 1, 'mail' => '…']` |
+| `model_compact($model, ...$columns)` | `object_compact()` untuk model. Deprecated, dihapus di 3.0: pakai `object_compact()` |
 
 Fungsi-fungsi penggabung juga menerima array, yang akan diratakan: `word_concat('a', ['b', ['c']])` → `a b c`.
 

@@ -457,11 +457,14 @@ $user->getMany('name', 'email'); // ['Ana', 'ana@example.com']
 
 // Attributes of nested relations without null checks, with the relations given as model classes
 $comment->getVia('name', Post::class, User::class);                // $comment->post?->user?->name
-$comment->getManyVia(['name', 'email'], Post::class, User::class); // [$comment->post?->user?->name, $comment->post?->user?->email]
+$comment->getVia(['name', 'email'], Post::class, User::class);    // [$comment->post?->user?->name, $comment->post?->user?->email]
 $comment->getVia('name', ['latest' => Post::class]);               // $comment->latestPost?->name
 
 // The related model of nested relations, without a column
 $comment->getRelVia(Post::class, User::class);                     // $comment->post?->user
+
+// Deprecated, removed in 3.0: use getVia() with an array of columns, which keeps their keys
+$comment->getManyVia(['name', 'email'], Post::class, User::class);
 
 // [column => value] for the given columns, after casting (a missing one is null)
 $user->compact('name', 'email'); // ['name' => 'Ana', 'email' => 'ana@example.com']
@@ -1116,7 +1119,8 @@ In `JundFauz\EloquentKompact`.
 | `build_class($name, $content = '{}', $parent = '', $docblock = '')` | `class Name extends Parent {}`, with the docblock above it; the spaces at the end of every line are trimmed |
 | `build_class_docblock($methods, $returnType = 'mixed', $isStatic = false, $parameters = '', $prefix = '')` | A class docblock with a `@method` line for every method. `$methods` is a list of names, or `name => return type` |
 | `collect(...$values)` | A [`Builder\Collection`](#other-helpers) of one value, like Laravel's `collect()`, or of several values as its items: `collect(1, 2)` → `[1, 2]`. Without a value it is empty. Import it to use it instead of Laravel's |
-| `model_compact($model, ...$columns)` | `[column => value]` for the given columns, after casting; missing attributes are `null` and loaded relations become arrays. A column can be given in an array, and a string key, in an array or as a named argument, is used as its alias: `model_compact($user, 'id', ['mail' => 'email'])` → `['id' => 1, 'mail' => '…']` |
+| `object_compact($object, ...$properties)` | `[property => value]` for the given properties of any object, e.g. the columns of a model after casting; missing properties are `null` and loaded relations become arrays. A property can be given in an array, and a string key, in an array or as a named argument, is used as its alias: `object_compact($user, 'id', ['mail' => 'email'])` → `['id' => 1, 'mail' => '…']` |
+| `model_compact($model, ...$columns)` | `object_compact()` for a model. Deprecated, removed in 3.0: use `object_compact()` |
 
 The joining functions accept arrays too, which are flattened: `word_concat('a', ['b', ['c']])` → `a b c`.
 
