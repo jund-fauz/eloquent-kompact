@@ -5,6 +5,7 @@ namespace JundFauz\EloquentKompact\Column;
 use InvalidArgumentException;
 use JundFauz\EloquentKompact\Builder\Str;
 use function JundFauz\EloquentKompact\Array\key_values;
+use function JundFauz\EloquentKompact\chain;
 use function JundFauz\EloquentKompact\is_any_of;
 
 final class Convert
@@ -29,7 +30,7 @@ final class Convert
 
     public static function modelToColumn(string $model, ?string $prefix = null): string
     {
-        $result = Str::of($model, true)->classBasename()->snake()->relation();
+        $result = chain(Str::of($model, true), 'classBasename', 'snake', 'relation');
         if ($prefix) {
             $result->addAtStart($prefix, '_');
         }

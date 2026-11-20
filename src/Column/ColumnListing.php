@@ -23,7 +23,7 @@ final class ColumnListing
 
     public static function has(string $table, string $column): bool
     {
-        return in_array(str('lower', $column), array_map(fn (string $name) => str('lower', $name), self::of($table)), true);
+        return in_array(str('lower', $column), str('lowers', ...self::of($table)), true);
     }
 
     public static function flush(): void
