@@ -670,6 +670,13 @@ class FunctionsTest extends TestCase
     }
 
     #[Test]
+    public function it_checks_any_string_value_against_several_checks(): void
+    {
+        $this->assertTrue(is_any_of('THIS_IS_AN_EMPTY_VALUE_TAG', 'string'));
+        $this->assertTrue(is_all_of('', 'string', 'not_numeric'));
+    }
+
+    #[Test]
     public function it_checks_a_value_against_every_check(): void
     {
         $this->assertTrue(is_all_of('5', 'string', 'numeric'));
