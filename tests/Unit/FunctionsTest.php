@@ -10,6 +10,7 @@ use Illuminate\Support\Facades\File;
 use JundFauz\EloquentKompact\Array as Arr;
 use JundFauz\EloquentKompact\Builder\Relation;
 use JundFauz\EloquentKompact\String as Str;
+use JundFauz\EloquentKompact\Builder\Str as KompactStr;
 use JundFauz\EloquentKompact\Tests\TestCase;
 use PHPUnit\Framework\Attributes\DataProvider;
 use PHPUnit\Framework\Attributes\Test;
@@ -33,6 +34,7 @@ use function JundFauz\EloquentKompact\is_all_type_of;
 use function JundFauz\EloquentKompact\is_any;
 use function JundFauz\EloquentKompact\is_any_not;
 use function JundFauz\EloquentKompact\is_any_not_type_of;
+use function JundFauz\EloquentKompact\is_all_of;
 use function JundFauz\EloquentKompact\is_any_of;
 use function JundFauz\EloquentKompact\is_app_local_or_test;
 use function JundFauz\EloquentKompact\is_file_exist;
@@ -580,6 +582,28 @@ class FunctionsTest extends TestCase
     }
 
     #[Test]
+    public function it_negates_a_check_with_the_word_not_anywhere(): void
+    {
+        $this->assertTrue(execute_what_function('is_not_null', 1));
+        $this->assertTrue(execute_what_function('notNull', 1));
+        $this->assertFalse(execute_what_function('is_not_null', null));
+        $this->assertSame([true, 'is_null'], \JundFauz\EloquentKompact\is_negation_and_get_raw_function('is_not_null'));
+        $this->assertSame([false, 'in'], \JundFauz\EloquentKompact\is_negation_and_get_raw_function('in'));
+        $this->assertSame([false, 'annotation'], \JundFauz\EloquentKompact\is_negation_and_get_raw_function('annotation'));
+    }
+
+    #[Test]
+    public function it_gives_the_same_result_as_the_negated_checks_with_not(): void
+    {
+        foreach ([[], [null], [1], [null, 1], [[null, 1]], ['5', 5.0]] as $values) {
+            foreach (['null', 'int', 'numeric'] as $what) {
+                $this->assertSame(is_all_not($what, ...$values), is_all("not_$what", ...$values));
+                $this->assertSame(is_any_not($what, ...$values), is_any("not_$what", ...$values));
+            }
+        }
+    }
+
+    #[Test]
     public function it_finds_an_array_is_function(): void
     {
         $this->assertTrue(execute_what_function('list', [1, 2]));
@@ -618,6 +642,57 @@ class FunctionsTest extends TestCase
         $this->assertTrue(is_any_of(null, 'null', 'numeric'));
         $this->assertFalse(is_any_of(1.5, 'int', 'string'));
         $this->assertFalse(is_any_of('x'));
+    }
+
+    #[Test]
+    public function it_checks_every_check_with_its_arguments(): void
+    {
+        $this->assertTrue(\JundFauz\EloquentKompact\all(method_exists: [KompactStr::class, 'of'], same_with: [1, 1]));
+        $this->assertFalse(\JundFauz\EloquentKompact\all(method_exists: [KompactStr::class, 'of'], same_with: [1, '1']));
+        $this->assertTrue(\JundFauz\EloquentKompact\all(not_same_with: [1, '1'], in: ['a', 'a,b']));
+        $this->assertTrue(\JundFauz\EloquentKompact\all());
+    }
+
+    #[Test]
+    public function it_checks_at_least_one_check_with_its_arguments(): void
+    {
+        $this->assertTrue(\JundFauz\EloquentKompact\any(same_with: [1, 2], in: ['a', 'a,b']));
+        $this->assertFalse(\JundFauz\EloquentKompact\any(same_with: [1, 2], method_exists: [KompactStr::class, 'missing']));
+        $this->assertFalse(\JundFauz\EloquentKompact\any());
+    }
+
+    #[Test]
+    public function it_checks_a_null_value_against_several_checks(): void
+    {
+        $this->assertTrue(is_any_of(null, 'null', 'numeric'));
+        $this->assertFalse(is_all_of(null, 'null', 'numeric'));
+        $this->assertTrue(is_all_of(null, 'null', 'not_numeric'));
+    }
+
+    #[Test]
+    public function it_checks_a_value_against_every_check(): void
+    {
+        $this->assertTrue(is_all_of('5', 'string', 'numeric'));
+        $this->assertFalse(is_all_of('x', 'string', 'numeric'));
+        $this->assertTrue(is_all_of('x'));
+    }
+
+    #[Test]
+    public function it_passes_the_parameters_of_a_named_argument_to_the_check_of_a_value(): void
+    {
+        $this->assertTrue(is_any_of('max', 'int', in: 'min,max'));
+        $this->assertFalse(is_any_of('x', 'int', in: 'min,max'));
+        $this->assertTrue(is_all_of('max', 'string', in: 'min,max'));
+        $this->assertFalse(is_all_of('max', 'string', in: 'a,b'));
+        $this->assertTrue(is_any_of(5, same_with: ['5', 'integer']));
+    }
+
+    #[Test]
+    public function it_checks_an_array_value_against_several_checks(): void
+    {
+        $this->assertTrue(is_all_of(['a' => 1], 'array', 'count_one'));
+        $this->assertTrue(is_any_of(['a' => 1, 'b' => 2], 'not_count_one', 'list'));
+        $this->assertFalse(is_any_of(['a' => 1], 'not_count_one', 'list'));
     }
 
     #[Test]
@@ -756,6 +831,43 @@ class FunctionsTest extends TestCase
         $this->assertSame('ba', Str\str('replaceFirst', 'a', 'b', 'aa'));
         $this->assertSame('ba', Str\str('replace_first', 'a', 'b', 'aa'));
         $this->assertSame('digits_between', Str\str('snake', 'digitsBetween'));
+    }
+
+    #[Test]
+    public function it_runs_the_singular_str_method_on_every_parameter(): void
+    {
+        $this->assertSame(['aB', 'cD'], Str\str('camels', 'a_b', 'c_d'));
+        $this->assertSame(['a_b'], Str\str('snakes', 'aB'));
+    }
+
+    #[Test]
+    public function it_still_calls_a_str_method_whose_name_looks_plural(): void
+    {
+        $this->assertTrue(Str\str('contains', 'abc', 'b'));
+        $this->assertSame('a b', Str\str('words', 'a b c', 2, ''));
+    }
+
+    #[Test]
+    public function it_chains_the_methods_of_an_object(): void
+    {
+        $this->assertSame('ABc', (string) \JundFauz\EloquentKompact\chain(KompactStr::of('ab'), 'upper', append: 'c'));
+        $this->assertTrue(\JundFauz\EloquentKompact\chain(KompactStr::of('isDirty'), 'snake', startsWith: 'is'));
+        $this->assertSame('null', \JundFauz\EloquentKompact\chain(collect(['not', 'null']), diff: [['not']], implode: '_'));
+    }
+
+    #[Test]
+    public function it_calls_a_chained_method_without_parameters_by_its_name(): void
+    {
+        $this->assertSame('a', Str\strs(' a ', trim: []));
+    }
+
+    #[Test]
+    public function it_chains_the_str_methods_of_a_string(): void
+    {
+        $this->assertSame('A', Str\strs('  a ', 'trim', 'upper'));
+        $this->assertTrue(Str\strs('isDirty', 'snake', startsWith: 'is'));
+        $this->assertFalse(Str\strs('dirty', 'snake', startsWith: 'is'));
+        $this->assertSame('ab', Str\strs('b', addAtStart: 'a'));
     }
 
     #[Test]

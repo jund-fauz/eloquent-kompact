@@ -203,6 +203,20 @@ class IsAllOfTest extends TestCase
     }
 
     #[Test]
+    public function it_gives_the_same_result_as_the_deprecated_not_same_with(): void
+    {
+        $model = (new IsAllOfModel)->forceFill(['a' => null, 'b' => 3, 'c' => 'x'])->syncOriginal();
+        $model->b = 4;
+
+        foreach ([['b', 4, null], ['b', '4', null], ['b', '4', 'integer'], ['b', 3, null], ['c', 'x', null], ['a', null, null], ['a', '', 'string']] as [$column, $value, $cast]) {
+            $state = json_encode([$column, $value, $cast]);
+            $this->assertSame($model->notSameWith($column, $value, $cast), $model->not('same_with', $column, $value, $cast), $state);
+            $this->assertSame($model->notSameWith($column, $value, $cast), $model->isAllOf($column, not_same_with: [$value, $cast]), $state);
+            $this->assertSame($model->isDirty($column) && $model->notSameWith($column, $value, $cast), $model->isAllOf($column, 'dirty', not_same_with: [$value, $cast]), $state);
+        }
+    }
+
+    #[Test]
     public function it_gives_the_same_result_as_the_deprecated_and_dirty_methods(): void
     {
         $other = (new IsAllOfModel)->forceFill(['a' => 10, 'b' => 20]);
