@@ -3,25 +3,30 @@
 namespace JundFauz\EloquentKompact;
 
 use BadMethodCallException;
+use JundFauz\EloquentKompact\Builder\Str;
 use ReflectionException;
 use ReflectionFunction;
 use ReflectionNamedType;
 use function JundFauz\EloquentKompact\Array\flat;
+use function JundFauz\EloquentKompact\Array\merge;
 use function JundFauz\EloquentKompact\Array\merge_as_array;
+use function JundFauz\EloquentKompact\Array\wrap;
 use function JundFauz\EloquentKompact\String\str;
 
 /**
  * is_$what, or $what itself when it already starts with is
  *
- * @param string|null $what
+ * @param string $what
  * @return string
  * @internal
  */
-function is(?string $what): string
+function is(string $what): string
 {
-    return str('startsWith', $what, 'is')
-        ? $what
-        : "is_$what";
+    $what = Str::of($what, true)->snake();
+    if (not($what->startsWith('is_'))) {
+        $what->addAtStart('is_');
+    }
+    return (string) $what;
 }
 
 /**
@@ -41,23 +46,41 @@ function is_function_eligible(string $function): bool
 
 /**
  * Runs the function returning a bool that checks $what with the parameters. The function is found
- * once and then cached. A $what starting with not_ runs the check without it, negated,
- * e.g. execute_what_function('not_in', $needle, $haystack) for ! in($needle, $haystack)
+ * once and then cached. A $what with the word not (in snake case) runs the check without it, negated,
+ * e.g. execute_what_function('not_in', $needle, $haystack) for ! in($needle, $haystack),
+ * or 'is_not_null' and 'notNull' for ! is_null()
  *
- * @param $what
+ * @param string $what
  * @param mixed ...$parameters The arguments of the check
  * @return bool
  * @throws BadMethodCallException When no function returning a bool is found for $what
  * @internal
  */
-function execute_what_function($what, ...$parameters): bool
+function execute_what_function(string $what, ...$parameters): bool
 {
     static $cache = [];
-    $what = (string)$what;
-    $result = ($cache[$what] ??= resolve_what_function($what))(...$parameters);
-    return str('startsWith', $what, 'not_')
+    [$isNegation, $function] = is_negation_and_get_raw_function($what);
+    $result = ($cache[$function] ??= resolve_what_function($function))(...$parameters);
+    return $isNegation
         ? not($result)
         : $result;
+}
+
+/**
+ * Whether the name of a check has the word not (in snake case), and the name without every not,
+ * e.g. [true, 'is_null'] for 'is_not_null', [false, 'in'] for 'in'
+ *
+ * @param string $function
+ * @return array{bool, string}
+ * @internal
+ */
+function is_negation_and_get_raw_function(string $function): array
+{
+    $isNegativeFunction = ($words = Str::of($function)->snake()->explode('_'))->contains('not');
+    $rawFunction = $isNegativeFunction
+        ? chain($words, diff: ['not'], implode: '_')
+        : $function;
+    return [$isNegativeFunction, $rawFunction];
 }
 
 /**
@@ -72,9 +95,6 @@ function execute_what_function($what, ...$parameters): bool
 function resolve_what_function(string $what): string
 {
     $namespaceVariations = [null, '', 'String', 'Array'];
-    if (str('startsWith', $what, 'not_')) {
-        $what = str('removeStart', $what, 'not_');
-    }
     $basicVariations = merge_as_array($what, not_same_with($isWhat = is($what), $what) ? $isWhat : [], "array_$isWhat");
     foreach ($namespaceVariations as $namespaceVariation) {
         foreach ($basicVariations as $basicVariation) {
@@ -90,6 +110,55 @@ function resolve_what_function(string $what): string
         }
     }
     throw new BadMethodCallException("$what doesn't found in any context.");
+}
+
+/**
+ * One check of is_any_of() or is_all_of(): a named argument is the check with its extra parameters,
+ * a positional one is the check alone; the value goes to the check first
+ *
+ * @param mixed $value The check, or the extra parameters of a named one
+ * @param int|string $key The name of a named check
+ * @param mixed $mainValue The value that is checked
+ * @return bool
+ * @throws BadMethodCallException When no function returning a bool is found for the check
+ * @internal
+ */
+function execute(mixed $value, int|string $key, mixed $mainValue = EMPTY_VALUE): bool
+{
+    $arguments = [($isKeyString = is_string($key)) ? $key : $value];
+    if (not_same_with($mainValue, EMPTY_VALUE)) {
+        $arguments[] = $mainValue;
+    }
+    if ($isKeyString) {
+        $arguments = merge($arguments, wrap($value));
+    }
+    return execute_what_function(...$arguments);
+}
+
+/**
+ * Whether every check is true, stopping at the first false one; true without a check. A check is a named argument with its arguments,
+ * e.g. all(method_exists: [$class, $method], same_with: [$a, $b]); see is_not() for the names
+ *
+ * @param mixed ...$methodAndParameters
+ * @return bool
+ * @throws BadMethodCallException When no function returning a bool is found for a check that is reached
+ */
+function all(mixed ...$methodAndParameters): bool
+{
+    return array_all($methodAndParameters, execute(...));
+}
+
+/**
+ * Whether at least one check is true, stopping at the first true one; false without a check. A check is a named argument with its arguments,
+ * e.g. any(method_exists: [$class, $method], same_with: [$a, $b]); see is_not() for the names
+ *
+ * @param mixed ...$methodAndParameters
+ * @return bool
+ * @throws BadMethodCallException When no function returning a bool is found for a check that is reached
+ */
+function any(mixed ...$methodAndParameters): bool
+{
+    return array_any($methodAndParameters, execute(...));
 }
 
 /**
@@ -138,8 +207,60 @@ function is_any(string $what, ...$values): bool
 }
 
 /**
+ * Whether at least one of the checks is true for the value, stopping at the first true one.
+ * E.g. is_any_of($value, 'int', 'string') for is_int($value) || is_string($value). Extra parameters
+ * go in a named argument, e.g. is_any_of($value, 'int', in: 'min,max') for ... || in($value, 'min,max')
+ *
+ * @param mixed $value
+ * @param mixed ...$whats See is_not()
+ * @return bool
+ * @throws BadMethodCallException When no function returning a bool is found for a check that is reached
+ */
+function is_any_of(mixed $value, mixed ...$whats): bool
+{
+    return array_any($whats, fn ($arrValue, $key) => execute($arrValue, $key, $value));
+}
+
+/**
+ * Whether every check is true for the value, stopping at the first false one; true without a check.
+ * E.g. is_all_of($value, 'string', 'numeric') for is_string($value) && is_numeric($value). Extra
+ * parameters go in a named argument, like is_any_of()
+ *
+ * @param mixed $value
+ * @param mixed ...$whats See is_not()
+ * @return bool
+ * @throws BadMethodCallException When no function returning a bool is found for a check that is reached
+ */
+function is_all_of(mixed $value, mixed ...$whats): bool
+{
+    return array_all($whats, fn ($arrValue, $key) => execute($arrValue, $key, $value));
+}
+
+/**
+ * Calls the methods one after another, each on what the previous one returned. A named argument is
+ * the method with its parameters, e.g. chain(Str::of('isDirty'), 'snake', startsWith: 'is')
+ * for Str::of('isDirty')->snake()->startsWith('is')
+ *
+ * @param object $object
+ * @param mixed ...$methods A method name, or method name => its parameter(s)
+ * @return mixed What the last method returns
+ */
+function chain(object $object, ...$methods): mixed
+{
+    foreach ($methods as $key => $value) {
+        $object = match (true) {
+            blank($value) => $object->{$key}(),
+            is_string($key) => $object->{$key}(...wrap($value)),
+            default => $object->{$value}()
+        };
+    }
+    return $object;
+}
+
+/**
  * Whether the check is false for every value, nested arrays flattened
  *
+ * @deprecated Will be removed in 3.0. Use is_all("not_$what", ...$values), e.g. is_all('not_null', $a, $b)
  * @param string $what See is_not()
  * @param mixed ...$values
  * @return bool
@@ -153,6 +274,7 @@ function is_all_not(string $what, ...$values): bool
 /**
  * Whether the check is false for at least one value, nested arrays flattened
  *
+ * @deprecated Will be removed in 3.0. Use is_any("not_$what", ...$values), e.g. is_any('not_int', $a, $b)
  * @param string $what See is_not()
  * @param mixed ...$values
  * @return bool
@@ -161,18 +283,4 @@ function is_all_not(string $what, ...$values): bool
 function is_any_not(string $what, ...$values): bool
 {
     return not(is_all($what, ...$values));
-}
-
-/**
- * Whether at least one of the checks is true for the value, stopping at the first true one.
- * E.g. is_any_of($value, 'int', 'string') for is_int($value) || is_string($value)
- *
- * @param mixed $value
- * @param string ...$whats See is_not()
- * @return bool
- * @throws BadMethodCallException When no function returning a bool is found for a check that is reached
- */
-function is_any_of(mixed $value, string ...$whats): bool
-{
-    return array_any($whats, fn ($what) => execute_what_function($what, $value));
 }
