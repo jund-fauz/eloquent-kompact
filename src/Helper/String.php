@@ -20,49 +20,22 @@ function concat(string|array|Collection|SupportCollection ...$values): string
 
 /**
  * Calls a static method of Laravel's Str, the method name converted to camel case first,
- * e.g. str('replace_first', 'a', 'b', 'aa') for Str::replaceFirst('a', 'b', 'aa')
+ * e.g. str('replace_first', 'a', 'b', 'aa') for Str::replaceFirst('a', 'b', 'aa').
+ * When Str has no such method, calls it on this package's Str of the first parameter and gives
+ * back the string, e.g. str('add_at_start', 'b', 'a') for Str::of('b')->addAtStart('a')->value()
  *
  * @param string $methodName E.g. 'snake', 'replaceFirst' or 'replace_first'
- * @param mixed ...$parameters
- * @return mixed What the Str method returns
+ * @param mixed ...$parameters The subject first when the method is not one of Laravel's Str
+ * @return mixed What the Str method returns, or the string
  */
 function str(string $methodName, mixed ...$parameters): mixed
 {
-    return SupportStr::{SupportStr::camel($methodName)}(...$parameters);
-}
-
-/**
- * Shorthand for Str::beforeLast()
- *
- * @param string $subject
- * @param string $search
- * @return string
- */
-function before_last(string $subject, string $search): string
-{
-    return SupportStr::beforeLast($subject, $search);
-}
-
-/**
- * Shorthand for Str::lower()
- *
- * @param string $subject
- * @return string
- */
-function lower(string $subject): string
-{
-    return SupportStr::lower($subject);
-}
-
-/**
- * Shorthand for Str::upper()
- *
- * @param string $subject
- * @return string
- */
-function upper(string $subject): string
-{
-    return SupportStr::upper($subject);
+    $methodName = SupportStr::camel($methodName);
+    return match (true) {
+        method_exists(SupportStr::class, $methodName) => SupportStr::{$methodName}(...$parameters),
+        ($result = Str::of(array_shift($parameters))->{$methodName}(...$parameters)) instanceof Str => $result->value(),
+        default => $result
+    };
 }
 
 /**
@@ -114,4 +87,41 @@ function rtrim_multiline(string $value, string $characters = " \n\r\t\v\0"): str
         ->explode("\n")
         ->map(fn ($value) => rtrim($value, $characters))
         ->implode("\n");
+}
+
+/**
+ * Shorthand for Str::beforeLast()
+ *
+ * @deprecated Will be removed in 3.0. Use str('before_last', $subject, $search)
+ * @param string $subject
+ * @param string $search
+ * @return string
+ */
+function before_last(string $subject, string $search): string
+{
+    return SupportStr::beforeLast($subject, $search);
+}
+
+/**
+ * Shorthand for Str::lower()
+ *
+ * @deprecated Will be removed in 3.0. Use str('lower', $subject)
+ * @param string $subject
+ * @return string
+ */
+function lower(string $subject): string
+{
+    return SupportStr::lower($subject);
+}
+
+/**
+ * Shorthand for Str::upper()
+ *
+ * @deprecated Will be removed in 3.0. Use str('upper', $subject)
+ * @param string $subject
+ * @return string
+ */
+function upper(string $subject): string
+{
+    return SupportStr::upper($subject);
 }
