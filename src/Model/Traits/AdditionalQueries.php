@@ -5,6 +5,7 @@ namespace JundFauz\EloquentKompact\Model\Traits;
 use BadMethodCallException;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\Relation;
+use JundFauz\EloquentKompact\Builder\Str;
 use JundFauz\EloquentKompact\Column\ColumnCreator;
 use JundFauz\EloquentKompact\Column\Convert;
 use ReflectionClass;
@@ -14,8 +15,10 @@ use function JundFauz\EloquentKompact\Array\filter_filled;
 use function JundFauz\EloquentKompact\Array\flat;
 use function JundFauz\EloquentKompact\Array\merge_as_array;
 use function JundFauz\EloquentKompact\cast_as;
+use function JundFauz\EloquentKompact\chain;
 use function JundFauz\EloquentKompact\execute_what_function;
 use function JundFauz\EloquentKompact\is;
+use function JundFauz\EloquentKompact\is_negation_and_get_raw_function;
 use function JundFauz\EloquentKompact\is_not;
 use function JundFauz\EloquentKompact\is_not_null;
 use function JundFauz\EloquentKompact\model_compact;
@@ -25,6 +28,7 @@ use function JundFauz\EloquentKompact\same_with_one_of;
 use function JundFauz\EloquentKompact\schema_concat;
 use function JundFauz\EloquentKompact\String\concat;
 use function JundFauz\EloquentKompact\String\str;
+use function JundFauz\EloquentKompact\String\strs;
 
 trait AdditionalQueries
 {
@@ -106,10 +110,14 @@ trait AdditionalQueries
      */
     private function executeWhatFunction(string $what, ...$parameters): bool
     {
-        $whats = [str('camel', $what), str('camel', is($what))];
+        [$isNegationFunction, $rawWhat] = is_negation_and_get_raw_function($what);
+        $whats = str('camels', $rawWhat, is($rawWhat));
         foreach ($whats as $whatValue) {
             if ($this->isMethodEligible($whatValue)) {
-                return $this->{$whatValue}(...$parameters);
+                $result = $this->{$whatValue}(...$parameters);
+                return $isNegationFunction
+                    ? not($result)
+                    : $result;
             }
         }
         return execute_what_function($what, $this->{array_shift($parameters)}, ...$parameters);
@@ -143,7 +151,7 @@ trait AdditionalQueries
         try {
             $returnType = ($method = (new ReflectionClass($this))->getMethod($function))->getReturnType();
             if (is_null($returnType)) {
-                return (bool) preg_match('/@return\s+bool\b/', $method->getDocComment() ?: '');
+                return (bool)preg_match('/@return\s+bool\b/', $method->getDocComment() ?: '');
             }
         } catch (ReflectionException) {
             return false;
@@ -254,11 +262,11 @@ trait AdditionalQueries
      * A method without a native return type counts when its docblock has `@return bool`
      *
      * @param mixed $columnOrParameters The column name, or the argument of a method such as the conditions of match()
-     * @param string|array ...$what
+     * @param mixed ...$what
      * @return bool
      * @throws BadMethodCallException When no method nor function returning a bool is found for a check that is reached
      */
-    public function isAllOf(mixed $columnOrParameters, string|array ...$what): bool
+    public function isAllOf(mixed $columnOrParameters, mixed ...$what): bool
     {
         return array_all($what, fn ($value, $key) => $this->execute($value, $key, $columnOrParameters));
     }
@@ -268,11 +276,11 @@ trait AdditionalQueries
      * The checks are the ones of isAllOf(), e.g. $order->isAnyOf('note', 'null', 'blank')
      *
      * @param mixed $columnOrParameters See isAllOf()
-     * @param string|array ...$what
+     * @param mixed ...$what
      * @return bool
      * @throws BadMethodCallException When no method nor function returning a bool is found for a check that is reached
      */
-    public function isAnyOf(mixed $columnOrParameters, string|array ...$what): bool
+    public function isAnyOf(mixed $columnOrParameters, mixed ...$what): bool
     {
         return array_any($what, fn ($value, $key) => $this->execute($value, $key, $columnOrParameters));
     }
@@ -316,21 +324,6 @@ trait AdditionalQueries
     public function sameWith(string $columnName, mixed $value, ?string $cast = null): bool
     {
         return $this->castedAttribute($columnName, $cast) === cast_as($value, $cast);
-    }
-
-    /**
-     * Shorthand for: $this->{$columnName} !== $value
-     *
-     * The attribute is compared after casting, like sameWith()
-     *
-     * @param string $columnName
-     * @param mixed $value
-     * @param string|null $cast See sameWith()
-     * @return bool
-     */
-    public function notSameWith(string $columnName, mixed $value, ?string $cast = null): bool
-    {
-        return $this->castedAttribute($columnName, $cast) !== cast_as($value, $cast);
     }
 
     /**
@@ -497,9 +490,9 @@ trait AdditionalQueries
     /**
      * match(), with every column of the conditions being dirty
      *
-     * @deprecated Will be removed in 3.0. Use $this->isAll('dirty', array_keys($conditions)) && $this->match($conditions)
      * @param array<string, array|mixed> $conditions Column name => expected value, or a list of allowed values
      * @return bool False if no condition is given
+     * @deprecated Will be removed in 3.0. Use $this->isAll('dirty', array_keys($conditions)) && $this->match($conditions)
      */
     public function matchAndDirty(array $conditions): bool
     {
@@ -509,11 +502,11 @@ trait AdditionalQueries
     /**
      * sameWith(), with the column being dirty
      *
-     * @deprecated Will be removed in 3.0. Use $this->isAllOf($columnName, 'dirty', sameWith: [$value, $cast])
      * @param string $columnName
      * @param mixed $value
      * @param string|null $cast See sameWith()
      * @return bool
+     * @deprecated Will be removed in 3.0. Use $this->isAllOf($columnName, 'dirty', sameWith: [$value, $cast])
      */
     public function sameWithAndDirty(string $columnName, mixed $value, ?string $cast = null): bool
     {
@@ -523,11 +516,11 @@ trait AdditionalQueries
     /**
      * notSameWith(), with the column being dirty
      *
-     * @deprecated Will be removed in 3.0. Use $this->isAllOf($columnName, 'dirty', notSameWith: [$value, $cast])
      * @param string $columnName
      * @param mixed $value
      * @param string|null $cast See sameWith()
      * @return bool
+     * @deprecated Will be removed in 3.0. Use $this->isAllOf($columnName, 'dirty', notSameWith: [$value, $cast])
      */
     public function notSameWithAndDirty(string $columnName, mixed $value, ?string $cast = null): bool
     {
@@ -537,10 +530,10 @@ trait AdditionalQueries
     /**
      * sameWithOther(), with every column being dirty
      *
-     * @deprecated Will be removed in 3.0. Use $this->isAll('dirty', ...$columns) && $this->sameWithOther($other, ...$columns)
      * @param Model $other
      * @param string ...$columns
      * @return bool False if no column is given
+     * @deprecated Will be removed in 3.0. Use $this->isAll('dirty', ...$columns) && $this->sameWithOther($other, ...$columns)
      */
     public function sameWithOtherAndDirty(Model $other, string ...$columns): bool
     {
@@ -554,10 +547,10 @@ trait AdditionalQueries
     /**
      * sameWithOtherOr(), with the matching column being dirty
      *
-     * @deprecated Will be removed in 3.0. Use array_any($columns, fn ($column) => $this->isAllOf($column, 'dirty', sameWith: [$other->{$column}]))
      * @param Model $other
      * @param string ...$columns
      * @return bool False if no column is given
+     * @deprecated Will be removed in 3.0. Use array_any($columns, fn ($column) => $this->isAllOf($column, 'dirty', sameWith: [$other->{$column}]))
      */
     public function sameWithOtherOrAndDirty(Model $other, string ...$columns): bool
     {
@@ -571,10 +564,10 @@ trait AdditionalQueries
     /**
      * notSameWithOther(), with every column being dirty
      *
-     * @deprecated Will be removed in 3.0. Use $this->isAll('dirty', ...$columns) && ! $this->sameWithOther($other, ...$columns, ...['or'])
      * @param Model $other
      * @param string ...$columns
      * @return bool False if no column is given
+     * @deprecated Will be removed in 3.0. Use $this->isAll('dirty', ...$columns) && ! $this->sameWithOther($other, ...$columns, ...['or'])
      */
     public function notSameWithOtherAndDirty(Model $other, string ...$columns): bool
     {
@@ -588,10 +581,10 @@ trait AdditionalQueries
     /**
      * notSameWithOtherOr(), with the differing column being dirty
      *
-     * @deprecated Will be removed in 3.0. Use array_any($columns, fn ($column) => $this->isAllOf($column, 'dirty', notSameWith: [$other->{$column}]))
      * @param Model $other
      * @param string ...$columns
      * @return bool False if no column is given
+     * @deprecated Will be removed in 3.0. Use array_any($columns, fn ($column) => $this->isAllOf($column, 'dirty', notSameWith: [$other->{$column}]))
      */
     public function notSameWithOtherOrAndDirty(Model $other, string ...$columns): bool
     {
@@ -605,10 +598,10 @@ trait AdditionalQueries
     /**
      * isMorphModelSame(), with the type column of the morph being dirty
      *
-     * @deprecated Will be removed in 3.0. Use $this->isAllOf(ColumnCreator::type($morphName), 'dirty', sameWith: [Relation::getMorphAlias($modelClass)])
      * @param string $morphName
      * @param string $modelClass
      * @return bool
+     * @deprecated Will be removed in 3.0. Use $this->isAllOf(ColumnCreator::type($morphName), 'dirty', sameWith: [Relation::getMorphAlias($modelClass)])
      */
     public function isMorphModelSameAndDirty(string $morphName, string $modelClass): bool
     {
@@ -618,9 +611,9 @@ trait AdditionalQueries
     /**
      * isBlank(), with the column being dirty
      *
-     * @deprecated Will be removed in 3.0. Use $this->isAllOf($column, 'dirty', 'blank')
      * @param string $column
      * @return bool
+     * @deprecated Will be removed in 3.0. Use $this->isAllOf($column, 'dirty', 'blank')
      */
     public function isBlankAndDirty(string $column): bool
     {
@@ -630,9 +623,9 @@ trait AdditionalQueries
     /**
      * isFilled(), with the column being dirty
      *
-     * @deprecated Will be removed in 3.0. Use $this->isAllOf($column, 'dirty', 'filled')
      * @param string $column
      * @return bool
+     * @deprecated Will be removed in 3.0. Use $this->isAllOf($column, 'dirty', 'filled')
      */
     public function isFilledAndDirty(string $column): bool
     {
@@ -642,9 +635,9 @@ trait AdditionalQueries
     /**
      * isNull(), with the column being dirty
      *
-     * @deprecated Will be removed in 3.0. Use $this->isAllOf($column, 'dirty', 'null')
      * @param string $column
      * @return bool
+     * @deprecated Will be removed in 3.0. Use $this->isAllOf($column, 'dirty', 'null')
      */
     public function isNullAndDirty(string $column): bool
     {
@@ -654,9 +647,9 @@ trait AdditionalQueries
     /**
      * isNotNull(), with the column being dirty
      *
-     * @deprecated Will be removed in 3.0. Use $this->isAllOf($column, 'dirty', 'not_null')
      * @param string $column
      * @return bool
+     * @deprecated Will be removed in 3.0. Use $this->isAllOf($column, 'dirty', 'not_null')
      */
     public function isNotNullAndDirty(string $column): bool
     {
@@ -666,9 +659,9 @@ trait AdditionalQueries
     /**
      * Whether every column was changed by the last save; without a column, whether any column was
      *
-     * @deprecated Will be removed in 3.0. Use $this->isAll('was_changed', ...$columns), or $this->wasChanged() without a column
      * @param string ...$columns
      * @return bool
+     * @deprecated Will be removed in 3.0. Use $this->isAll('was_changed', ...$columns), or $this->wasChanged() without a column
      */
     public function wereChanged(string ...$columns): bool
     {
@@ -681,9 +674,9 @@ trait AdditionalQueries
     /**
      * Whether no column was changed by the last save; without a column, whether no column at all was
      *
-     * @deprecated Will be removed in 3.0. Use $this->isAllNot('was_changed', ...$columns), or ! $this->wasChanged() without a column
      * @param string ...$columns
      * @return bool
+     * @deprecated Will be removed in 3.0. Use $this->isAllNot('was_changed', ...$columns), or ! $this->wasChanged() without a column
      */
     public function wereNotChanged(string ...$columns): bool
     {
@@ -696,10 +689,10 @@ trait AdditionalQueries
     /**
      * Whether at least one column is the same as in the other model
      *
-     * @deprecated Will be removed in 3.0. Use $this->sameWithOther($other, ...$columns, ...['or'])
      * @param Model $other
      * @param string ...$columns
      * @return bool False if no column is given
+     * @deprecated Will be removed in 3.0. Use $this->sameWithOther($other, ...$columns, ...['or'])
      */
     public function sameWithOtherOr(Model $other, string ...$columns): bool
     {
@@ -713,10 +706,10 @@ trait AdditionalQueries
     /**
      * Whether every column is different from the other model
      *
-     * @deprecated Will be removed in 3.0. Use ! $this->sameWithOther($other, ...$columns, ...['or']) when at least one column is given
      * @param Model $other
      * @param string ...$columns
      * @return bool False if no column is given
+     * @deprecated Will be removed in 3.0. Use ! $this->sameWithOther($other, ...$columns, ...['or']) when at least one column is given
      */
     public function notSameWithOther(Model $other, string ...$columns): bool
     {
@@ -730,10 +723,10 @@ trait AdditionalQueries
     /**
      * Whether at least one column is different from the other model
      *
-     * @deprecated Will be removed in 3.0. Use ! $this->sameWithOther($other, ...$columns) when at least one column is given
      * @param Model $other
      * @param string ...$columns
      * @return bool False if no column is given
+     * @deprecated Will be removed in 3.0. Use ! $this->sameWithOther($other, ...$columns) when at least one column is given
      */
     public function notSameWithOtherOr(Model $other, string ...$columns): bool
     {
@@ -742,5 +735,21 @@ trait AdditionalQueries
         }
 
         return array_reduce($columns, fn ($acc, string $column) => $acc || $this->notSameWith($column, $other->{$column}), false);
+    }
+
+    /**
+     * Shorthand for: $this->{$columnName} !== $value
+     *
+     * The attribute is compared after casting, like sameWith()
+     *
+     * @deprecated Will be removed in 3.0. Use $this->not('same_with', $columnName, $value, $cast), or the check not_same_with, e.g. $this->isAllOf($columnName, 'dirty', not_same_with: [$value, $cast])
+     * @param string $columnName
+     * @param mixed $value
+     * @param string|null $cast See sameWith()
+     * @return bool
+     */
+    public function notSameWith(string $columnName, mixed $value, ?string $cast = null): bool
+    {
+        return $this->castedAttribute($columnName, $cast) !== cast_as($value, $cast);
     }
 }
