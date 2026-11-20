@@ -489,7 +489,7 @@ $order->isNotNull('note');
 
 // Strict comparison of attributes, after casting
 $user->sameWith('role', 'admin');
-$user->notSameWith('role', 'admin');
+$user->not('same_with', 'role', 'admin');                       // notSameWith() is deprecated, removed in 3.0
 $order->sameWith('qty', '5', 'integer');                         // with another cast, for this comparison only
 $user->sameWithOther($otherUser, 'tenant_id', 'branch_id');        // every column is the same
 $user->sameWithOther($otherUser, 'tenant_id', 'branch_id', 'or');  // at least one column is the same
@@ -545,11 +545,11 @@ Order::randomId('status', 'paid'); // the arguments of where()
 
 `match()` and the `sameWithOther()` family return `false` when no condition or column is given. The last column of `sameWithOther()` can be a logic word instead: `'and'` or `'all'` (the default) for every column, `'or'` or `'any'` for at least one, so a column named like one of them cannot be the last one. The deprecated `notSameWithOther()` is not the opposite of `sameWithOther()`: that is `notSameWithOtherOr()`. Objects such as the Carbon dates of `datetime` columns are compared by identity, so two models never have the same date. An array value matches if the attribute equals one of its items, unless the attribute itself is an array.
 
-`sameWith()`, `notSameWith()`, `sameWithAndDirty()` and `notSameWithAndDirty()` take a cast of Laravel as their third argument (`'integer'`, `'decimal:2'`, `'string'`, an enum class, …), used instead of the cast of the column for that comparison only, and also applied to the value with [`cast_as()`](#other-helpers); the casts of the model stay as they are. Without a cast the value is compared as it is. An accessor of the column still wins over it, and a date cast still gives an object, compared by identity.
+`sameWith()`, the deprecated `notSameWith()`, `sameWithAndDirty()` and `notSameWithAndDirty()` take a cast of Laravel as their third argument (`'integer'`, `'decimal:2'`, `'string'`, an enum class, …), used instead of the cast of the column for that comparison only, and also applied to the value with [`cast_as()`](#other-helpers); the casts of the model stay as they are. Without a cast the value is compared as it is. An accessor of the column still wins over it, and a date cast still gives an object, compared by identity.
 
 The deprecated `AndDirty` methods use Eloquent's `isDirty()` on each column, so `sameWithOtherOrAndDirty()` needs one column that is both dirty and the same, and `sameWithOtherAndDirty()` and `matchAndDirty()` are `false` if one of the columns is not dirty. Every attribute set on a new model is dirty. Changed columns are still dirty in the `saving`, `saved`, `updating`, `updated`, `creating` and `created` events, and nothing is dirty once `save()` has returned.
 
-`isAll()` and `isAny()` run one check on several columns, nested arrays flattened, like [`is_all()`](#checks); without a column `isAll()` is `true` and `isAny()` is `false`. `isAllNot()` and `isAnyNot()` are their opposites, like `is_all_not()` and `is_any_not()`: `isAllNot()` is `true` and `isAnyNot()` is `false` without a column. They replace the `AndDirty` methods of several columns, e.g. `isAll('dirty', 'a', 'b') && sameWithOther($other, 'a', 'b')` for `sameWithOtherAndDirty($other, 'a', 'b')`.
+`isAll()` and `isAny()` run one check on several columns, nested arrays flattened, like [`is_all()`](#checks); without a column `isAll()` is `true` and `isAny()` is `false`. `isAllNot()` and `isAnyNot()` are their opposites, like `is_all('not_…')` and `is_any('not_…')`: `isAllNot()` is `true` and `isAnyNot()` is `false` without a column. They replace the `AndDirty` methods of several columns, e.g. `isAll('dirty', 'a', 'b') && sameWithOther($other, 'a', 'b')` for `sameWithOtherAndDirty($other, 'a', 'b')`.
 
 `isAllOf()`, `isAnyOf()` and `not()` look for a method of the model first (`$what`, then `is_$what`, in camel case) and only use it when it returns a `bool`; otherwise they use a bool function, like [`is_not()`](#checks). A method without a native return type counts when its docblock says `@return bool`, which is how Eloquent's `isDirty()` and `isClean()` are found. Note: when the docblocks are stripped (`opcache.save_comments=0`), those methods are not found anymore and the check falls back to a function, or throws a `BadMethodCallException`. Extra parameters only go in named arguments, so a check cannot be given twice in one call. An unknown check throws a `BadMethodCallException` when it is reached.
 
@@ -1070,14 +1070,16 @@ Upgrading from `1.x`? See [UPGRADE.md](UPGRADE.md) for the old name of every hel
 
 In `JundFauz\EloquentKompact`.
 
-`is_not()`, `is_all()`, `is_any()`, `is_all_not()`, `is_any_not()` and `is_any_of()` take a check by its name. The check is a function that returns a `bool`, found in this order: the name itself (`'defined'` → `defined()`), `is_` + the name (`'null'` → `is_null()`), then `array_is_` + the name (`'list'` → `array_is_list()`), then the same three in this package (`'app_local_or_test'` → `is_app_local_or_test()`), then in its [string](#strings) and [array](#arrays) helpers (`'count_one'` → `Array\is_count_one()`, `'in'` → `Array\in()`). A name starting with `not_` is the check without it, negated: `'not_null'` → `! is_null()`, `'not_in'` → `! Array\in()`. A function that returns something else is skipped, so `'file'` is `is_file()`, not `file()`. A name without such a function throws a `BadMethodCallException`.
+`is_not()`, `is_all()`, `is_any()`, `is_all_not()`, `is_any_not()`, `is_any_of()` and `is_all_of()` take a check by its name. The check is a function that returns a `bool`, found in this order: the name itself (`'defined'` → `defined()`), `is_` + the name (`'null'` → `is_null()`), then `array_is_` + the name (`'list'` → `array_is_list()`), then the same three in this package (`'app_local_or_test'` → `is_app_local_or_test()`), then in its [string](#strings) and [array](#arrays) helpers (`'count_one'` → `Array\is_count_one()`, `'in'` → `Array\in()`). A name with the word `not` (in snake case) is the check without it, negated: `'not_null'` → `! is_null()`, `'not_in'` → `! Array\in()`, `'is_not_null'` → `! is_null()`, so `is_all('not_null', ...)` is `is_all_not('null', ...)`. A function that returns something else is skipped, so `'file'` is `is_file()`, not `file()`. A name without such a function throws a `BadMethodCallException`.
 
 | Function | Result |
 |---|---|
 | `is_not($check, ...$arguments)` | The check is `false` for the value: `is_not('array', $value)` → `! is_array($value)`, `is_not('defined', 'FOO')` → `! defined('FOO')`. Every argument goes to the check, so `is_not('in', $needle, $haystack)` → `! in($needle, $haystack)` |
 | `is_all($check, ...$values)` / `is_any($check, ...$values)` | The check is `true` for every value / at least one value, nested arrays included: `is_all('null', $a, $b)`, `is_any('numeric', 'abc', '2')` → `true`. Without values `true` / `false` |
-| `is_all_not($check, ...$values)` / `is_any_not($check, ...$values)` | The check is `false` for every value / at least one value, nested arrays included: `is_all_not('null', $a, $b)` |
-| `is_any_of($value, ...$checks)` | At least one of the checks is `true` for the value, stopping at the first one: `is_any_of($value, 'int', 'string')` |
+| `is_all_not($check, ...$values)` / `is_any_not($check, ...$values)` | The check is `false` for every value / at least one value, nested arrays included: `is_all_not('null', $a, $b)`. Deprecated, removed in 3.0: use `is_all('not_null', $a, $b)` / `is_any('not_null', $a, $b)` |
+| `is_any_of($value, ...$checks)` | At least one of the checks is `true` for the value, stopping at the first one: `is_any_of($value, 'int', 'string')`. Extra parameters go in a named argument, the value first: `is_any_of($value, 'int', in: 'min,max')` → `is_int($value) \|\| in($value, 'min,max')` |
+| `is_all_of($value, ...$checks)` | Every check is `true` for the value, stopping at the first `false` one; `true` without a check: `is_all_of($value, 'string', 'numeric')`. Named arguments like `is_any_of()` |
+| `all(...$checks)` / `any(...$checks)` | Every check / at least one check is `true`, each one a named argument with its arguments, stopping early; `true` / `false` without a check: `all(method_exists: [$class, $method], same_with: [$a, $b])` |
 | `is_all_type_of($type, ...$values)` / `is_any_not_type_of($type, ...$values)` | Every value has / at least one value has not the type, or one of the types, nested arrays included: `is_all_type_of(['int', 'string'], 1, 'a')` → `true`. The type is checked by PHP's own `is_` function, e.g. `'int'` → `is_int()` |
 | `is_not_null($value)` | `! is_null()` |
 | `not($condition)` | `! $condition` |
@@ -1161,7 +1163,8 @@ In `JundFauz\EloquentKompact\String`.
 | `constant($class, $constant)` | `Class::Constant`, e.g. for `defined()` or PHP's `constant()` |
 | `stringify($array)` | Every value cast to a `string`, nested arrays included, keeping the keys; `null` and `false` become `''` |
 | `rtrim_multiline($value, $characters = " \n\r\t\v\0")` | `rtrim()` on every line. `@experimental` |
-| `str($method, ...$parameters)` | A static method of Laravel's `Str` by its name, in camel or snake case: `str('replace_first', 'a', 'b', 'aa')` → `Str::replaceFirst('a', 'b', 'aa')` → `'ba'`. A method that Laravel's `Str` does not have is called on this package's [`Str`](#str) of the first parameter, and the string comes back: `str('add_at_start', 'b', 'a')` → `'ab'`. An unknown method throws a `BadMethodCallException` |
+| `str($method, ...$parameters)` | A static method of Laravel's `Str` by its name, in camel or snake case: `str('replace_first', 'a', 'b', 'aa')` → `Str::replaceFirst('a', 'b', 'aa')` → `'ba'`. A method that Laravel's `Str` does not have is called on this package's [`Str`](#str) of the first parameter, and the string comes back: `str('add_at_start', 'b', 'a')` → `'ab'`. A plural name runs the singular method on every parameter: `str('camels', 'a_b', 'c_d')` → `['aB', 'cD']`. An unknown method throws a `BadMethodCallException` |
+| `strs($string, ...$methods)` | The methods of this package's [`Str`](#str) chained on the string, a named argument being a method with its parameters, and the string comes back (or what the last method returns): `strs('  a ', 'trim', 'upper')` → `'A'`, `strs('isDirty', 'snake', startsWith: 'is')` → `true` |
 
 ### Constants
 
