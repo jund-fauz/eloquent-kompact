@@ -7,6 +7,41 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [2.5.0] - 2026-11-20
+
+### Added
+
+- `is_all_of($value, ...$checks)`: every check is true for the value, like `is_any_of()`, e.g. `is_all_of($value, 'string', 'numeric')`.
+- `is_any_of()` and `is_all_of()` take the extra parameters of a check in a named argument, the value first, e.g. `is_any_of($value, 'int', in: 'min,max')`.
+- `all(...$checks)` and `any(...$checks)`: every check, or at least one, is true, each one a named argument with its arguments, e.g. `all(method_exists: [$class, $method], same_with: [$a, $b])`.
+- `chain($object, ...$methods)`: calls the methods one after another, a named argument being a method with its parameters, e.g. `chain($collection, diff: [['not']], implode: '_')`.
+- `String\strs($string, ...$methods)`: `chain()` on this package's `Str` of the string, giving back the string, e.g. `strs('  a ', 'trim', 'upper')` → `'A'`.
+- `String\str()` with a plural method name runs the singular method on every parameter, e.g. `str('camels', 'a_b', 'c_d')` → `['aB', 'cD']`.
+
+### Changed
+
+- A check by name is negated when it has the word `not` anywhere (in snake case), not only at the start, e.g. `'is_not_null'` → `! is_null()`. The checks of `isAllOf()`, `isAnyOf()`, `isAll()`, `isAny()` and `not()` are negated the same way, so `isAll('not_dirty', ...)` is `isAllNot('dirty', ...)`.
+- `is()` converts the name to snake case first, and keeps a name already starting with `is_`.
+- `isAllOf()` and `isAnyOf()` take any value in a named argument (`mixed ...$what`).
+
+### Deprecated
+
+- `is_all_not()` and `is_any_not()`, to be removed in 3.0. Use `is_all("not_$what", ...)` and `is_any("not_$what", ...)`, e.g. `is_all('not_null', $a, $b)`.
+- `notSameWith()` on `AdditionalQueries`, to be removed in 3.0. Use `not('same_with', $column, $value, $cast)`, or the check `not_same_with` in `isAllOf()`, e.g. `isAllOf($column, 'dirty', not_same_with: [$value, $cast])`.
+
+### Documentation
+
+- Marked `is_all_not()`, `is_any_not()` and `notSameWith()` as deprecated.
+- Documented `all()`, `any()`, `is_all_of()` and the named arguments of `is_any_of()`, `strs()` and the plural method names of `str()`.
+
+### Tests
+
+- Added tests for `is_all_of()`, the named arguments of `is_any_of()` and `is_all_of()`, and an array value.
+- Added tests for `chain()`, `strs()` and the plural method names of `str()`.
+- Added tests for `all()`, `any()` and a `null` value in `is_any_of()` and `is_all_of()`.
+- Added tests for the word `not` anywhere in a check by name, and that `is_all('not_…')` and `is_any('not_…')` give the same results as `is_all_not()` and `is_any_not()`.
+- Added a test that `not('same_with', …)` and the check `not_same_with` give the same results as `notSameWith()`.
+
 ## [2.4.0] - 2026-11-20
 
 ### Added
@@ -2499,7 +2534,8 @@ The first stable release: from now on, breaking changes only come in a major rel
 - `RawQuery` static helpers for raw SQL expressions.
 - Translations for `en` and `id`.
 
-[Unreleased]: https://github.com/jund-fauz/eloquent-kompact/compare/v2.4.0...HEAD
+[Unreleased]: https://github.com/jund-fauz/eloquent-kompact/compare/v2.5.0...HEAD
+[2.5.0]: https://github.com/jund-fauz/eloquent-kompact/compare/v2.4.0...v2.5.0
 [2.4.0]: https://github.com/jund-fauz/eloquent-kompact/compare/v2.3.0...v2.4.0
 [2.3.0]: https://github.com/jund-fauz/eloquent-kompact/compare/v2.2.0...v2.3.0
 [2.2.0]: https://github.com/jund-fauz/eloquent-kompact/compare/v2.1.0...v2.2.0
