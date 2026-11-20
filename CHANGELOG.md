@@ -7,6 +7,16 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [2.5.1] - 2026-11-20
+
+### Fixed
+
+- `is_any_of()` and `is_all_of()` checked no value when the value was the string `'THIS_IS_AN_EMPTY_VALUE_TAG'`, the internal `EMPTY_VALUE` tag, and threw an `ArgumentCountError`. A missing value is now told by the number of arguments, and the tag is removed.
+
+### Tests
+
+- Added a test for any string value in `is_any_of()` and `is_all_of()`.
+
 ## [2.5.0] - 2026-11-20
 
 ### Added
@@ -2534,7 +2544,8 @@ The first stable release: from now on, breaking changes only come in a major rel
 - `RawQuery` static helpers for raw SQL expressions.
 - Translations for `en` and `id`.
 
-[Unreleased]: https://github.com/jund-fauz/eloquent-kompact/compare/v2.5.0...HEAD
+[Unreleased]: https://github.com/jund-fauz/eloquent-kompact/compare/v2.5.1...HEAD
+[2.5.1]: https://github.com/jund-fauz/eloquent-kompact/compare/v2.5.0...v2.5.1
 [2.5.0]: https://github.com/jund-fauz/eloquent-kompact/compare/v2.4.0...v2.5.0
 [2.4.0]: https://github.com/jund-fauz/eloquent-kompact/compare/v2.3.0...v2.4.0
 [2.3.0]: https://github.com/jund-fauz/eloquent-kompact/compare/v2.2.0...v2.3.0
