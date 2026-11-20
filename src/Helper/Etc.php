@@ -27,16 +27,18 @@ function cast_as(mixed $value, ?string $cast = null): mixed
 }
 
 /**
- * Column => value of the model; a string key or a named argument renames the column, e.g. model_compact($user, nama: 'name')
+ * Property => value of the object, e.g. a model's column => value after casting; a property that is not
+ * set is null. A property can be given in an array, and a string key, in an array or as a named argument,
+ * renames it, e.g. object_compact($user, 'id', ['mail' => 'email']) or object_compact($user, nama: 'name')
  *
- * @param Model $model
- * @param string|array ...$columns
+ * @param object $object
+ * @param string|array ...$variables
  * @return array
  */
-function model_compact(Model $model, string|array ...$columns): array
+function object_compact(object $object, string|array ...$variables): array
 {
-    return collect(merge_mixed($columns))
-        ->mapWithKeys(fn (string $column, mixed $key) => [(is_string($key) ? $key : $column) => $model->{$column}])
+    return collect(merge_mixed($variables))
+        ->mapWithKeys(fn (string $variable, mixed $key) => [(is_string($key) ? $key : $variable) => $object->{$variable} ?? null])
         ->toArray();
 }
 
@@ -63,4 +65,17 @@ function collect(mixed ...$data): Collection
 function is_app_local_or_test(): bool
 {
     return App::isLocal() || App::runningUnitTests();
+}
+
+/**
+ * Column => value of the model; a string key or a named argument renames the column, e.g. model_compact($user, nama: 'name')
+ *
+ * @deprecated Will be removed in 3.0. Use object_compact($model, ...$columns)
+ * @param Model $model
+ * @param string|array ...$columns
+ * @return array
+ */
+function model_compact(Model $model, string|array ...$columns): array
+{
+    return object_compact($model, ...$columns);
 }
