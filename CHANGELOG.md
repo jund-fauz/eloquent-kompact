@@ -7,6 +7,26 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [2.6.0] - 2026-11-20
+
+### Added
+
+- `object_compact($object, ...$properties)`: `model_compact()` for any object, e.g. `object_compact($dto, 'id', mail: 'email')`. A property that is not set is `null`.
+
+### Deprecated
+
+- `model_compact()`, to be removed in 3.0. Use `object_compact()`.
+- `getManyVia()` on `AdditionalQueries`, to be removed in 3.0. Use `getVia()` with an array of columns, e.g. `$comment->getVia(['name', 'email'], Post::class, User::class)`; it keeps the keys of the array.
+
+### Documentation
+
+- Marked `getManyVia()` and `model_compact()` as deprecated, documented `getVia()` with an array of columns and `object_compact()`.
+
+### Tests
+
+- Added tests that `getVia()` with an array of columns gives the same results as `getManyVia()` and keeps the keys.
+- Added tests for `object_compact()` on any object, and that it gives the same results as `model_compact()`.
+
 ## [2.5.1] - 2026-11-20
 
 ### Fixed
@@ -2544,7 +2564,8 @@ The first stable release: from now on, breaking changes only come in a major rel
 - `RawQuery` static helpers for raw SQL expressions.
 - Translations for `en` and `id`.
 
-[Unreleased]: https://github.com/jund-fauz/eloquent-kompact/compare/v2.5.1...HEAD
+[Unreleased]: https://github.com/jund-fauz/eloquent-kompact/compare/v2.6.0...HEAD
+[2.6.0]: https://github.com/jund-fauz/eloquent-kompact/compare/v2.5.1...v2.6.0
 [2.5.1]: https://github.com/jund-fauz/eloquent-kompact/compare/v2.5.0...v2.5.1
 [2.5.0]: https://github.com/jund-fauz/eloquent-kompact/compare/v2.4.0...v2.5.0
 [2.4.0]: https://github.com/jund-fauz/eloquent-kompact/compare/v2.3.0...v2.4.0
