@@ -49,6 +49,7 @@ use function JundFauz\EloquentKompact\path_concat;
 use function JundFauz\EloquentKompact\relation_concat;
 use function JundFauz\EloquentKompact\same_with;
 use function JundFauz\EloquentKompact\same_with_one_of;
+use function JundFauz\EloquentKompact\execute_what_function;
 use function JundFauz\EloquentKompact\schema_concat;
 use function JundFauz\EloquentKompact\syntax;
 use function JundFauz\EloquentKompact\word_concat;
@@ -498,6 +499,8 @@ class FunctionsTest extends TestCase
     public function it_builds_the_name_of_an_is_function(): void
     {
         $this->assertSame('is_int', is('int'));
+        $this->assertSame('is_list', is('is_list'));
+        $this->assertTrue(execute_what_function('is_list', [1, 2]));
         $this->assertSame('is_not_null', is('not_null'));
     }
 
@@ -556,6 +559,56 @@ class FunctionsTest extends TestCase
         $this->assertTrue(is_not('in', 1, ['1'], true));
         $this->assertTrue(is_not('count_one', [1, 2]));
         $this->assertFalse(is_not('count_one', [1]));
+    }
+
+    #[Test]
+    public function it_finds_the_same_check_function_again_from_the_cache(): void
+    {
+        $this->assertTrue(execute_what_function('null', null));
+        $this->assertFalse(execute_what_function('null', 1));
+        $this->assertTrue(execute_what_function('in', 'a', 'a,b'));
+        $this->assertFalse(execute_what_function('in', 'x', 'a,b'));
+    }
+
+    #[Test]
+    public function it_negates_a_check_starting_with_not(): void
+    {
+        $this->assertTrue(execute_what_function('not_null', 1));
+        $this->assertFalse(execute_what_function('not_null', null));
+        $this->assertTrue(execute_what_function('not_in', 'x', 'a,b'));
+        $this->assertFalse(execute_what_function('not_count_one', [1]));
+    }
+
+    #[Test]
+    public function it_finds_an_array_is_function(): void
+    {
+        $this->assertTrue(execute_what_function('list', [1, 2]));
+        $this->assertFalse(execute_what_function('list', ['a' => 1]));
+        $this->assertTrue(is_any_of(['a' => 1], 'not_count_one', 'list') === false);
+        $this->assertTrue(is_any_of([1], 'not_count_one', 'list'));
+    }
+
+    #[Test]
+    public function it_gives_the_same_result_as_the_deprecated_not_in_functions(): void
+    {
+        foreach ([['c', ['a', 'b'], false], ['a', ['a', 'b'], false], ['1', [1], false], ['1', [1], true]] as [$needle, $haystack, $strict]) {
+            $this->assertSame(not_in_array($needle, $haystack, $strict), is_not('in_array', $needle, $haystack, $strict));
+            $this->assertSame(not_in($needle, $haystack, $strict), is_not('in', $needle, $haystack, $strict));
+            $this->assertSame(not_in($needle, collect($haystack), $strict), is_not('in', $needle, collect($haystack), $strict));
+        }
+    }
+
+    #[Test]
+    public function it_does_not_cache_a_check_function_that_is_not_found(): void
+    {
+        try {
+            execute_what_function('kompact_missing_check');
+            $this->fail('No exception for the first call');
+        } catch (BadMethodCallException) {
+        }
+
+        $this->expectException(BadMethodCallException::class);
+        execute_what_function('kompact_missing_check');
     }
 
     #[Test]
@@ -703,6 +756,20 @@ class FunctionsTest extends TestCase
         $this->assertSame('ba', Str\str('replaceFirst', 'a', 'b', 'aa'));
         $this->assertSame('ba', Str\str('replace_first', 'a', 'b', 'aa'));
         $this->assertSame('digits_between', Str\str('snake', 'digitsBetween'));
+    }
+
+    #[Test]
+    public function it_calls_a_method_of_the_str_of_the_package_by_name(): void
+    {
+        $this->assertSame('ab', Str\str('add_at_start', 'b', 'a'));
+        $this->assertSame('ab', Str\str('addAtStart', 'b', 'a'));
+    }
+
+    #[Test]
+    public function it_gives_back_what_a_str_method_of_the_package_returns_when_it_is_not_a_string(): void
+    {
+        $this->assertTrue(Str\str('is_not_empty', 'a'));
+        $this->assertSame(['a', 'b'], Str\str('explode', 'a,b', ',')->toArray());
     }
 
     #[Test]
