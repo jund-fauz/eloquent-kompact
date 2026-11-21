@@ -7,6 +7,26 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [2.7.0] - 2026-11-21
+
+### Added
+
+- `concat_by($delimiter, ...$values)`: the values joined with any delimiter, nested arrays flattened, e.g. `concat_by(relation, 'posts', 'user')` → `'posts.user'`. `word_concat()`, `schema_concat()`, `relation_concat()` and `path_concat()` use it.
+- The delimiter constants `path` (`'/'`), `word` (`' '`), `schema` (`':'`), `relation` (`'.'`) and `snake` (`'_'`).
+- `nullIf($condition, $value)`: `null` if the condition is truthy, otherwise the value.
+
+### Changed
+
+- `StaticH::morphClass()` reads the alias from `Relation::getMorphAlias()` instead of making a model for `getMorphClass()`. It no longer throws a `ClassMorphViolationException` for a model missing from a required morph map, and it does not see a `getMorphClass()` overridden on the model.
+
+### Documentation
+
+- Documented `concat_by()`, the delimiter constants and `nullIf()`, and that `morphClass()` makes no model.
+
+### Tests
+
+- Added tests for `concat_by()`, `nullIf()` and `morphClass()` with a required morph map.
+
 ## [2.6.0] - 2026-11-20
 
 ### Added
@@ -2564,7 +2584,8 @@ The first stable release: from now on, breaking changes only come in a major rel
 - `RawQuery` static helpers for raw SQL expressions.
 - Translations for `en` and `id`.
 
-[Unreleased]: https://github.com/jund-fauz/eloquent-kompact/compare/v2.6.0...HEAD
+[Unreleased]: https://github.com/jund-fauz/eloquent-kompact/compare/v2.7.0...HEAD
+[2.7.0]: https://github.com/jund-fauz/eloquent-kompact/compare/v2.6.0...v2.7.0
 [2.6.0]: https://github.com/jund-fauz/eloquent-kompact/compare/v2.5.1...v2.6.0
 [2.5.1]: https://github.com/jund-fauz/eloquent-kompact/compare/v2.5.0...v2.5.1
 [2.5.0]: https://github.com/jund-fauz/eloquent-kompact/compare/v2.4.0...v2.5.0
