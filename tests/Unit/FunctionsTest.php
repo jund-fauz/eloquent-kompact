@@ -27,6 +27,7 @@ use function JundFauz\EloquentKompact\create_php_content;
 use function JundFauz\EloquentKompact\ensure_directory_exists;
 use function JundFauz\EloquentKompact\full_path_on_app;
 use function JundFauz\EloquentKompact\if_not_null;
+use function JundFauz\EloquentKompact\nullIf;
 use function JundFauz\EloquentKompact\is;
 use function JundFauz\EloquentKompact\is_all;
 use function JundFauz\EloquentKompact\is_all_not;
@@ -53,6 +54,7 @@ use function JundFauz\EloquentKompact\relation_concat;
 use function JundFauz\EloquentKompact\same_with;
 use function JundFauz\EloquentKompact\same_with_one_of;
 use function JundFauz\EloquentKompact\execute_what_function;
+use function JundFauz\EloquentKompact\concat_by;
 use function JundFauz\EloquentKompact\schema_concat;
 use function JundFauz\EloquentKompact\syntax;
 use function JundFauz\EloquentKompact\word_concat;
@@ -129,6 +131,10 @@ class FunctionsTest extends TestCase
     public function it_joins_with_delimiters(): void
     {
         $this->assertSame('a b c', word_concat('a', ['b', 'c']));
+        $this->assertSame('posts.user', concat_by(\JundFauz\EloquentKompact\relation, 'posts', ['user']));
+        $this->assertSame('a_b_c', concat_by(\JundFauz\EloquentKompact\snake, 'a', ['b', ['c']]));
+        $this->assertSame('a-b', concat_by('-', 'a', 'b'));
+        $this->assertSame('', concat_by('-'));
         $this->assertSame('a:b:c', schema_concat('a', ['b', 'c']));
         $this->assertSame("a\nb\nc", write_line('a', ['b', 'c']));
         $this->assertSame('a/b/c', path_concat('a', ['b', 'c']));
@@ -1091,6 +1097,19 @@ class FunctionsTest extends TestCase
         $this->assertSame('Foo\Bar::Baz', Str\constant('Foo\Bar', 'Baz'));
         $this->assertFalse(is_not('defined', Str\constant(\JundFauz\EloquentKompact\Column\ColumnCreator::class, 'Relation')));
         $this->assertTrue(is_not('defined', Str\constant(\JundFauz\EloquentKompact\Column\ColumnCreator::class, 'Unknown')));
+    }
+
+    #[Test]
+    public function it_gives_null_if_the_condition_is_truthy(): void
+    {
+        $this->assertNull(nullIf(true, 'paid'));
+        $this->assertNull(nullIf(1, 'paid'));
+        $this->assertNull(nullIf('yes', 'paid'));
+        $this->assertSame('paid', nullIf(false, 'paid'));
+        $this->assertSame('paid', nullIf(0, 'paid'));
+        $this->assertSame('paid', nullIf('', 'paid'));
+        $this->assertSame('paid', nullIf(null, 'paid'));
+        $this->assertSame([], nullIf([], []));
     }
 
     #[Test]

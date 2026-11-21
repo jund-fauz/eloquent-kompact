@@ -145,6 +145,18 @@ class StaticHTest extends TestCase
     }
 
     #[Test]
+    public function it_returns_the_class_as_morph_class_when_a_morph_map_is_required(): void
+    {
+        Relation::requireMorphMap();
+
+        try {
+            $this->assertSame(StaticHPost::class, StaticHPost::morphClass());
+        } finally {
+            Relation::requireMorphMap(false);
+        }
+    }
+
+    #[Test]
     public function it_returns_the_singular_relation_name(): void
     {
         $this->assertSame('staticHPost', StaticHPost::singular());
