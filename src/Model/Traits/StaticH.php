@@ -3,6 +3,7 @@
 namespace JundFauz\EloquentKompact\Model\Traits;
 
 use Illuminate\Database\Eloquent\Model;
+use Illuminate\Database\Eloquent\Relations\Relation;
 use Illuminate\Database\Schema\Blueprint;
 use JundFauz\EloquentKompact\Builder\Str;
 use JundFauz\EloquentKompact\Column\Convert;
@@ -16,9 +17,9 @@ trait StaticH
         return (new static)->getTable();
     }
 
-    public static function morphClass()
+    public static function morphClass(): int|string
     {
-        return (new static)->getMorphClass();
+        return Relation::getMorphAlias(static::class);
     }
 
     public static function baseName(): string
