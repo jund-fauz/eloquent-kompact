@@ -593,7 +593,7 @@ These methods are not scopes, so a scope of the same name on a model is never ca
 
 ```php
 Post::tableName();             // posts
-Post::morphClass();            // App\Models\Post, or its alias in Relation::morphMap()
+Post::morphClass();            // App\Models\Post, or its alias in Relation::morphMap(), without making a model
 BlogPost::baseName();          // BlogPost
 
 // The relation name of the model
@@ -1091,6 +1091,7 @@ In `JundFauz\EloquentKompact`.
 | `cast_as($value, $cast = null)` | The value cast with a cast of Laravel, like an attribute of a model: `cast_as('10.5', 'decimal:2')` → `'10.50'`, `cast_as('paid', Status::class)` → `Status::Paid`. A date cast gives a Carbon object. Without a cast the value is returned as it is |
 | `not_in_array($needle, $haystack, $strict = false)` | `! in_array()`. Deprecated, removed in 3.0: use `is_not('in_array', ...)` |
 | `not_in($needle, $haystack, $strict = false)` | `not_in_array()` for an array or a collection. Deprecated, removed in 3.0: use `is_not('in', ...)` |
+| `nullIf($condition, $value)` | `null` if `$condition` is truthy, or `$value`: `nullIf($order->isCancelled(), $order->total)` |
 | `if_not_null($value, $then)` | `$then` if `$value` is not `null`, or `null`: `if_not_null($paidAt, 'Paid')`. `$then` is evaluated before the call, also when `$value` is `null`. `@experimental` |
 | `is_app_local_or_test()` | Whether the app runs in the `local` or `testing` environment |
 
@@ -1100,6 +1101,7 @@ In `JundFauz\EloquentKompact`.
 
 | Function | Result |
 |---|---|
+| `concat_by($delimiter, ...$values)` | Joined with the delimiter, e.g. one of the constants `path`, `word`, `schema`, `relation` and `snake`: `concat_by(relation, 'posts', 'user')` → `'posts.user'`, `concat_by('-', 'a', 'b')` → `'a-b'` |
 | `word_concat(...$values)` | Joined with a space |
 | `schema_concat(...$values)` | Joined with `:` |
 | `path_concat(...$values)` | Joined with `/` |

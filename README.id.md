@@ -593,7 +593,7 @@ Method-method ini bukan scope, jadi scope dengan nama yang sama di model tidak p
 
 ```php
 Post::tableName();             // posts
-Post::morphClass();            // App\Models\Post, atau alias-nya di Relation::morphMap()
+Post::morphClass();            // App\Models\Post, atau alias-nya di Relation::morphMap(), tanpa membuat model
 BlogPost::baseName();          // BlogPost
 
 // Nama relasi model
@@ -1091,6 +1091,7 @@ Di `JundFauz\EloquentKompact`.
 | `cast_as($value, $cast = null)` | Nilai yang di-cast dengan cast Laravel, seperti atribut model: `cast_as('10.5', 'decimal:2')` → `'10.50'`, `cast_as('paid', Status::class)` → `Status::Paid`. Cast tanggal menghasilkan object Carbon. Tanpa cast, nilainya dikembalikan apa adanya |
 | `not_in_array($needle, $haystack, $strict = false)` | `! in_array()`. Deprecated, dihapus di 3.0: pakai `is_not('in_array', ...)` |
 | `not_in($needle, $haystack, $strict = false)` | `not_in_array()` untuk array atau collection. Deprecated, dihapus di 3.0: pakai `is_not('in', ...)` |
+| `nullIf($condition, $value)` | `null` kalau `$condition` bernilai truthy, atau `$value`: `nullIf($order->isCancelled(), $order->total)` |
 | `if_not_null($value, $then)` | `$then` kalau `$value` tidak `null`, atau `null`: `if_not_null($paidAt, 'Lunas')`. `$then` dievaluasi sebelum fungsi dipanggil, juga saat `$value` bernilai `null`. `@experimental` |
 | `is_app_local_or_test()` | Apakah app berjalan di environment `local` atau `testing` |
 
@@ -1100,6 +1101,7 @@ Di `JundFauz\EloquentKompact`.
 
 | Fungsi | Hasil |
 |---|---|
+| `concat_by($delimiter, ...$values)` | Digabung dengan delimiter-nya, misalnya salah satu konstanta `path`, `word`, `schema`, `relation` dan `snake`: `concat_by(relation, 'posts', 'user')` → `'posts.user'`, `concat_by('-', 'a', 'b')` → `'a-b'` |
 | `word_concat(...$values)` | Digabung dengan spasi |
 | `schema_concat(...$values)` | Digabung dengan `:` |
 | `path_concat(...$values)` | Digabung dengan `/` |
