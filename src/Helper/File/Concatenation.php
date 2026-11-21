@@ -25,8 +25,7 @@ function namespace_concat(string|array ...$folderOrPackages): string
  */
 function path_concat(string|array ...$folderOrPackages): string
 {
-    flat($folderOrPackages);
-    return join(PATH_DELIMITER, $folderOrPackages);
+    return concat_by(path, ...$folderOrPackages);
 }
 
 /**
@@ -39,9 +38,9 @@ function full_path_on_app(string $path): string
 {
     return app_path(
         Str::of($path)
-            ->replace(NAMESPACE_DELIMITER, PATH_DELIMITER)
+            ->replace(NAMESPACE_DELIMITER, path)
             ->replaceByRegex('/^app(\/|$)/i', '')
-            ->trim(PATH_DELIMITER)
+            ->trim(path)
             ->value()
     );
 }

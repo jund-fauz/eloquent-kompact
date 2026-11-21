@@ -4,6 +4,27 @@ namespace JundFauz\EloquentKompact;
 
 use function JundFauz\EloquentKompact\Array\flat;
 
+const path = '/';
+const word = ' ';
+const schema = ':';
+const relation = '.';
+const snake = '_';
+
+/**
+ * The values joined with the delimiter, nested arrays flattened, e.g. concat_by(relation, 'posts', ['user'])
+ * for 'posts.user'. The delimiters of the other *_concat() functions are the constants path, word, schema,
+ * relation and snake
+ *
+ * @param string $by The delimiter
+ * @param string|array ...$values
+ * @return string
+ */
+function concat_by(string $by, string|array ...$values): string
+{
+    flat($values);
+    return join($by, $values);
+}
+
 /**
  * The values joined with a space, nested arrays flattened
  *
@@ -12,8 +33,7 @@ use function JundFauz\EloquentKompact\Array\flat;
  */
 function word_concat(string|array ...$values): string
 {
-    flat($values);
-    return join(' ', $values);
+    return concat_by(word, ...$values);
 }
 
 /**
@@ -24,8 +44,7 @@ function word_concat(string|array ...$values): string
  */
 function schema_concat(string|array ...$values): string
 {
-    flat($values);
-    return join(':', $values);
+    return concat_by(schema, ...$values);
 }
 
 /**
@@ -36,6 +55,5 @@ function schema_concat(string|array ...$values): string
  */
 function relation_concat(string|array ...$values): string
 {
-    flat($values);
-    return join('.', $values);
+    return concat_by(relation, ...$values);
 }

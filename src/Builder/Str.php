@@ -16,7 +16,7 @@ use function JundFauz\EloquentKompact\String\concat;
 use function JundFauz\EloquentKompact\String\constant;
 use function JundFauz\EloquentKompact\word_concat;
 use const JundFauz\EloquentKompact\NEW_LINE;
-use const JundFauz\EloquentKompact\PATH_DELIMITER;
+use const JundFauz\EloquentKompact\path;
 
 class Str extends Stringable
 {
@@ -621,9 +621,9 @@ class Str extends Stringable
         return path_concat(array_map(
             fn (string $path, int $index) => match (true) {
                 $index === 0 && $index === $lastIndex => $path,
-                $index === 0 => rtrim($path, PATH_DELIMITER),
-                $index === $lastIndex => ltrim($path, PATH_DELIMITER),
-                default => trim($path, PATH_DELIMITER),
+                $index === 0 => rtrim($path, path),
+                $index === $lastIndex => ltrim($path, path),
+                default => trim($path, path),
             },
             $paths,
             array_keys($paths)
