@@ -7,6 +7,24 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [2.8.0] - 2026-11-23
+
+### Added
+
+- `null_if($condition, $value)` and `null_if_not($condition, $value)`: return `null` when the condition is truthy or falsy, respectively.
+
+### Changed
+
+- `nullIf()` is now an alias for `null_if()`.
+
+### Documentation
+
+- Documented `null_if()`, `null_if_not()` and the `nullIf()` alias in both READMEs.
+
+### Tests
+
+- Added tests for `null_if()`, `null_if_not()` and the `nullIf()` alias.
+
 ## [2.7.0] - 2026-11-21
 
 ### Added
@@ -2584,7 +2602,8 @@ The first stable release: from now on, breaking changes only come in a major rel
 - `RawQuery` static helpers for raw SQL expressions.
 - Translations for `en` and `id`.
 
-[Unreleased]: https://github.com/jund-fauz/eloquent-kompact/compare/v2.7.0...HEAD
+[Unreleased]: https://github.com/jund-fauz/eloquent-kompact/compare/v2.8.0...HEAD
+[2.8.0]: https://github.com/jund-fauz/eloquent-kompact/compare/v2.7.0...v2.8.0
 [2.7.0]: https://github.com/jund-fauz/eloquent-kompact/compare/v2.6.0...v2.7.0
 [2.6.0]: https://github.com/jund-fauz/eloquent-kompact/compare/v2.5.1...v2.6.0
 [2.5.1]: https://github.com/jund-fauz/eloquent-kompact/compare/v2.5.0...v2.5.1
