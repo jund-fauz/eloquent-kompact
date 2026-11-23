@@ -1091,7 +1091,8 @@ In `JundFauz\EloquentKompact`.
 | `cast_as($value, $cast = null)` | The value cast with a cast of Laravel, like an attribute of a model: `cast_as('10.5', 'decimal:2')` → `'10.50'`, `cast_as('paid', Status::class)` → `Status::Paid`. A date cast gives a Carbon object. Without a cast the value is returned as it is |
 | `not_in_array($needle, $haystack, $strict = false)` | `! in_array()`. Deprecated, removed in 3.0: use `is_not('in_array', ...)` |
 | `not_in($needle, $haystack, $strict = false)` | `not_in_array()` for an array or a collection. Deprecated, removed in 3.0: use `is_not('in', ...)` |
-| `nullIf($condition, $value)` | `null` if `$condition` is truthy, or `$value`: `nullIf($order->isCancelled(), $order->total)` |
+| `null_if($condition, $value)` / `nullIf($condition, $value)` | `null` if `$condition` is truthy, or `$value`: `null_if($order->isCancelled(), $order->total)`. `nullIf()` is an alias |
+| `null_if_not($condition, $value)` | `null` if `$condition` is falsy, or `$value`: `null_if_not($order->isFinished(), $order->total)` |
 | `if_not_null($value, $then)` | `$then` if `$value` is not `null`, or `null`: `if_not_null($paidAt, 'Paid')`. `$then` is evaluated before the call, also when `$value` is `null`. `@experimental` |
 | `is_app_local_or_test()` | Whether the app runs in the `local` or `testing` environment |
 

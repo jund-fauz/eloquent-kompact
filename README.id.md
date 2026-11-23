@@ -1091,7 +1091,8 @@ Di `JundFauz\EloquentKompact`.
 | `cast_as($value, $cast = null)` | Nilai yang di-cast dengan cast Laravel, seperti atribut model: `cast_as('10.5', 'decimal:2')` → `'10.50'`, `cast_as('paid', Status::class)` → `Status::Paid`. Cast tanggal menghasilkan object Carbon. Tanpa cast, nilainya dikembalikan apa adanya |
 | `not_in_array($needle, $haystack, $strict = false)` | `! in_array()`. Deprecated, dihapus di 3.0: pakai `is_not('in_array', ...)` |
 | `not_in($needle, $haystack, $strict = false)` | `not_in_array()` untuk array atau collection. Deprecated, dihapus di 3.0: pakai `is_not('in', ...)` |
-| `nullIf($condition, $value)` | `null` kalau `$condition` bernilai truthy, atau `$value`: `nullIf($order->isCancelled(), $order->total)` |
+| `null_if($condition, $value)` / `nullIf($condition, $value)` | `null` kalau `$condition` bernilai truthy, atau `$value`: `null_if($order->isCancelled(), $order->total)`. `nullIf()` adalah alias |
+| `null_if_not($condition, $value)` | `null` kalau `$condition` bernilai falsy, atau `$value`: `null_if_not($order->isFinished(), $order->total)` |
 | `if_not_null($value, $then)` | `$then` kalau `$value` tidak `null`, atau `null`: `if_not_null($paidAt, 'Lunas')`. `$then` dievaluasi sebelum fungsi dipanggil, juga saat `$value` bernilai `null`. `@experimental` |
 | `is_app_local_or_test()` | Apakah app berjalan di environment `local` atau `testing` |
 
