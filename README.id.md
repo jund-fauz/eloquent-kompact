@@ -526,6 +526,8 @@ $order->isAllOf('note', 'dirty', 'blank');      // semua cek bernilai true
 $order->isAnyOf('note', 'null', 'numeric');     // setidaknya satu cek bernilai true
 $order->isAnyOf('status', in: 'paid,sent');     // in($order->status, 'paid,sent')
 $user->isAllOf(['role' => 'admin'], 'match');   // argumen pertama diteruskan ke method yang tidak menerima kolom
+$order->matchAll(isDirty: 'status', filled: 'status'); // semua cek bernama bernilai true
+$order->any(isClean: 'note', isDirty: 'status');       // setidaknya satu cek bernama bernilai true
 $order->not('null', 'note');                    // ! $order->isNull('note')
 $order->isAll('dirty', 'status', 'note');      // satu cek, true untuk semua kolom
 $order->isAny('null', ['status', 'note']);     // satu cek, true untuk setidaknya satu kolom
@@ -555,6 +557,8 @@ Method `AndDirty` yang deprecated memakai `isDirty()` dari Eloquent pada setiap 
 `isAll()` dan `isAny()` menjalankan satu cek pada beberapa kolom, array bersarang di-flatten, seperti [`is_all()`](#pengecekan); tanpa kolom `isAll()` bernilai `true` dan `isAny()` bernilai `false`. `isAllNot()` dan `isAnyNot()` adalah kebalikannya, seperti `is_all('not_…')` dan `is_any('not_…')`: tanpa kolom `isAllNot()` bernilai `true` dan `isAnyNot()` bernilai `false`. Keduanya menggantikan method `AndDirty` untuk beberapa kolom, misalnya `isAll('dirty', 'a', 'b') && sameWithOther($other, 'a', 'b')` untuk `sameWithOtherAndDirty($other, 'a', 'b')`.
 
 `isAllOf()`, `isAnyOf()` dan `not()` mencari method model lebih dulu (`$what`, lalu `is_$what`, dalam camel case) dan hanya memakainya kalau method itu mengembalikan `bool`; kalau tidak, dipakai fungsi bool, seperti [`is_not()`](#pengecekan). Method tanpa return type native tetap dihitung kalau docblock-nya menyebut `@return bool`, dan begitulah `isDirty()` dan `isClean()` dari Eloquent ditemukan. Catatan: kalau docblock dibuang (`opcache.save_comments=0`), method itu tidak ditemukan lagi dan cek-nya beralih ke fungsi, atau melempar `BadMethodCallException`. Parameter tambahan hanya lewat named argument, jadi satu cek tidak bisa dipakai dua kali dalam satu panggilan. Cek yang tidak dikenal melempar `BadMethodCallException` saat dijalankan.
+
+`matchAll()` dan `any()` menjalankan beberapa cek pada model tanpa argumen kolom bersama. Named argument berisi nama cek dan parameternya, misalnya `matchAll(isDirty: 'status', filled: 'status')`; argumen posisional adalah cek tanpa parameter, misalnya `matchAll('isDirty')`. Tanpa cek, `matchAll()` bernilai `true` dan `any()` bernilai `false`.
 
 `wereChanged()` dan `wereNotChanged()` yang deprecated memakai `wasChanged()` dari Eloquent pada setiap kolom. Berbeda dengan `wasChanged('a', 'b')` yang butuh satu kolom berubah, `wereChanged('a', 'b')` butuh semuanya. `wereNotChanged()` bukan kebalikan `wereChanged()` saat sebagian kolom berubah dan sebagian tidak: keduanya `false`. Seperti `wasChanged()`, keduanya tidak melihat perubahan tepat setelah `create()`, dan `save()` tanpa perubahan tetap menyimpan perubahan dari update terakhir.
 

@@ -526,6 +526,8 @@ $order->isAllOf('note', 'dirty', 'blank');      // every check is true
 $order->isAnyOf('note', 'null', 'numeric');     // at least one check is true
 $order->isAnyOf('status', in: 'paid,sent');     // in($order->status, 'paid,sent')
 $user->isAllOf(['role' => 'admin'], 'match');   // the first argument goes to a method that takes no column
+$order->matchAll(isDirty: 'status', filled: 'status'); // every named check is true
+$order->any(isClean: 'note', isDirty: 'status');       // at least one named check is true
 $order->not('null', 'note');                    // ! $order->isNull('note')
 $order->isAll('dirty', 'status', 'note');      // one check, true for every column
 $order->isAny('null', ['status', 'note']);     // one check, true for at least one column
@@ -555,6 +557,8 @@ The deprecated `AndDirty` methods use Eloquent's `isDirty()` on each column, so 
 `isAll()` and `isAny()` run one check on several columns, nested arrays flattened, like [`is_all()`](#checks); without a column `isAll()` is `true` and `isAny()` is `false`. `isAllNot()` and `isAnyNot()` are their opposites, like `is_all('not_…')` and `is_any('not_…')`: `isAllNot()` is `true` and `isAnyNot()` is `false` without a column. They replace the `AndDirty` methods of several columns, e.g. `isAll('dirty', 'a', 'b') && sameWithOther($other, 'a', 'b')` for `sameWithOtherAndDirty($other, 'a', 'b')`.
 
 `isAllOf()`, `isAnyOf()` and `not()` look for a method of the model first (`$what`, then `is_$what`, in camel case) and only use it when it returns a `bool`; otherwise they use a bool function, like [`is_not()`](#checks). A method without a native return type counts when its docblock says `@return bool`, which is how Eloquent's `isDirty()` and `isClean()` are found. Note: when the docblocks are stripped (`opcache.save_comments=0`), those methods are not found anymore and the check falls back to a function, or throws a `BadMethodCallException`. Extra parameters only go in named arguments, so a check cannot be given twice in one call. An unknown check throws a `BadMethodCallException` when it is reached.
+
+`matchAll()` and `any()` run several checks on the model without a shared column argument. A named argument is a check and its parameter(s), such as `matchAll(isDirty: 'status', filled: 'status')`; a positional argument is a zero-parameter check, such as `matchAll('isDirty')`. `matchAll()` is `true` and `any()` is `false` without checks.
 
 The deprecated `wereChanged()` and `wereNotChanged()` use Eloquent's `wasChanged()` on each column. Unlike `wasChanged('a', 'b')`, which needs one changed column, `wereChanged('a', 'b')` needs all of them. `wereNotChanged()` is not the opposite of `wereChanged()` when some columns were changed and others were not: both are `false`. Like `wasChanged()`, they see no change right after `create()`, and a `save()` without changes keeps the changes of the last update.
 
