@@ -7,6 +7,20 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [2.9.0] - 2026-11-23
+
+### Added
+
+- `matchAll(...$checks)` and `any(...$checks)` on `AdditionalQueries`: check several model methods or bool functions, with parameters supplied by named arguments.
+
+### Documentation
+
+- Documented `matchAll()` and `any()` in both READMEs.
+
+### Tests
+
+- Added tests for `matchAll()` and `any()`, including named checks, positional checks, and empty input.
+
 ## [2.8.0] - 2026-11-23
 
 ### Added
@@ -2602,7 +2616,8 @@ The first stable release: from now on, breaking changes only come in a major rel
 - `RawQuery` static helpers for raw SQL expressions.
 - Translations for `en` and `id`.
 
-[Unreleased]: https://github.com/jund-fauz/eloquent-kompact/compare/v2.8.0...HEAD
+[Unreleased]: https://github.com/jund-fauz/eloquent-kompact/compare/v2.9.0...HEAD
+[2.9.0]: https://github.com/jund-fauz/eloquent-kompact/compare/v2.8.0...v2.9.0
 [2.8.0]: https://github.com/jund-fauz/eloquent-kompact/compare/v2.7.0...v2.8.0
 [2.7.0]: https://github.com/jund-fauz/eloquent-kompact/compare/v2.6.0...v2.7.0
 [2.6.0]: https://github.com/jund-fauz/eloquent-kompact/compare/v2.5.1...v2.6.0
