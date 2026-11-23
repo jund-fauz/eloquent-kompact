@@ -41,6 +41,34 @@ function if_not_null(mixed $value, mixed $ifNotNullValue): mixed
 }
 
 /**
+ * null when the condition is truthy, otherwise the value, e.g. null_if($order->isCancelled(), $order->total)
+ *
+ * @param mixed $condition
+ * @param mixed $ifNotTrueValue
+ * @return mixed
+ */
+function null_if(mixed $condition, mixed $ifNotTrueValue): mixed
+{
+    return $condition
+        ? null
+        : $ifNotTrueValue;
+}
+
+/**
+ * null when the condition is falsy, otherwise the value, e.g. null_if_not($order->isFinished(), $order->total)
+ *
+ * @param mixed $condition
+ * @param mixed $ifTrueValue
+ * @return mixed
+ */
+function null_if_not(mixed $condition, mixed $ifTrueValue): mixed
+{
+    return $condition
+        ? $ifTrueValue
+        : null;
+}
+
+/**
  * null when the condition is truthy, otherwise the value, e.g. nullIf($order->isCancelled(), $order->total)
  *
  * @param mixed $condition
@@ -49,7 +77,5 @@ function if_not_null(mixed $value, mixed $ifNotNullValue): mixed
  */
 function nullIf(mixed $condition, mixed $ifNotTrueValue): mixed
 {
-    return $condition
-        ? null
-        : $ifNotTrueValue;
+    return null_if($condition, $ifNotTrueValue);
 }

@@ -27,6 +27,8 @@ use function JundFauz\EloquentKompact\create_php_content;
 use function JundFauz\EloquentKompact\ensure_directory_exists;
 use function JundFauz\EloquentKompact\full_path_on_app;
 use function JundFauz\EloquentKompact\if_not_null;
+use function JundFauz\EloquentKompact\null_if;
+use function JundFauz\EloquentKompact\null_if_not;
 use function JundFauz\EloquentKompact\nullIf;
 use function JundFauz\EloquentKompact\is;
 use function JundFauz\EloquentKompact\is_all;
@@ -1102,6 +1104,8 @@ class FunctionsTest extends TestCase
     #[Test]
     public function it_gives_null_if_the_condition_is_truthy(): void
     {
+        $this->assertNull(null_if(true, 'paid'));
+        $this->assertSame('paid', null_if(false, 'paid'));
         $this->assertNull(nullIf(true, 'paid'));
         $this->assertNull(nullIf(1, 'paid'));
         $this->assertNull(nullIf('yes', 'paid'));
@@ -1110,6 +1114,17 @@ class FunctionsTest extends TestCase
         $this->assertSame('paid', nullIf('', 'paid'));
         $this->assertSame('paid', nullIf(null, 'paid'));
         $this->assertSame([], nullIf([], []));
+    }
+
+    #[Test]
+    public function it_gives_null_if_the_condition_is_falsy(): void
+    {
+        $this->assertSame('paid', null_if_not(true, 'paid'));
+        $this->assertSame('paid', null_if_not(1, 'paid'));
+        $this->assertNull(null_if_not(false, 'paid'));
+        $this->assertNull(null_if_not(0, 'paid'));
+        $this->assertNull(null_if_not('', 'paid'));
+        $this->assertNull(null_if_not(null, 'paid'));
     }
 
     #[Test]
