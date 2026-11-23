@@ -42,6 +42,27 @@ class IsAllOfTest extends TestCase
     }
 
     #[Test]
+    public function it_checks_all_model_checks_with_match_all(): void
+    {
+        $model = $this->model();
+
+        $this->assertTrue($model->matchAll(isDirty: 'status', filled: 'status'));
+        $this->assertFalse($model->matchAll(isDirty: 'status', isClean: 'status'));
+        $this->assertTrue($model->matchAll('isDirty'));
+        $this->assertTrue($model->matchAll());
+    }
+
+    #[Test]
+    public function it_checks_at_least_one_model_check_with_any(): void
+    {
+        $model = $this->model();
+
+        $this->assertTrue($model->any(isClean: 'note', isDirty: 'status'));
+        $this->assertFalse($model->any(isClean: 'status'));
+        $this->assertFalse($model->any());
+    }
+
+    #[Test]
     public function it_finds_a_bool_method_without_a_native_return_type_by_its_docblock(): void
     {
         $model = $this->model();

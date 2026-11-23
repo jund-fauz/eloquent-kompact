@@ -21,8 +21,8 @@ use function JundFauz\EloquentKompact\is;
 use function JundFauz\EloquentKompact\is_negation_and_get_raw_function;
 use function JundFauz\EloquentKompact\is_not;
 use function JundFauz\EloquentKompact\is_not_null;
-use function JundFauz\EloquentKompact\model_compact;
 use function JundFauz\EloquentKompact\not;
+use function JundFauz\EloquentKompact\object_compact;
 use function JundFauz\EloquentKompact\same_with;
 use function JundFauz\EloquentKompact\same_with_one_of;
 use function JundFauz\EloquentKompact\schema_concat;
@@ -76,7 +76,7 @@ trait AdditionalQueries
 
     public function compact(string|array ...$columns): array
     {
-        return model_compact($this, ...$columns);
+        return object_compact($this, ...$columns);
     }
 
     public function updateMany(array ...$data): bool
@@ -160,14 +160,44 @@ trait AdditionalQueries
      * @return bool
      * @internal
      */
-    private function execute(mixed $value, int|string $key, mixed $column): bool
+    private function execute(mixed $value, int|string $key, mixed $column = null): bool
     {
-        $keyIsString = is_string($key);
-        $arguments = [$keyIsString ? $key : $value, $column];
+        $arguments = [($keyIsString = is_string($key)) ? $key : $value];
+        if (same_with(func_num_args(), 3)) {
+            $arguments[] = $column;
+        }
         if ($keyIsString) {
             $arguments = merge_as_array($arguments, $value);
         }
         return $this->executeWhatFunction(...$arguments);
+    }
+
+    /**
+     * Whether every check is true, stopping at the first false one; true without a check.
+     * Checks are model methods or bool functions; named arguments pass their parameters,
+     * while positional checks are called without parameters.
+     *
+     * @param mixed ...$methodAndParameters
+     * @return bool
+     * @throws BadMethodCallException When no method nor function returning a bool is found for a reached check
+     */
+    public function matchAll(mixed ...$methodAndParameters): bool
+    {
+        return array_all($methodAndParameters, $this->execute(...));
+    }
+
+    /**
+     * Whether at least one check is true, stopping at the first true one; false without a check.
+     * Checks are model methods or bool functions; named arguments pass their parameters,
+     * while positional checks are called without parameters.
+     *
+     * @param mixed ...$methodAndParameters
+     * @return bool
+     * @throws BadMethodCallException When no method nor function returning a bool is found for a reached check
+     */
+    public function any(mixed ...$methodAndParameters): bool
+    {
+        return array_any($methodAndParameters, $this->execute(...));
     }
 
     /**
