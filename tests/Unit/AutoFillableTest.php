@@ -132,6 +132,12 @@ class AutoFillableTest extends TestCase
     {
         $this->assertSame(['name', 'secret_note', 'user_id', 'paid_at'], (new AutoFillableDeclaredItem)->getFillable());
     }
+
+    #[Test]
+    public function it_includes_custom_fillable(): void
+    {
+        $this->assertSame(['name', 'secret_note', 'user_id', 'custom_col'], (new AutoFillableCustomItem)->getFillable());
+    }
 }
 
 class AutoFillableItem extends KompactModel
@@ -151,4 +157,14 @@ class AutoFillableDeclaredItem extends KompactModel
     protected $table = 'af_items';
 
     protected $fillable = ['paid_at'];
+}
+
+class AutoFillableCustomItem extends KompactModel
+{
+    protected $table = 'af_items';
+
+    public function getCustomFillable(): array
+    {
+        return ['custom_col'];
+    }
 }

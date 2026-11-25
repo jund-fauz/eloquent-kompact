@@ -68,9 +68,20 @@ trait AutoFillable
                 })
                 ->values()
                 ->merge(parent::getFillable())
+                ->merge(static::getCustomFillable())
                 ->merge(array_intersect($includedColumnsFromConfig, ColumnListing::of($this->getTable())))
                 ->unique()
                 ->values()
                 ->all();
+    }
+
+    /**
+     * Extra fillable attributes merged after `parent::getFillable()`.
+     *
+     * @return array<int, string>
+     */
+    public function getCustomFillable(): array
+    {
+        return [];
     }
 }
