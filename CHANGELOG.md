@@ -7,6 +7,25 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [2.11.0] - 2026-11-25
+
+### Added
+
+- `hasOne` support in `AutoRelation` (including prefixed foreign keys) and `kompact:ide-helper` (`IdeHelperCommand`).
+- `getCustomFillable()` on `AutoFillable` to supply extra fillable columns alongside `$fillable` and auto-detected columns.
+
+### Changed
+
+- `AutoRelation` now throws a `BadMethodCallException` when a singular relation name matches a model class but no matching `belongsTo` or `hasOne` column exists.
+
+### Documentation
+
+- Documented `hasOne` resolution in `AutoRelation` in both READMEs.
+
+### Tests
+
+- Added tests for `hasOne` resolution and unresolvable singular relations in `AutoRelation`, `hasOne` generation in `kompact:ide-helper`, and `getCustomFillable()` on `AutoFillable`.
+
 ## [2.10.0] - 2026-11-25
 
 ### Added
@@ -2631,7 +2650,8 @@ The first stable release: from now on, breaking changes only come in a major rel
 - `RawQuery` static helpers for raw SQL expressions.
 - Translations for `en` and `id`.
 
-[Unreleased]: https://github.com/jund-fauz/eloquent-kompact/compare/v2.10.0...HEAD
+[Unreleased]: https://github.com/jund-fauz/eloquent-kompact/compare/v2.11.0...HEAD
+[2.11.0]: https://github.com/jund-fauz/eloquent-kompact/compare/v2.10.0...v2.11.0
 [2.10.0]: https://github.com/jund-fauz/eloquent-kompact/compare/v2.9.0...v2.10.0
 [2.9.0]: https://github.com/jund-fauz/eloquent-kompact/compare/v2.8.0...v2.9.0
 [2.8.0]: https://github.com/jund-fauz/eloquent-kompact/compare/v2.7.0...v2.8.0
