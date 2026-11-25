@@ -9,6 +9,7 @@ use Illuminate\Database\Eloquent\Relations\Relation;
 use Illuminate\Support\Str;
 use JundFauz\EloquentKompact\Column\ColumnListing;
 use JundFauz\EloquentKompact\Column\ColumnCreator;
+use JundFauz\EloquentKompact\Model\KompactModel;
 use ReflectionClass;
 use ReflectionException;
 use ReflectionMethod;
@@ -53,19 +54,17 @@ trait AutoRelation
         $originalParts = $parts;
 
         while (count($parts) > 0) {
-            $attemptedClassName = implode('', array_map(ucfirst(...), $parts));
+            $attemptedClassName = implode('', array_map('ucfirst', $parts));
+            /** @var class-string<KompactModel> $className */
             $className = namespace_concat(config('eloquent-kompact.path.model'), $attemptedClassName);
 
             if (class_exists($className)) {
                 $prefixParts = array_slice($originalParts, 0, count($originalParts) - count($parts));
-                $prefix = implode('_', array_map(strtolower(...), $prefixParts));
+                $prefix = implode('_', array_map('strtolower', $prefixParts));
 
+                $table = $className::tableName();
                 if ($isPlural) {
-                    $parentModelName = Str::snake(class_basename(static::class));
-                    $foreignKey = ColumnCreator::relation($prefix ? "{$prefix}_$parentModelName" : $parentModelName);
-                    $table = (new $className)->getTable();
-
-                    if (ColumnListing::has($table, $foreignKey)) {
+                    if (ColumnListing::has($table, $foreignKey = static::foreign($prefix))) {
                         $type = 'hasMany';
                     } elseif ($morphName = static::resolveMorphName($className, $table)) {
                         $type = 'morphMany';
@@ -79,9 +78,18 @@ trait AutoRelation
                             'related' => $className,
                         ]));
                     }
-                } else {
-                    $foreignKey = ColumnCreator::relation(Str::snake($relationName));
+                } elseif (ColumnListing::has(static::tableName(), $foreignKey = ColumnCreator::relation(Str::snake($relationName)))) {
                     $type = 'belongsTo';
+                } elseif (ColumnListing::has($table, $foreignKey = static::foreign($prefix))) {
+                    $type = 'hasOne';
+                } else {
+                    throw new BadMethodCallException(__('eloquent-kompact::messages.relation_not_resolvable', [
+                        'class' => static::class,
+                        'relation' => $relationName,
+                        'table' => $table,
+                        'column' => $foreignKey,
+                        'related' => $className,
+                    ]));
                 }
 
                 return self::$dynamicRelationCache[static::class][$relationName] = [

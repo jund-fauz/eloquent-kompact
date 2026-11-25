@@ -116,6 +116,12 @@ class IdeHelperCommandRunTest extends TestCase
         $this->assertStringContainsString('class _EK_Article {}', $file);
         $this->assertStringNotContainsString('_EK_NotAModel', $file);
 
+        // hasOne, also with a prefix
+        $this->assertStringContainsString("@property-read $article|null \$article", $file);
+        $this->assertStringContainsString("@property-read $article|null \$editorArticle", $file);
+        $this->assertStringContainsString("@method \\Illuminate\\Database\\Eloquent\\Relations\\HasOne<$article, $writer>|$builder article()", $file);
+        $this->assertStringContainsString("@method \\Illuminate\\Database\\Eloquent\\Relations\\HasOne<$article, $writer>|$builder editorArticle()", $file);
+
         // hasMany, also with a prefix
         $this->assertStringContainsString("@property-read \\Illuminate\\Database\\Eloquent\\Collection<int, $article> \$articles", $file);
         $this->assertStringContainsString("@property-read \\Illuminate\\Database\\Eloquent\\Collection<int, $article> \$editorArticles", $file);

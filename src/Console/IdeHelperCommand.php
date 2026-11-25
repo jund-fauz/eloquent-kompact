@@ -166,14 +166,19 @@ final class IdeHelperCommand extends Command
 
         foreach ($models as $model) {
             $table = (new $model)->getTable();
-            $plural = Str::of($model)->classBasename()->pluralStudly()->snake();
+            $base = Str::of($model)->classBasename();
+            $singular = $base->snake();
+            $plural = $base->pluralStudly()->snake();
 
-            // hasMany: author_user_id in the posts table → User::authorPosts
+            // hasOne & hasMany: author_user_id in the posts table → User::authorPost, User::authorPosts
             foreach ($relationColumns($table) as $column) {
                 $plain = ColumnCreator::getPlainColumnName($column);
 
                 if ($plain->value() === $parentName->value() || $plain->endsWith("_$parentName")) {
-                    yield (string) $plain->beforeLast($parentName)->add($plural)->camel() => $model;
+                    $prefix = $plain->beforeLast($parentName);
+
+                    yield (string) $prefix->add($singular)->camel() => $model;
+                    yield (string) $prefix->add($plural)->camel() => $model;
                 }
             }
 

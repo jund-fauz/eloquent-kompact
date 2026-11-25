@@ -5,6 +5,7 @@ namespace JundFauz\EloquentKompact\Tests\Unit;
 use BadMethodCallException;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use Illuminate\Database\Eloquent\Relations\HasMany;
+use Illuminate\Database\Eloquent\Relations\HasOne;
 use Illuminate\Database\Eloquent\Relations\MorphMany;
 use Illuminate\Database\Schema\Blueprint;
 use Illuminate\Support\Facades\DB;
@@ -87,6 +88,28 @@ class AutoRelationTest extends TestCase
         $this->assertSame('editor_writer_id', $article->editorWriter()->getForeignKeyName());
         $this->assertSame('Budi', $article->editorWriter->name);
         $this->assertNull(Article::find(2)->editorWriter);
+    }
+
+    #[Test]
+    public function it_resolves_a_has_one_relation(): void
+    {
+        $writer = Writer::find(1);
+
+        $this->assertInstanceOf(HasOne::class, $writer->article());
+        $this->assertSame('writer_id', $writer->article()->getForeignKeyName());
+        $this->assertSame('First', $writer->article->title);
+
+        $this->assertInstanceOf(HasOne::class, $writer->editorArticle());
+        $this->assertSame('editor_writer_id', $writer->editorArticle()->getForeignKeyName());
+        $this->assertSame('Third', $writer->editorArticle->title);
+    }
+
+    #[Test]
+    public function it_throws_on_a_singular_relation_without_a_column(): void
+    {
+        $this->expectException(BadMethodCallException::class);
+
+        Writer::find(1)->label();
     }
 
     #[Test]
