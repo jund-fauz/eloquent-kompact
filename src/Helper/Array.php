@@ -214,15 +214,11 @@ function get_array_list(array $from): array
  */
 function compact(array $array, string ...$keys): array
 {
-    $result = [];
+    $results = [];
     foreach ($keys as $key => $keyValue) {
-        if (is_string($key)) {
-            $result[$key] = get($array[$keyValue]);
-        } else {
-            $result[$keyValue] = get($array[$keyValue]);
-        }
+        $results[is_string($key) ? $key : $keyValue] = get($array[$keyValue]);
     }
-    return $result;
+    return $results;
 }
 
 /**

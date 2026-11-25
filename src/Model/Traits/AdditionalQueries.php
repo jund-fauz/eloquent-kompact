@@ -434,12 +434,8 @@ trait AdditionalQueries
 
     public function assign(string|array $columns, mixed $value = null): void
     {
-        if (is_string($columns)) {
-            $this->{$columns} = $value;
-        } else {
-            foreach ($columns as $column => $value) {
-                $this->{$column} = $value;
-            }
+        foreach (is_string($columns) ? [$columns => $value] : $columns as $column => $value) {
+            $this->{$column} = $value;
         }
     }
 
@@ -794,11 +790,11 @@ trait AdditionalQueries
      *
      * The attribute is compared after casting, like sameWith()
      *
-     * @deprecated Will be removed in 3.0. Use $this->not('same_with', $columnName, $value, $cast), or the check not_same_with, e.g. $this->isAllOf($columnName, 'dirty', not_same_with: [$value, $cast])
      * @param string $columnName
      * @param mixed $value
      * @param string|null $cast See sameWith()
      * @return bool
+     * @deprecated Will be removed in 3.0. Use $this->not('same_with', $columnName, $value, $cast), or the check not_same_with, e.g. $this->isAllOf($columnName, 'dirty', not_same_with: [$value, $cast])
      */
     public function notSameWith(string $columnName, mixed $value, ?string $cast = null): bool
     {
@@ -808,10 +804,10 @@ trait AdditionalQueries
     /**
      * The columns of the model reached through the relations, see getVia(), in the given order
      *
-     * @deprecated Will be removed in 3.0. Use $this->getVia($columnNames, ...$relationClasses), which keeps the keys of $columnNames
      * @param array $columnNames
      * @param string|array ...$relationClasses
      * @return array
+     * @deprecated Will be removed in 3.0. Use $this->getVia($columnNames, ...$relationClasses), which keeps the keys of $columnNames
      */
     public function getManyVia(array $columnNames, string|array ...$relationClasses): array
     {
