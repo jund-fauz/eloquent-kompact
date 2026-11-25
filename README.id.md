@@ -417,11 +417,12 @@ Relasi diselesaikan dari nama relasi dan kolom-kolomnya, tanpa mendeklarasikan m
 | Relasi | Diselesaikan sebagai | Syarat |
 |---|---|---|
 | `$post->authorUser` | `belongsTo(User::class, 'author_user_id')` | ada model `User`; nama dicoba sebagai `AuthorUser`, lalu `User` |
+| `$user->profile` | `hasOne(Profile::class, 'user_id')` | `profiles.user_id` (dan tidak ada kolom `users.profile_id`) |
 | `$user->posts` | `hasMany(Post::class, 'user_id')` | `posts.user_id` |
 | `$user->authorPosts` | `hasMany(Post::class, 'author_user_id')` | `posts.author_user_id` |
 | `$post->comments` | `morphMany(Comment::class, 'commentable')` | tidak ada `comments.post_id`, `Comment` punya satu public method yang mengembalikan `MorphTo` dan kolom `commentable_type` |
 
-Nama jamak tanpa kolom atau morph yang cocok akan melempar `BadMethodCallException`. Relasi yang dideklarasikan sebagai method selalu menang. Relasi dinamis menghormati `Model::preventLazyLoading()` dan bisa di-eager load (`Post::with('authorUser')`).
+Nama tunggal atau jamak tanpa kolom atau morph yang cocok akan melempar `BadMethodCallException`. Relasi yang dideklarasikan sebagai method selalu menang. Relasi dinamis menghormati `Model::preventLazyLoading()` dan bisa di-eager load (`Post::with('authorUser')`).
 
 Untuk mendapatkan autocomplete relasi-relasi ini, lihat [IDE helper](#ide-helper).
 

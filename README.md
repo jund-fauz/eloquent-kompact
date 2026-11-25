@@ -417,11 +417,12 @@ Relations are resolved from the relation name and the columns, without declaring
 | Relation | Resolved as | Requires |
 |---|---|---|
 | `$post->authorUser` | `belongsTo(User::class, 'author_user_id')` | a `User` model; the name is tried as `AuthorUser`, then `User` |
+| `$user->profile` | `hasOne(Profile::class, 'user_id')` | `profiles.user_id` (and no `users.profile_id` column) |
 | `$user->posts` | `hasMany(Post::class, 'user_id')` | `posts.user_id` |
 | `$user->authorPosts` | `hasMany(Post::class, 'author_user_id')` | `posts.author_user_id` |
 | `$post->comments` | `morphMany(Comment::class, 'commentable')` | no `comments.post_id`, `Comment` has a single public method returning `MorphTo` and a `commentable_type` column |
 
-A plural name without a matching column or morph throws a `BadMethodCallException`. Relations declared as methods always win. Dynamic relations respect `Model::preventLazyLoading()` and can be eager loaded (`Post::with('authorUser')`).
+A singular or plural name without a matching column or morph throws a `BadMethodCallException`. Relations declared as methods always win. Dynamic relations respect `Model::preventLazyLoading()` and can be eager loaded (`Post::with('authorUser')`).
 
 To get autocomplete for these relations, see [IDE helper](#ide-helper).
 
