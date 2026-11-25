@@ -469,6 +469,7 @@ $comment->getManyVia(['name', 'email'], Post::class, User::class);
 // [kolom => nilai] untuk kolom yang diberikan, setelah casting (yang tidak ada bernilai null)
 $user->compact('name', 'email'); // ['name' => 'Ana', 'email' => 'ana@example.com']
 $user->compact('name', ['mail' => 'email']); // ['name' => 'Ana', 'mail' => 'ana@example.com'], juga compact('name', mail: 'email')
+$user->compactId(); // ['user_id' => 1]
 
 // update() dengan beberapa array digabung, key yang belakangan menang
 $order->updateMany($data, $order->compact('note'), ['status' => 'paid']);

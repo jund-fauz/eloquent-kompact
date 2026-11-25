@@ -469,6 +469,7 @@ $comment->getManyVia(['name', 'email'], Post::class, User::class);
 // [column => value] for the given columns, after casting (a missing one is null)
 $user->compact('name', 'email'); // ['name' => 'Ana', 'email' => 'ana@example.com']
 $user->compact('name', ['mail' => 'email']); // ['name' => 'Ana', 'mail' => 'ana@example.com'], also compact('name', mail: 'email')
+$user->compactId(); // ['user_id' => 1]
 
 // update() with several arrays merged, where a later key wins
 $order->updateMany($data, $order->compact('note'), ['status' => 'paid']);
