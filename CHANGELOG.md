@@ -7,6 +7,21 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [2.10.0] - 2026-11-25
+
+### Added
+
+- `compactId()` on `AdditionalQueries`: returns `[static::foreign() => $this->getKey()]`.
+- `@experimental` `process($what, $toColumns, $conditions)` on `AdditionalQueries`: runs a model method on each column that satisfies all conditions.
+
+### Documentation
+
+- Documented `compactId()` in both READMEs.
+
+### Tests
+
+- Added tests for `compactId()` and `process()`.
+
 ## [2.9.0] - 2026-11-23
 
 ### Added
@@ -2616,7 +2631,8 @@ The first stable release: from now on, breaking changes only come in a major rel
 - `RawQuery` static helpers for raw SQL expressions.
 - Translations for `en` and `id`.
 
-[Unreleased]: https://github.com/jund-fauz/eloquent-kompact/compare/v2.9.0...HEAD
+[Unreleased]: https://github.com/jund-fauz/eloquent-kompact/compare/v2.10.0...HEAD
+[2.10.0]: https://github.com/jund-fauz/eloquent-kompact/compare/v2.9.0...v2.10.0
 [2.9.0]: https://github.com/jund-fauz/eloquent-kompact/compare/v2.8.0...v2.9.0
 [2.8.0]: https://github.com/jund-fauz/eloquent-kompact/compare/v2.7.0...v2.8.0
 [2.7.0]: https://github.com/jund-fauz/eloquent-kompact/compare/v2.6.0...v2.7.0
