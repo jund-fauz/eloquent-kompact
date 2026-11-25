@@ -5,7 +5,6 @@ namespace JundFauz\EloquentKompact\Model\Traits;
 use BadMethodCallException;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\Relation;
-use JundFauz\EloquentKompact\Builder\Str;
 use JundFauz\EloquentKompact\Column\ColumnCreator;
 use JundFauz\EloquentKompact\Column\Convert;
 use ReflectionClass;
@@ -13,9 +12,10 @@ use ReflectionException;
 use ReflectionNamedType;
 use function JundFauz\EloquentKompact\Array\filter_filled;
 use function JundFauz\EloquentKompact\Array\flat;
+use function JundFauz\EloquentKompact\Array\merge;
 use function JundFauz\EloquentKompact\Array\merge_as_array;
+use function JundFauz\EloquentKompact\Array\wrap;
 use function JundFauz\EloquentKompact\cast_as;
-use function JundFauz\EloquentKompact\chain;
 use function JundFauz\EloquentKompact\execute_what_function;
 use function JundFauz\EloquentKompact\is;
 use function JundFauz\EloquentKompact\is_negation_and_get_raw_function;
@@ -28,7 +28,6 @@ use function JundFauz\EloquentKompact\same_with_one_of;
 use function JundFauz\EloquentKompact\schema_concat;
 use function JundFauz\EloquentKompact\String\concat;
 use function JundFauz\EloquentKompact\String\str;
-use function JundFauz\EloquentKompact\String\strs;
 
 trait AdditionalQueries
 {
@@ -77,6 +76,16 @@ trait AdditionalQueries
     public function compact(string|array ...$columns): array
     {
         return object_compact($this, ...$columns);
+    }
+
+    /**
+     * [foreign_key => key] for this model
+     *
+     * @return array<string, mixed>
+     */
+    public function compactId(): array
+    {
+        return [static::foreign() => $this->getKey()];
     }
 
     public function updateMany(array ...$data): bool
@@ -399,6 +408,28 @@ trait AdditionalQueries
     public function getMany(string ...$columns): array
     {
         return array_map(fn (string $column) => $this->{$column}, $columns);
+    }
+
+    /**
+     * @param string|array $what
+     * @param string|array $toColumns
+     * @param string|array $conditions
+     * @return void
+     * @experimental
+     */
+    public function process(string|array $what, string|array $toColumns, string|array $conditions): void
+    {
+        $toColumns = wrap($toColumns);
+        foreach ($toColumns as $toColumn) {
+            if ($this->isAllOf($toColumn, ...wrap($conditions))) {
+                $function = str('pascal', ($whatIsArray = is_array($what)) ? array_key_first($what) : $what);
+                $arguments = [$toColumn];
+                if ($whatIsArray) {
+                    $arguments = merge_as_array($arguments, ...array_values(wrap($what)));
+                }
+                $this->{$function}(...$arguments);
+            }
+        }
     }
 
     public function assign(string|array $columns, mixed $value = null): void

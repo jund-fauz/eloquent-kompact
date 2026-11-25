@@ -560,6 +560,33 @@ class AdditionalQueriesTest extends TestCase
     }
 
     #[Test]
+    public function it_compacts_the_foreign_key_and_primary_key(): void
+    {
+        $model = (new CompactIdModel)->forceFill(['id' => 7]);
+
+        $this->assertSame(['compact_id_model_id' => 7], $model->compactId());
+        $this->assertSame(['compact_id_model_id' => null], (new CompactIdModel)->compactId());
+    }
+
+    #[Test]
+    public function it_processes_matching_columns_with_string_and_array_actions(): void
+    {
+        $model = (new ProcessModel)->forceFill(['a' => null, 'b' => 'keep', 'c' => 'foo']);
+
+        $model->process(['assign' => 'default'], ['a', 'b'], 'null');
+        $this->assertSame('default', $model->a);
+        $this->assertSame('keep', $model->b);
+
+        $model->process('clear_column', ['a', 'b'], ['filled', 'same_with' => 'default']);
+        $this->assertNull($model->a);
+        $this->assertSame('keep', $model->b);
+
+        $model->process(['append_pair' => ['_1', '_2']], ['b', 'c'], ['same_with' => 'foo']);
+        $this->assertSame('keep', $model->b);
+        $this->assertSame('foo_1_2', $model->c);
+    }
+
+    #[Test]
     public function it_copies_relations_to_another_model_with_the_given_columns(): void
     {
         $this->createCopyTables();
@@ -740,4 +767,24 @@ class CopyItem extends Model
     protected $table = 'copy_items';
 
     protected $guarded = [];
+}
+
+class CompactIdModel extends Model
+{
+    use AdditionalQueries, \JundFauz\EloquentKompact\Model\Traits\StaticH;
+}
+
+class ProcessModel extends Model
+{
+    use AdditionalQueries;
+
+    public function clearColumn(string $column): void
+    {
+        $this->{$column} = null;
+    }
+
+    public function appendPair(string $column, string $first, string $second): void
+    {
+        $this->{$column} .= $first.$second;
+    }
 }
