@@ -421,6 +421,7 @@ Relations are resolved from the relation name and the columns, without declaring
 | `$user->posts` | `hasMany(Post::class, 'user_id')` | `posts.user_id` |
 | `$user->authorPosts` | `hasMany(Post::class, 'author_user_id')` | `posts.author_user_id` |
 | `$post->comments` | `morphMany(Comment::class, 'commentable')` | no `comments.post_id`, `Comment` has a single public method returning `MorphTo` and a `commentable_type` column |
+| `$post->tags` | `belongsToMany(Tag::class, 'post_tag', 'post_id', 'tag_id')` | no `tags.post_id` or morph on `Tag`, and the pivot table `post_tag` exists with `post_id` and `tag_id` |
 
 A singular or plural name without a matching column or morph throws a `BadMethodCallException`. Relations declared as methods always win. Dynamic relations respect `Model::preventLazyLoading()` and can be eager loaded (`Post::with('authorUser')`).
 
@@ -1166,7 +1167,7 @@ In `JundFauz\EloquentKompact\Array`.
 | `normalize($list)` | The item of a list with one item, or the list as it is. The list needs numeric keys from `0` |
 | `merge(...$arrays)` | `array_merge()` of the arrays |
 | `merge_mixed($values)` | The strings and arrays of `$values` merged into one array: a string with an `int` key becomes a list item, a string with a string key keeps that key, and the items of an array are merged with `array_merge()` |
-| `merge_as_array(...$values)` | Associative arrays or collections merged with their keys, where a later key wins and nested values stay as they are: `merge_as_array(['a' => 1], ['b' => 2])` → `['a' => 1, 'b' => 2]`. `null`, blank strings and empty arrays are ignored there. With any other value next to them, every value goes in one flat list, nested arrays and collections included; keys are dropped and `null` is kept: `merge_as_array(['a' => 1], 'x')` → `[1, 'x']` |
+| `merge_as_array(...$values)` | Associative arrays, associative collections and named arguments (`key: $value` as `['key' => $value]`) merged with their keys, where a later key wins and nested values stay as they are: `merge_as_array(['a' => 1], b: 2)` → `['a' => 1, 'b' => 2]`. `null`, blank strings and empty arrays passed positionally are ignored there. With any other value next to them, every value goes in one flat list, nested arrays and collections included; keys are dropped and `null` is kept: `merge_as_array(['a' => 1], 'x')` → `[1, 'x']` |
 | `is_associative($value)` | Whether the value is an array that is not a list, so also `[5 => 'x']`; `[]` is not |
 | `is_array_or_collection($value)` | Whether the value is an array or a Laravel `Collection` |
 | `is_count_zero($value)` / `is_count_one($value)` / `is_count_many($value)` | Whether the array or `Countable` has no item / one item / more than one item |

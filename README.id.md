@@ -421,6 +421,7 @@ Relasi diselesaikan dari nama relasi dan kolom-kolomnya, tanpa mendeklarasikan m
 | `$user->posts` | `hasMany(Post::class, 'user_id')` | `posts.user_id` |
 | `$user->authorPosts` | `hasMany(Post::class, 'author_user_id')` | `posts.author_user_id` |
 | `$post->comments` | `morphMany(Comment::class, 'commentable')` | tidak ada `comments.post_id`, `Comment` punya satu public method yang mengembalikan `MorphTo` dan kolom `commentable_type` |
+| `$post->tags` | `belongsToMany(Tag::class, 'post_tag', 'post_id', 'tag_id')` | tidak ada `tags.post_id` atau morph di `Tag`, dan tabel pivot `post_tag` ada dengan kolom `post_id` dan `tag_id` |
 
 Nama tunggal atau jamak tanpa kolom atau morph yang cocok akan melempar `BadMethodCallException`. Relasi yang dideklarasikan sebagai method selalu menang. Relasi dinamis menghormati `Model::preventLazyLoading()` dan bisa di-eager load (`Post::with('authorUser')`).
 
@@ -1166,7 +1167,7 @@ Di `JundFauz\EloquentKompact\Array`.
 | `normalize($list)` | Item dari list dengan satu item, atau list-nya apa adanya. List-nya butuh key numerik mulai dari `0` |
 | `merge(...$arrays)` | `array_merge()` dari array-array itu |
 | `merge_mixed($values)` | String dan array di `$values` digabung jadi satu array: string dengan key `int` menjadi item list, string dengan key string mempertahankan key itu, dan item-item array digabung dengan `array_merge()` |
-| `merge_as_array(...$values)` | Array asosiatif atau collection digabung beserta key-nya, key yang belakangan menang dan nilai bersarang tetap apa adanya: `merge_as_array(['a' => 1], ['b' => 2])` → `['a' => 1, 'b' => 2]`. Di sini `null`, string kosong dan array kosong diabaikan. Kalau ada nilai lain di sampingnya, semua nilai masuk ke satu list datar, termasuk array dan collection bersarang; key dibuang dan `null` dipertahankan: `merge_as_array(['a' => 1], 'x')` → `[1, 'x']` |
+| `merge_as_array(...$values)` | Array asosiatif, collection asosiatif dan named argument (`key: $value` sebagai `['key' => $value]`) digabung beserta key-nya, key yang belakangan menang dan nilai bersarang tetap apa adanya: `merge_as_array(['a' => 1], b: 2)` → `['a' => 1, 'b' => 2]`. Di sini `null`, string kosong dan array kosong yang dikirim secara posisional diabaikan. Kalau ada nilai lain di sampingnya, semua nilai masuk ke satu list datar, termasuk array dan collection bersarang; key dibuang dan `null` dipertahankan: `merge_as_array(['a' => 1], 'x')` → `[1, 'x']` |
 | `is_associative($value)` | Apakah nilainya array yang bukan list, jadi `[5 => 'x']` juga termasuk; `[]` tidak |
 | `is_array_or_collection($value)` | Apakah nilainya array atau `Collection` Laravel |
 | `is_count_zero($value)` / `is_count_one($value)` / `is_count_many($value)` | Apakah array atau `Countable`-nya tidak punya item / punya satu item / lebih dari satu item |
