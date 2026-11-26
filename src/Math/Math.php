@@ -6,18 +6,24 @@ use BadMethodCallException;
 use DivisionByZeroError;
 use InvalidArgumentException;
 use JundFauz\EloquentKompact\Helper\Error\ErrorThrow;
+use function JundFauz\EloquentKompact\Array\flat;
 use function JundFauz\EloquentKompact\Array\is_count_zero;
-use function JundFauz\EloquentKompact\is_any_not;
+use function JundFauz\EloquentKompact\is_any;
 use function JundFauz\EloquentKompact\is_any_not_type_of;
 use function JundFauz\EloquentKompact\is_not_null;
 use function JundFauz\EloquentKompact\not_same_with;
 use function JundFauz\EloquentKompact\same_with;
+use function JundFauz\EloquentKompact\String\concat;
 
 /**
  * @method static string plus(float|int|string $firstNumber, float|int|string $secondNumber)
  * @method static string minus(float|int|string $firstNumber, float|int|string $secondNumber)
  * @method static string multiply(float|int|string $firstNumber, float|int|string $secondNumber)
  * @method static string divide(float|int|string $firstNumber, float|int|string $secondNumber)
+ * @method static string sum(float|int|string|array ...$numbers)
+ * @method static string diff(float|int|string|array ...$numbers)
+ * @method static string product(float|int|string|array ...$numbers)
+ * @method static string quotient(float|int|string|array ...$numbers)
  * @method static bool higherThan(float|int|string $firstNumber, float|int|string $secondNumber)
  * @method static bool lowerThan(float|int|string $firstNumber, float|int|string $secondNumber)
  * @method static bool equalTo(float|int|string $firstNumber, float|int|string $secondNumber)
@@ -29,25 +35,33 @@ class Math
     use ErrorThrow;
 
     protected static ?int $precision = null;
+    private static array $single = ['plus', 'minus', 'multiply', 'divide'];
+    private static array $batch = ['sum', 'diff', 'product', 'quotient'];
+    private static array $compare = ['higherThan', 'lowerThan', 'equalTo', 'higherThanOrEqualTo', 'lowerThanOrEqualTo'];
 
     /**
-     * Calculates or compares two numbers with bcmath, with the precision of the class, or the config
-     * eloquent-kompact.decimal.default-precision when it is null. Decimals after the precision are cut off
+     * Calculates or compares numbers with bcmath, with the precision of the class, or the config
+     * eloquent-kompact.decimal.default-precision when it is null. Decimals after the precision are cut off,
+     * only on the final result for sum(), diff(), product() and quotient()
      *
      * @param string $name
-     * @param array $arguments Exactly two numbers, each a float, an int or a numeric string
-     * @return string|bool A numeric string for plus(), minus(), multiply() and divide(), otherwise a bool
-     * @throws InvalidArgumentException When not exactly two numbers are given, a number is not numeric or the precision is negative
-     * @throws DivisionByZeroError When divide() is called with zero as the second number
+     * @param array $arguments Two numbers for single and comparison methods, or any amount of numbers for batch methods
+     * @return string|bool A numeric string for arithmetic methods, otherwise a bool
+     * @throws InvalidArgumentException When the argument count is invalid, a number is not numeric or the precision is negative
+     * @throws DivisionByZeroError When divide() or quotient() divides by zero
      * @throws BadMethodCallException When the method does not exist
      */
     public static function __callStatic(string $name, array $arguments): string|bool
     {
+        if (in_array($name, self::$batch)) {
+            return self::batch($name, $arguments);
+        }
+
         if (not_same_with(count($arguments), 2)) {
             throw new InvalidArgumentException("You need to pass exact two argument");
         }
 
-        if (is_any_not_type_of(['float', 'int', 'string'], $arguments)) {
+        if (array_any($arguments, fn ($value) => is_array($value)) || is_any_not_type_of(['float', 'int', 'string'], $arguments)) {
             throw new InvalidArgumentException("Parameter type is invalid. Ensure that you pass either float, int, or string as parameter");
         }
 
@@ -60,15 +74,9 @@ class Math
 
         normalize_numbers($precision, $firstNumber, $secondNumber);
 
-        if (in_array($name, ['plus', 'minus', 'multiply', 'divide'])) {
-            $method = match ($name) {
-                'plus' => 'bcadd',
-                'minus' => 'bcsub',
-                'multiply' => 'bcmul',
-                'divide' => 'bcdiv',
-            };
-            return $method($firstNumber, $secondNumber, $precision);
-        } elseif (in_array($name, ['higherThan', 'lowerThan', 'equalTo', 'higherThanOrEqualTo', 'lowerThanOrEqualTo'])) {
+        if (in_array($name, self::$single)) {
+            return bc(self::$single, $name)($firstNumber, $secondNumber, $precision);
+        } elseif (in_array($name, self::$compare)) {
             $result = bccomp($firstNumber, $secondNumber, $precision);
             return match ($name) {
                 'higherThan' => $result > 0,
@@ -83,15 +91,13 @@ class Math
     }
 
     /**
-     * Adds any amount of numbers with bcmath, cutting off the decimals after the precision of the class,
-     * or the config eloquent-kompact.decimal.default-precision when it is null, only on the total
-     *
-     * @param float|int|string ...$numbers Each a float, an int or a numeric string
-     * @return string A numeric string with the precision as its number of decimals, or '0' without a number
-     * @throws InvalidArgumentException When a number is not numeric or the precision is negative
+     * @param string $name
+     * @param array $numbers
+     * @return string
      */
-    public static function sum(float|int|string ...$numbers): string
+    private static function batch(string $name, array $numbers): string
     {
+        flat($numbers);
         if (is_count_zero($numbers)) {
             return '0';
         }
@@ -100,17 +106,72 @@ class Math
         }
         $precision = static::$precision;
         normalize_numbers($precision, ...$numbers);
-        if (is_any_not('numeric', $numbers) || $precision < 0) {
+        if (is_any('not_numeric', $numbers) || $precision < 0) {
             throw new InvalidArgumentException('Non-numeric passed as argument or negative number as precision parameter');
         }
-        $scale = max(array_map(fn (string $number) => str_contains($number, '.') ? strlen($number) - strpos($number, '.') - 1 : 0, $numbers));
-        $result = '0';
+        if (same_with(count($numbers), 1)) {
+            return bcadd($numbers[0], '0', $precision);
+        }
+        if (same_with($name, 'quotient')) {
+            return bcdiv(array_shift($numbers), exact_product($numbers), $precision);
+        }
+        if (same_with($name, 'product')) {
+            return bcadd(exact_product($numbers), '0', $precision);
+        }
+        $scale = max(array_map(decimal_scale(...), $numbers));
+        $result = array_shift($numbers);
+        $function = bc(self::$batch, $name);
         foreach ($numbers as $number) {
-            $result = bcadd($result, $number, $scale);
+            $result = $function($result, $number, $scale);
         }
 
         return bcadd($result, '0', $precision);
     }
+}
+
+/**
+ * @param array $payload
+ * @param string $name
+ * @return string
+ * @internal
+ */
+function bc(array $payload, string $name): string
+{
+    return concat('bc', match (array_search($name, $payload, true)) {
+        0 => 'add',
+        1 => 'sub',
+        2 => 'mul',
+        3 => 'div'
+    });
+}
+
+/**
+ * @param string $number
+ * @return int
+ * @internal
+ */
+function decimal_scale(string $number): int
+{
+    return str_contains($number, '.') ? strlen($number) - strpos($number, '.') - 1 : 0;
+}
+
+/**
+ * @param array $numbers
+ * @return string
+ * @internal
+ */
+function exact_product(array $numbers): string
+{
+    $result = array_shift($numbers);
+    foreach ($numbers as $number) {
+        $scale = decimal_scale($result) + decimal_scale($number);
+        $result = bcmul($result, $number, $scale);
+        if (str_contains($result, '.')) {
+            $result = rtrim(rtrim($result, '0'), '.');
+        }
+    }
+
+    return $result;
 }
 
 /**
@@ -122,7 +183,7 @@ class Math
  */
 function check_for_number_comparison($firstNumber, $secondNumber, $precision = null): bool
 {
-    return is_any_not('numeric', $firstNumber, $secondNumber) || (
+    return is_any('not_numeric', $firstNumber, $secondNumber) || (
             is_not_null($precision) && (! is_numeric($precision) || is_float($precision) || $precision < 0)
         );
 }

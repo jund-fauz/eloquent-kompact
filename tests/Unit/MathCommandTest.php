@@ -44,6 +44,10 @@ class MathCommandTest extends TestCase
         $this->assertStringContainsString('class Money extends Math', $content);
         $this->assertStringContainsString('protected static ?int $precision = 2;', $content);
         $this->assertStringContainsString(' * @method static string plus(float|int|string $firstNumber, float|int|string $secondNumber)', $content);
+        $this->assertStringContainsString(' * @method static string sum(float|int|string|array ...$numbers)', $content);
+        $this->assertStringContainsString(' * @method static string diff(float|int|string|array ...$numbers)', $content);
+        $this->assertStringContainsString(' * @method static string product(float|int|string|array ...$numbers)', $content);
+        $this->assertStringContainsString(' * @method static string quotient(float|int|string|array ...$numbers)', $content);
         $this->assertStringContainsString(' * @method static bool lowerThanOrEqualTo(float|int|string $firstNumber, float|int|string $secondNumber)', $content);
     }
 
@@ -55,6 +59,7 @@ class MathCommandTest extends TestCase
         require $this->tempPath . '/Logic/MathCommandTestMoney.php';
 
         $this->assertSame('2.55', \App\Logic\MathCommandTestMoney::plus('1.555', '1'));
+        $this->assertSame('2.50', \App\Logic\MathCommandTestMoney::product('0.005', '0.5', '1000'));
     }
 
     #[Test]

@@ -163,6 +163,72 @@ class MathTest extends TestCase
     }
 
     #[Test]
+    public function it_flattens_nested_arrays_in_batch_methods(): void
+    {
+        $this->assertSame('6.000', Math::sum([1, [2]], 3));
+        $this->assertSame('5.000', Math::diff([10, 2], [3]));
+        $this->assertSame('9.000', Math::product([2, 3], [1.5]));
+        $this->assertSame('4.000', Math::quotient([20, 2], [2.5]));
+        $this->assertSame('0', Math::sum([[]]));
+    }
+
+    #[Test]
+    public function it_rejects_an_array_in_two_argument_methods(): void
+    {
+        $this->expectException(InvalidArgumentException::class);
+
+        Math::plus([1], 2);
+    }
+
+    #[Test]
+    public function it_calculates_diff_of_numbers(): void
+    {
+        $this->assertSame('6.250', Math::diff(10, '2.5', 1.25));
+        $this->assertSame('1.999', Math::diff('1.9999'));
+        $this->assertSame('0', Math::diff());
+        $this->assertSame('999.000', Math::diff('1e3', ' 1 '));
+        $this->assertSame('3.000', Math::diff('5', '1.9994', '0.0004'));
+        $this->assertSame(Math::minus('1.9999', '0.5555'), Math::diff('1.9999', '0.5555'));
+        $this->assertSame('1.35', MathTestTwo::diff('5', '2.105', '1.545'));
+    }
+
+    #[Test]
+    public function it_calculates_product_of_numbers_before_cutting_off_the_decimals(): void
+    {
+        $this->assertSame('9.000', Math::product(2, '3', 1.5));
+        $this->assertSame('1.999', Math::product('1.9999'));
+        $this->assertSame('0', Math::product());
+        $this->assertSame('9.000', Math::product('-1.5', '2', '-3'));
+        $this->assertSame('2.500', Math::product('0.005', '0.5', '1000'));
+        $this->assertSame('39.996', Math::product('1.9999', '1.9999', '10'));
+        $this->assertSame(Math::multiply('1.9999', '1.9999'), Math::product('1.9999', '1.9999'));
+        $this->assertSame('2.50', MathTestTwo::product('0.005', '0.5', '1000'));
+        $this->assertSame('0', MathTestZero::product('1.9', '0.5'));
+    }
+
+    #[Test]
+    public function it_calculates_quotient_of_numbers_before_cutting_off_the_decimals(): void
+    {
+        $this->assertSame('4.000', Math::quotient(20, '2', 2.5));
+        $this->assertSame('3.333', Math::quotient('10', '3'));
+        $this->assertSame('1.999', Math::quotient('1.9999'));
+        $this->assertSame('0.000', Math::quotient(0));
+        $this->assertSame('0', Math::quotient());
+        $this->assertSame('3.333', Math::quotient('1', '3', '0.1'));
+        $this->assertSame('4.000', Math::quotient('1', '0.5', '0.5'));
+        $this->assertSame(Math::divide('10', '3'), Math::quotient('10', '3'));
+        $this->assertSame('3.33', MathTestTwo::quotient('1', '3', '0.1'));
+    }
+
+    #[Test]
+    public function it_fails_on_a_division_by_zero_in_quotient(): void
+    {
+        $this->expectException(DivisionByZeroError::class);
+
+        Math::quotient(10, 2, '0.00');
+    }
+
+    #[Test]
     public function it_rejects_a_non_number(): void
     {
         $this->expectException(InvalidArgumentException::class);

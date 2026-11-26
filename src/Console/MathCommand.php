@@ -47,14 +47,20 @@ class MathCommand extends Command
             return;
         }
 
+        $twoNumbers = '(float|int|string $firstNumber, float|int|string $secondNumber)';
+        $manyNumbers = '(float|int|string|array ...$numbers)';
+
         $docblock = build_class_docblock(
             merge(
-                array_fill_keys(['plus', 'minus', 'multiply', 'divide'], 'string'),
-                array_fill_keys(['higherThan', 'lowerThan', 'equalTo', 'higherThanOrEqualTo', 'lowerThanOrEqualTo'], 'bool')
+                array_map(fn (string $method) => "$method$twoNumbers", ['plus', 'minus', 'multiply', 'divide']),
+                array_map(fn (string $method) => "$method$manyNumbers", ['sum', 'diff', 'product', 'quotient']),
+                array_fill_keys(
+                    array_map(fn (string $method) => "$method$twoNumbers", ['higherThan', 'lowerThan', 'equalTo', 'higherThanOrEqualTo', 'lowerThanOrEqualTo']),
+                    'bool'
+                )
             ),
-            '',
-            true,
-            'float|int|string $firstNumber, float|int|string $secondNumber'
+            'string',
+            true
         );
 
         $classContent = build_class(
