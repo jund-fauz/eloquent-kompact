@@ -116,6 +116,37 @@ class AdditionalQueriesTest extends TestCase
     }
 
     #[Test]
+    public function it_gets_the_first_non_null_attribute_or_default_with_get_or(): void
+    {
+        $model = (new MorphComment)->forceFill([
+            'nickname' => null,
+            'name' => 'Ana',
+            'zero' => 0,
+            'empty' => '',
+            'off' => false,
+        ]);
+
+        $this->assertSame('Ana', $model->getOr('nickname', 'name'));
+        $this->assertSame(0, $model->getOr('nickname', 'zero', 'name'));
+        $this->assertSame('', $model->getOr('nickname', 'empty', 'name'));
+        $this->assertFalse($model->getOr('nickname', 'off', 'name'));
+        $this->assertNull($model->getOr('nickname', 'missing'));
+        $this->assertNull($model->getOr());
+
+        $withFallback = $model->withDefault('-');
+        $this->assertSame('-', $withFallback->getOr('nickname', 'missing'));
+        $this->assertSame('-', $withFallback->getOr());
+        $this->assertSame('Ana', $withFallback->getOr('nickname', 'name'));
+        $this->assertSame(0, $withFallback->getOr('nickname', 'zero'));
+        $this->assertSame('N/A', $withFallback->withDefault('N/A')->getOr('missing'));
+        $this->assertSame('-', $withFallback->getOr('missing'));
+
+        // Original model remains untouched
+        $this->assertNull($model->getOr('nickname', 'missing'));
+        $this->assertNull($model->getOr());
+    }
+
+    #[Test]
     public function it_gets_many_attributes_in_order(): void
     {
         $comment = MorphComment::find(3);

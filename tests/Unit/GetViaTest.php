@@ -186,9 +186,48 @@ class GetViaTest extends TestCase
     }
 
     #[Test]
+    public function it_uses_the_default_from_with_default_without_mutating_the_model(): void
+    {
+        $present = GetViaComment::find(1);
+        $missingUser = GetViaComment::find(2);
+        $missingPost = GetViaComment::find(3);
+        $fallbackUser = new GetViaUser;
+
+        $this->assertSame('Ana', $present->withDefault('-')->getVia('name', GetViaPost::class, GetViaUser::class));
+        $this->assertSame('-', $missingUser->withDefault('-')->getVia('name', GetViaPost::class, GetViaUser::class));
+        $this->assertSame('-', $missingPost->withDefault('-')->getVia('name', GetViaPost::class, GetViaUser::class));
+        $this->assertSame('-', $present->withDefault('-')->getVia('missing_col', GetViaPost::class, GetViaUser::class));
+
+        $this->assertSame(
+            ['mail' => '-', 'who' => '-'],
+            $missingUser->withDefault('-')->getVia(['mail' => 'email', 'who' => 'name'], GetViaPost::class, GetViaUser::class),
+        );
+        $this->assertSame(
+            ['mail' => 'ana@example.com', 'missing' => '-'],
+            $present->withDefault('-')->getVia(['mail' => 'email', 'missing' => 'missing_col'], GetViaPost::class, GetViaUser::class),
+        );
+        $this->assertSame([], $missingPost->withDefault('-')->getVia([], GetViaPost::class, GetViaUser::class));
+        $this->assertSame(
+            $missingPost->withDefault('-')->getManyVia(['name', 'email'], GetViaPost::class, GetViaUser::class),
+            $missingPost->withDefault('-')->getVia(['name', 'email'], GetViaPost::class, GetViaUser::class),
+        );
+
+        $this->assertSame($fallbackUser, $missingUser->withDefault($fallbackUser)->getRelVia(GetViaPost::class, GetViaUser::class));
+        $this->assertSame($fallbackUser, $missingPost->withDefault($fallbackUser)->getVia('', GetViaPost::class, GetViaUser::class));
+        $this->assertInstanceOf(GetViaUser::class, $present->withDefault($fallbackUser)->getRelVia(GetViaPost::class, GetViaUser::class));
+        $this->assertNotSame($fallbackUser, $present->withDefault($fallbackUser)->getRelVia(GetViaPost::class, GetViaUser::class));
+
+        // Original models remain untouched
+        $this->assertNull($missingUser->getVia('name', GetViaPost::class, GetViaUser::class));
+        $this->assertNull($missingUser->getRelVia(GetViaPost::class, GetViaUser::class));
+        $this->assertNull($missingPost->getVia('name', GetViaPost::class, GetViaUser::class));
+        $this->assertSame([null, null], $missingPost->getVia(['name', 'email'], GetViaPost::class, GetViaUser::class));
+    }
+
+    #[Test]
     public function it_has_the_methods_on_the_kompact_models(): void
     {
-        foreach (['getVia', 'getRelVia', 'getManyVia'] as $method) {
+        foreach (['withDefault', 'getOr', 'getVia', 'getRelVia', 'getManyVia'] as $method) {
             $this->assertTrue(method_exists(KompactModel::class, $method), "KompactModel::$method");
             $this->assertTrue(method_exists(KompactPivot::class, $method), "KompactPivot::$method");
         }

@@ -32,6 +32,7 @@ use function JundFauz\EloquentKompact\String\str;
 trait AdditionalQueries
 {
     protected static array $aqCache = [];
+    private mixed $defaultValue = null;
 
     public function copyRelationsTo(Model $target, array $relations): void
     {
@@ -49,12 +50,39 @@ trait AdditionalQueries
         }
     }
 
-    public function getOr(string ...$columnNames)
+    /**
+     * Returns a clone whose getOr(), getVia() and getRelVia() fall back to $value instead of null
+     *
+     * @param mixed $value
+     * @return static
+     */
+    public function withDefault(mixed $value): static
     {
-        return array_reduce($columnNames, fn ($acc, $column) => $acc ?? $this?->{$column});
+        $newInstance = clone $this;
+        $newInstance->defaultValue = $value;
+        return $newInstance;
     }
 
-    public function getVia(string|array $columnName = '', string|array ...$relationClasses)
+    /**
+     * The first non-null attribute, or the default set by withDefault() (null by default)
+     *
+     * @param string ...$columnNames
+     * @return mixed
+     */
+    public function getOr(string ...$columnNames): mixed
+    {
+        return array_reduce($columnNames, fn ($acc, $column) => $acc ?? $this?->{$column}) ?? $this->defaultValue;
+    }
+
+    /**
+     * An attribute, an array of attributes, or the related model reached through nested relations,
+     * falling back to the default set by withDefault() (null by default)
+     *
+     * @param string|array $columnName
+     * @param string|array ...$relationClasses
+     * @return mixed
+     */
+    public function getVia(string|array $columnName = '', string|array ...$relationClasses): mixed
     {
         $result = $this;
         foreach ($relationClasses as $relationClass) {
@@ -62,13 +90,19 @@ trait AdditionalQueries
         }
 
         return match (true) {
-            is_array($columnName) => array_map(fn (string $columnName) => $result?->{$columnName}, $columnName),
+            is_array($columnName) => array_map(fn (string $columnName) => $result?->{$columnName} ?? $this->defaultValue, $columnName),
             filled($columnName) => $result?->{$columnName},
             default => $result
-        };
+        } ?? $this->defaultValue;
     }
 
-    public function getRelVia(string|array ...$relationClasses)
+    /**
+     * The related model reached through nested relations, or the default set by withDefault() (null by default)
+     *
+     * @param string|array ...$relationClasses
+     * @return mixed
+     */
+    public function getRelVia(string|array ...$relationClasses): mixed
     {
         return $this->getVia('', ...$relationClasses);
     }
