@@ -811,6 +811,7 @@ Di tabel ini, `x` adalah subjek saat ini.
 | `zeroIfNull()` | `COALESCE(x, 0)` |
 | `replaceIfNull($value)` | `NULLIF(x, value)` |
 | `isNull()` | `x IS NULL` |
+| `isNotNull()` | `x IS NOT NULL` |
 | `isZeroOrNull(...$columns)` | `x = 0 OR x IS NULL OR a = 0 OR a IS NULL ...` |
 | `and($condition)` | `x AND condition`; rangkai lagi untuk kondisi tambahan |
 | `wrap()` | `(x)` |

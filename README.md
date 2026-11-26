@@ -811,6 +811,7 @@ In the table, `x` is the current subject.
 | `zeroIfNull()` | `COALESCE(x, 0)` |
 | `replaceIfNull($value)` | `NULLIF(x, value)` |
 | `isNull()` | `x IS NULL` |
+| `isNotNull()` | `x IS NOT NULL` |
 | `isZeroOrNull(...$columns)` | `x = 0 OR x IS NULL OR a = 0 OR a IS NULL ...` |
 | `and($condition)` | `x AND condition`; chain it for more conditions |
 | `wrap()` | `(x)` |
