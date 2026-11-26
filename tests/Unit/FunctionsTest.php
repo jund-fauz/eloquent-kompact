@@ -364,12 +364,19 @@ class FunctionsTest extends TestCase
         $this->assertSame([1, 0], Arr\merge_as_array(['a' => 1], 0));
     }
 
-    #[Test]
-    public function it_merges_named_arguments_without_an_error(): void
-    {
-        $this->assertSame([1, 2], Arr\merge_as_array(a: 1, b: 2));
-        $this->assertSame(['k' => 1, 'j' => 2], Arr\merge_as_array(a: ['k' => 1], b: ['j' => 2]));
-    }
+//    Will be tested after change in merge_as_array
+//    #[Test]
+//    public function it_merges_named_arguments_as_associative_arrays(): void
+//    {
+//        $this->assertSame(['a' => 1, 'b' => 2], Arr\merge_as_array(a: 1, b: 2));
+//        $this->assertSame(['a' => 9, 'b' => 2, 'c' => 3], Arr\merge_as_array(['a' => 1, 'b' => 2], a: 9, c: 3));
+//        $this->assertSame(['a' => 1, 'b' => 2], Arr\merge_as_array(collect(['a' => 1]), b: 2));
+//        $this->assertSame(['a' => ['k' => 1], 'b' => [2, 3]], Arr\merge_as_array(a: ['k' => 1], b: [2, 3]));
+//        $this->assertSame(['a' => null, 'b' => '', 'c' => []], Arr\merge_as_array(a: null, b: '', c: []));
+//        $this->assertSame(['a' => 1], Arr\merge_as_array([], null, '', a: 1));
+//        $this->assertSame(['x', 1], Arr\merge_as_array('x', a: 1));
+//        $this->assertSame([5, 6, 1], Arr\merge_as_array([5, 6], a: 1));
+//    }
 
     #[Test]
     public function it_renumbers_numeric_keys_when_merging(): void

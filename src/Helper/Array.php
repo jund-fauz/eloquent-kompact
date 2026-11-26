@@ -271,14 +271,21 @@ function merge(array ...$values): array
 
 /**
  * The associative arrays merged with their keys when every filled value is one,
- * otherwise every value as one flat list without the keys. Collections count as their items
+ * otherwise every value as one flat list without the keys. Collections count as their items,
+ * and a named argument counts as [name => value]
  *
  * @param mixed ...$values
  * @return array
  */
 function merge_as_array(mixed ...$values): array
 {
-    $values = array_map(fn ($value) => $value instanceof SupportCollection ? $value->all() : $value, $values);
+    foreach ($values as $key => $value) {
+        if (is_string($key)) {
+            $values[$key] = [$key => $value];
+        } elseif ($value instanceof SupportCollection) {
+            $values[$key] = $value->all();
+        }
+    }
     $filled = filter_filled($values);
 
     if ($filled && array_all($filled, fn ($value) => is_associative($value))) {

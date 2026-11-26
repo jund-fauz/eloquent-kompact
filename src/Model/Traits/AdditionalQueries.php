@@ -128,7 +128,7 @@ trait AdditionalQueries
         if (array_any($data, fn ($data) => array_is_list($data))) {
             return false;
         }
-        return $this->update(merge_as_array(...$data));
+        return $this->update(merge_as_array(...array_values($data)));
     }
 
     /**
