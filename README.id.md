@@ -464,6 +464,12 @@ $comment->getVia('name', ['latest' => Post::class]);               // $comment->
 // Model terkait dari relasi bersarang, tanpa kolom
 $comment->getRelVia(Post::class, User::class);                     // $comment->post?->user
 
+// Nilai default untuk getOr(), getVia() dan getRelVia() saat hasilnya (atau elemen array getVia()) null; mengembalikan clone
+$user->withDefault('-')->getOr('nickname', 'name');
+$comment->withDefault('-')->getVia('name', Post::class, User::class);
+$comment->withDefault('-')->getVia(['name', 'email'], Post::class, User::class);
+$comment->withDefault(new User)->getRelVia(Post::class, User::class);
+
 // Deprecated, dihapus di 3.0: pakai getVia() dengan array kolom, yang mempertahankan key-nya
 $comment->getManyVia(['name', 'email'], Post::class, User::class);
 

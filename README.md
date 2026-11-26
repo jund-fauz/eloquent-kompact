@@ -464,6 +464,12 @@ $comment->getVia('name', ['latest' => Post::class]);               // $comment->
 // The related model of nested relations, without a column
 $comment->getRelVia(Post::class, User::class);                     // $comment->post?->user
 
+// Default value for getOr(), getVia() and getRelVia() when the result (or an array item of getVia()) is null; returns a clone
+$user->withDefault('-')->getOr('nickname', 'name');
+$comment->withDefault('-')->getVia('name', Post::class, User::class);
+$comment->withDefault('-')->getVia(['name', 'email'], Post::class, User::class);
+$comment->withDefault(new User)->getRelVia(Post::class, User::class);
+
 // Deprecated, removed in 3.0: use getVia() with an array of columns, which keeps their keys
 $comment->getManyVia(['name', 'email'], Post::class, User::class);
 
