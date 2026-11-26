@@ -105,7 +105,7 @@ function build_class(string $className, string $classContent = '{}', string $par
 }
 
 /**
- * A class docblock with a @method line for every method
+ * A class docblock with a method line for every method
  *
  * @param array $methods Method names, or method name => return type
  * @param string $returnType The return type of the methods without one
