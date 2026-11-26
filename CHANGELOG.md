@@ -7,6 +7,25 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [2.15.0] - 2026-11-26
+
+### Added
+
+- `belongsToMany` support in `AutoRelation` (including prefixed pivot foreign keys) and `kompact:ide-helper` (`IdeHelperCommand`) when the Laravel joining pivot table exists with both foreign keys.
+
+### Changed
+
+- `Array\merge_as_array()` treats named arguments as `[name => value]` associative entries instead of dropping their names.
+
+### Documentation
+
+- Documented named arguments in `Array\merge_as_array()` and `belongsToMany` in `AutoRelation` in both READMEs.
+
+### Tests
+
+- Updated and expanded tests for named arguments in `Array\merge_as_array()`.
+- Added tests for `belongsToMany` resolution (including prefixed keys, inverse, and eager loading) in `AutoRelation` and `BelongsToMany` mixin generation in `kompact:ide-helper`.
+
 ## [2.14.0] - 2026-11-26
 
 ### Added
@@ -2702,7 +2721,8 @@ The first stable release: from now on, breaking changes only come in a major rel
 - `RawQuery` static helpers for raw SQL expressions.
 - Translations for `en` and `id`.
 
-[Unreleased]: https://github.com/jund-fauz/eloquent-kompact/compare/v2.14.0...HEAD
+[Unreleased]: https://github.com/jund-fauz/eloquent-kompact/compare/v2.15.0...HEAD
+[2.15.0]: https://github.com/jund-fauz/eloquent-kompact/compare/v2.14.0...v2.15.0
 [2.14.0]: https://github.com/jund-fauz/eloquent-kompact/compare/v2.13.0...v2.14.0
 [2.13.0]: https://github.com/jund-fauz/eloquent-kompact/compare/v2.12.0...v2.13.0
 [2.12.0]: https://github.com/jund-fauz/eloquent-kompact/compare/v2.11.0...v2.12.0
