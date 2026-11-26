@@ -84,6 +84,12 @@ class ValidationBuilderTest extends TestCase
     }
 
     #[Test]
+    public function it_builds_the_array_rule(): void
+    {
+        $this->assertSame(['required', 'array'], Validation::init()->required()->array()->build());
+    }
+
+    #[Test]
     public function it_throws_on_an_unknown_rule_method(): void
     {
         $this->expectException(BadMethodCallException::class);

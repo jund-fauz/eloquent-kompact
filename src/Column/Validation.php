@@ -17,9 +17,7 @@ use JundFauz\EloquentKompact\Regex\Regex;
 use function JundFauz\EloquentKompact\Array\in;
 use function JundFauz\EloquentKompact\collect;
 use function JundFauz\EloquentKompact\is_all;
-use function JundFauz\EloquentKompact\is_all_not;
 use function JundFauz\EloquentKompact\is_any;
-use function JundFauz\EloquentKompact\is_any_not;
 use function JundFauz\EloquentKompact\is_not;
 use function JundFauz\EloquentKompact\is_not_null;
 use function JundFauz\EloquentKompact\not;
@@ -33,6 +31,7 @@ use function JundFauz\EloquentKompact\String\str;
  * @method $this numeric()
  * @method $this boolean()
  * @method $this required()
+ * @method $this array()
  * @method $this min(float|int $num)
  * @method $this max(float|int $num)
  * @method $this digits(int $num)
@@ -57,7 +56,7 @@ class Validation
 
     public function __call(string $name, array $arguments): static
     {
-        if (in($name, 'integer,numeric,boolean,required')) {
+        if (in($name, 'integer,numeric,boolean,required,array')) {
             return $this->add($name);
         } elseif (in($name, 'min,max,digits,regex')) {
             $argument = array_shift($arguments);
@@ -74,7 +73,7 @@ class Validation
         } elseif (in($name, 'digitsBetween')) {
             if (not_same_with(count($arguments), 2)) {
                 throw new InvalidArgumentException("Argument should be exact two.");
-            } elseif (is_any_not('int', $arguments)) {
+            } elseif (is_any('not_int', $arguments)) {
                 throw new InvalidArgumentException("All arguments should be an integer.");
             }
             return $this->add(schema_concat(str('snake', $name), implode(',', $arguments)));
@@ -92,7 +91,7 @@ class Validation
         if (is_not_null($minDecimal)) {
             $result->concat($minDecimal);
         }
-        if (is_all_not('null', $minDecimal, $maxDecimal)) {
+        if (is_all('not_null', $minDecimal, $maxDecimal)) {
             $result->concat(',');
         }
         if (is_not_null($maxDecimal)) {
