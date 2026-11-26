@@ -59,6 +59,16 @@ class RawQuery extends Builder implements Expression
         return $this->set("$this IS NULL");
     }
 
+    /**
+     * Appends IS NOT NULL to the current expression
+     *
+     * @return static
+     */
+    public function isNotNull(): static
+    {
+        return $this->set("$this IS NOT NULL");
+    }
+
     public function and(string $otherColumn): static
     {
         return $this->set("$this AND $otherColumn");

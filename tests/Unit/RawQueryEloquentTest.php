@@ -69,6 +69,18 @@ class RawQueryEloquentTest extends TestCase
     }
 
     #[Test]
+    public function where_raw_accepts_is_not_null_instance(): void
+    {
+        $ids = DB::table('orders')
+            ->whereRaw(RawQuery::create('shipping')->isNotNull())
+            ->orderBy('id')
+            ->pluck('id')
+            ->all();
+
+        $this->assertSame([2, 3], $ids);
+    }
+
+    #[Test]
     public function group_by_raw_and_having_raw_accept_instance(): void
     {
         $customers = DB::table('orders')

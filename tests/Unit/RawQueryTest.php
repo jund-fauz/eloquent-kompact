@@ -23,6 +23,11 @@ class RawQueryTest extends TestCase
         yield 'zeroIfNull' => [RawQuery::create('price')->zeroIfNull(), 'COALESCE(price, 0)'];
         yield 'replaceIfNull' => [RawQuery::create('email')->replaceIfNull("''"), "NULLIF(email, '')"];
         yield 'isNull' => [RawQuery::create('deleted_at')->isNull(), 'deleted_at IS NULL'];
+        yield 'isNotNull' => [RawQuery::create('deleted_at')->isNotNull(), 'deleted_at IS NOT NULL'];
+        yield 'isNotNull in and' => [
+            RawQuery::create('a')->isNotNull()->and(RawQuery::create('b')->isNull()),
+            'a IS NOT NULL AND b IS NULL',
+        ];
         yield 'isZeroOrNull single' => [RawQuery::create('a')->isZeroOrNull(), 'a = 0 OR a IS NULL'];
         yield 'isZeroOrNull many' => [RawQuery::create('a')->isZeroOrNull('b'), 'a = 0 OR a IS NULL OR b = 0 OR b IS NULL'];
         yield 'and' => [RawQuery::create('a = 1')->and('b = 2'), 'a = 1 AND b = 2'];
