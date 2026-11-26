@@ -226,4 +226,29 @@ class IdeHelperCommandRunTest extends TestCase
         $this->assertStringNotContainsString('namespace', $this->helperFile());
         $this->assertSame([], $this->ideJson()['helperCode']['classMixins']);
     }
+
+    #[Test]
+    public function it_writes_belongs_to_many_relations_from_a_pivot_table(): void
+    {
+        Schema::create('article_label', function (Blueprint $table) {
+            $table->foreignId('article_id');
+            $table->foreignId('featured_article_id');
+            $table->foreignId('label_id');
+        });
+        ColumnListing::flush();
+
+        $this->artisan('kompact:ide-helper')->assertSuccessful();
+
+        $file = $this->helperFile();
+        $article = '\\'.Article::class;
+        $label = '\\'.Label::class;
+        $builder = '\\'.Builder::class;
+
+        $this->assertStringContainsString("@property-read \\Illuminate\\Database\\Eloquent\\Collection<int, $label> \$labels", $file);
+        $this->assertStringContainsString("@method \\Illuminate\\Database\\Eloquent\\Relations\\BelongsToMany<$label, $article>|$builder labels()", $file);
+        $this->assertStringContainsString("@property-read \\Illuminate\\Database\\Eloquent\\Collection<int, $label> \$featuredLabels", $file);
+        $this->assertStringContainsString("@method \\Illuminate\\Database\\Eloquent\\Relations\\BelongsToMany<$label, $article>|$builder featuredLabels()", $file);
+        $this->assertStringContainsString("@property-read \\Illuminate\\Database\\Eloquent\\Collection<int, $article> \$articles", $file);
+        $this->assertStringContainsString("@method \\Illuminate\\Database\\Eloquent\\Relations\\BelongsToMany<$article, $label>|$builder articles()", $file);
+    }
 }

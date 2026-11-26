@@ -6,6 +6,7 @@ use BadMethodCallException;
 use Closure;
 use Illuminate\Database\Eloquent\Relations\MorphTo;
 use Illuminate\Database\Eloquent\Relations\Relation;
+use Illuminate\Support\Facades\Schema;
 use Illuminate\Support\Str;
 use JundFauz\EloquentKompact\Column\ColumnListing;
 use JundFauz\EloquentKompact\Column\ColumnCreator;
@@ -69,6 +70,12 @@ trait AutoRelation
                     } elseif ($morphName = static::resolveMorphName($className, $table)) {
                         $type = 'morphMany';
                         $foreignKey = $morphName;
+                    } elseif (
+                        Schema::hasTable($pivotTable = (new static)->joiningTable($className))
+                        && ColumnListing::has($pivotTable, $foreignKey)
+                        && ColumnListing::has($pivotTable, $relatedKey = $className::foreign())
+                    ) {
+                        $type = 'belongsToMany';
                     } else {
                         throw new BadMethodCallException(__('eloquent-kompact::messages.relation_not_resolvable', [
                             'class' => static::class,
@@ -96,6 +103,7 @@ trait AutoRelation
                     'type' => $type,
                     'class' => $className,
                     'foreign_key' => $foreignKey,
+                    ...($type === 'belongsToMany' ? ['table' => $pivotTable, 'related_key' => $relatedKey] : []),
                 ];
             }
 
@@ -109,6 +117,7 @@ trait AutoRelation
     {
         return match ($config['type']) {
             'belongsTo' => $this->belongsTo($config['class'], $config['foreign_key']),
+            'belongsToMany' => $this->belongsToMany($config['class'], $config['table'], $config['foreign_key'], $config['related_key']),
             'hasMany' => $this->hasMany($config['class'], $config['foreign_key'] ?? null),
             'hasOne' => $this->hasOne($config['class'], $config['foreign_key'] ?? null),
             'morphMany' => $this->morphMany($config['class'], $config['foreign_key'])

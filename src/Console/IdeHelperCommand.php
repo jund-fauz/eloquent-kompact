@@ -9,10 +9,12 @@ use Illuminate\Console\Command;
 use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
+use Illuminate\Database\Eloquent\Relations\BelongsToMany;
 use Illuminate\Database\Eloquent\Relations\HasMany;
 use Illuminate\Database\Eloquent\Relations\HasOne;
 use Illuminate\Database\Eloquent\Relations\MorphMany;
 use Illuminate\Database\Eloquent\Relations\Relation;
+use Illuminate\Support\Facades\Schema;
 use JsonException;
 use JundFauz\EloquentKompact\Builder\Str;
 use JundFauz\EloquentKompact\Column\ColumnListing;
@@ -46,6 +48,7 @@ final class IdeHelperCommand extends Command
     protected const string MixinPrefix = '_EK_';
     protected const array RelationClasses = [
         'belongsTo' => BelongsTo::class,
+        'belongsToMany' => BelongsToMany::class,
         'hasOne' => HasOne::class,
         'hasMany' => HasMany::class,
         'morphMany' => MorphMany::class
@@ -161,8 +164,10 @@ final class IdeHelperCommand extends Command
             yield (string) ColumnCreator::getPlainColumnName($column)->camel() => null;
         }
 
+        $parentInstance = new $parent;
         $parentName = Str::of($parent)->classBasename()->snake();
         $morphMap = Relation::morphMap();
+        $tables = Schema::getTableListing(schemaQualified: false);
 
         foreach ($models as $model) {
             $table = (new $model)->getTable();
@@ -179,6 +184,20 @@ final class IdeHelperCommand extends Command
 
                     yield (string) $prefix->add($singular)->camel() => $model;
                     yield (string) $prefix->add($plural)->camel() => $model;
+                }
+            }
+
+            // belongsToMany: article_id & label_id in the article_label pivot table → Article::labels, Label::articles
+            $pivotTable = $parentInstance->joiningTable($model);
+            if (in_array($pivotTable, $tables, true)) {
+                foreach ($relationColumns($pivotTable) as $column) {
+                    $plain = ColumnCreator::getPlainColumnName($column);
+
+                    if ($plain->value() === $parentName->value() || $plain->endsWith("_$parentName")) {
+                        $prefix = $plain->beforeLast($parentName);
+
+                        yield (string) $prefix->add($plural)->camel() => $model;
+                    }
                 }
             }
 

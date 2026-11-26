@@ -56,6 +56,17 @@ class IdeHelperCommandTest extends TestCase
     }
 
     #[Test]
+    public function it_renders_belongs_to_many_relations_as_collections(): void
+    {
+        $block = $this->invoke('renderMixin', 'App\Models\Article', [
+            'labels' => ['type' => 'belongsToMany', 'class' => 'App\Models\Label'],
+        ]);
+
+        $this->assertStringContainsString('@property-read \Illuminate\Database\Eloquent\Collection<int, \App\Models\Label> $labels', $block);
+        $this->assertStringContainsString('@method \Illuminate\Database\Eloquent\Relations\BelongsToMany<\App\Models\Label, \App\Models\Article> labels()', $block);
+    }
+
+    #[Test]
     public function it_adds_the_builder_of_the_related_model_to_the_relation_method(): void
     {
         $block = $this->invoke('renderMixin', 'App\Models\Post', [

@@ -4,6 +4,7 @@ namespace JundFauz\EloquentKompact\Tests\Unit;
 
 use BadMethodCallException;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
+use Illuminate\Database\Eloquent\Relations\BelongsToMany;
 use Illuminate\Database\Eloquent\Relations\HasMany;
 use Illuminate\Database\Eloquent\Relations\HasOne;
 use Illuminate\Database\Eloquent\Relations\MorphMany;
@@ -196,5 +197,39 @@ class AutoRelationTest extends TestCase
 
         $this->assertSame(1, $note->notable->id);
         $this->assertInstanceOf(Article::class, $note->notable);
+    }
+
+    #[Test]
+    public function it_resolves_a_belongs_to_many_relation_via_a_pivot_table(): void
+    {
+        Schema::create('article_label', function (Blueprint $table) {
+            $table->foreignId('article_id')->nullable();
+            $table->foreignId('featured_article_id')->nullable();
+            $table->foreignId('label_id');
+        });
+        ColumnListing::flush();
+
+        DB::table('ar_labels')->insert([['name' => 'News'], ['name' => 'Tech']]);
+        DB::table('article_label')->insert([
+            ['article_id' => 1, 'featured_article_id' => null, 'label_id' => 1],
+            ['article_id' => 1, 'featured_article_id' => 2, 'label_id' => 2],
+        ]);
+
+        $article = Article::find(1);
+
+        $this->assertInstanceOf(BelongsToMany::class, $article->labels());
+        $this->assertSame('article_label', $article->labels()->getTable());
+        $this->assertSame('article_id', $article->labels()->getForeignPivotKeyName());
+        $this->assertSame('label_id', $article->labels()->getRelatedPivotKeyName());
+        $this->assertSame(['News', 'Tech'], $article->labels->pluck('name')->all());
+        $this->assertSame(['First'], Label::find(1)->articles->pluck('title')->all());
+
+        $featured = Article::find(2);
+        $this->assertSame('featured_article_id', $featured->featuredLabels()->getForeignPivotKeyName());
+        $this->assertSame(['Tech'], $featured->featuredLabels->pluck('name')->all());
+
+        $loaded = Article::with('labels')->find(1);
+        $this->assertTrue($loaded->relationLoaded('labels'));
+        $this->assertCount(2, $loaded->labels);
     }
 }
