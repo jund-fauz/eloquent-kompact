@@ -7,6 +7,20 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [2.13.0] - 2026-11-26
+
+### Added
+
+- `isNotNull()` on `RawQuery`: appends `IS NOT NULL` to the current expression.
+
+### Documentation
+
+- Documented `RawQuery::isNotNull()` in both READMEs.
+
+### Tests
+
+- Added tests for `RawQuery::isNotNull()`.
+
 ## [2.12.0] - 2026-11-26
 
 ### Added
@@ -2668,7 +2682,8 @@ The first stable release: from now on, breaking changes only come in a major rel
 - `RawQuery` static helpers for raw SQL expressions.
 - Translations for `en` and `id`.
 
-[Unreleased]: https://github.com/jund-fauz/eloquent-kompact/compare/v2.12.0...HEAD
+[Unreleased]: https://github.com/jund-fauz/eloquent-kompact/compare/v2.13.0...HEAD
+[2.13.0]: https://github.com/jund-fauz/eloquent-kompact/compare/v2.12.0...v2.13.0
 [2.12.0]: https://github.com/jund-fauz/eloquent-kompact/compare/v2.11.0...v2.12.0
 [2.11.0]: https://github.com/jund-fauz/eloquent-kompact/compare/v2.10.0...v2.11.0
 [2.10.0]: https://github.com/jund-fauz/eloquent-kompact/compare/v2.9.0...v2.10.0
