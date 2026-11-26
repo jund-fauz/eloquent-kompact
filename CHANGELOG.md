@@ -7,6 +7,26 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [2.14.0] - 2026-11-26
+
+### Added
+
+- `diff(...$numbers)`, `product(...$numbers)` and `quotient(...$numbers)` on `Math`: subtract, multiply or divide any amount of numbers from the first with bcmath, cutting off decimals after the precision only on the final result, and returning `'0'` without a number. `make:kompact-math` includes `sum()`, `diff()`, `product()` and `quotient()` in the generated `@method` docblock.
+- `sum()`, `diff()`, `product()` and `quotient()` on `Math` accept nested arrays, which are flattened.
+- `Validation::array()`: adds the `'array'` validation rule.
+
+### Fixed
+
+- Two-argument methods of `Math` throw an `InvalidArgumentException` when passed an array instead of failing with an array-to-string conversion error.
+
+### Documentation
+
+- Documented `Math::diff()`, `product()`, `quotient()` and nested arrays, and `Validation::array()` in both READMEs.
+
+### Tests
+
+- Added tests for `Math::diff()`, `product()`, `quotient()`, nested arrays in batch methods, array rejection in two-argument methods, `make:kompact-math` batch `@method` generation, and `Validation::array()`.
+
 ## [2.13.0] - 2026-11-26
 
 ### Added
@@ -2682,7 +2702,8 @@ The first stable release: from now on, breaking changes only come in a major rel
 - `RawQuery` static helpers for raw SQL expressions.
 - Translations for `en` and `id`.
 
-[Unreleased]: https://github.com/jund-fauz/eloquent-kompact/compare/v2.13.0...HEAD
+[Unreleased]: https://github.com/jund-fauz/eloquent-kompact/compare/v2.14.0...HEAD
+[2.14.0]: https://github.com/jund-fauz/eloquent-kompact/compare/v2.13.0...v2.14.0
 [2.13.0]: https://github.com/jund-fauz/eloquent-kompact/compare/v2.12.0...v2.13.0
 [2.12.0]: https://github.com/jund-fauz/eloquent-kompact/compare/v2.11.0...v2.12.0
 [2.11.0]: https://github.com/jund-fauz/eloquent-kompact/compare/v2.10.0...v2.11.0
