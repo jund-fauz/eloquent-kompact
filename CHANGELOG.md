@@ -7,6 +7,24 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [2.12.0] - 2026-11-26
+
+### Added
+
+- `withDefault($value)` on `AdditionalQueries`: returns a clone whose `getOr()`, `getVia()` (including per column when given an array) and `getRelVia()` fall back to `$value` instead of `null`.
+
+### Changed
+
+- `getOr()`, `getVia()` and `getRelVia()` on `AdditionalQueries` declare their `mixed` return type.
+
+### Documentation
+
+- Documented `withDefault()` in both READMEs.
+
+### Tests
+
+- Added tests for `getOr()` and `withDefault()` across `getOr()`, `getVia()`, `getRelVia()` and `getManyVia()`.
+
 ## [2.11.0] - 2026-11-25
 
 ### Added
@@ -2650,7 +2668,8 @@ The first stable release: from now on, breaking changes only come in a major rel
 - `RawQuery` static helpers for raw SQL expressions.
 - Translations for `en` and `id`.
 
-[Unreleased]: https://github.com/jund-fauz/eloquent-kompact/compare/v2.11.0...HEAD
+[Unreleased]: https://github.com/jund-fauz/eloquent-kompact/compare/v2.12.0...HEAD
+[2.12.0]: https://github.com/jund-fauz/eloquent-kompact/compare/v2.11.0...v2.12.0
 [2.11.0]: https://github.com/jund-fauz/eloquent-kompact/compare/v2.10.0...v2.11.0
 [2.10.0]: https://github.com/jund-fauz/eloquent-kompact/compare/v2.9.0...v2.10.0
 [2.9.0]: https://github.com/jund-fauz/eloquent-kompact/compare/v2.8.0...v2.9.0
