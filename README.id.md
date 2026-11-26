@@ -398,7 +398,7 @@ protected function defineRules(?Model $record = null): array
 }
 ```
 
-Isinya `required()`, `integer()`, `numeric()`, `boolean()`, `min($number)`, `max($number)`, `digits($digits)`, `digitsBetween($from, $until)`, `decimal($min = null, $max = null)`, `regex($regex)` dan `unique($column = null, $model = null, $record = null)`, dan `build()` mengembalikan aturannya sebagai array. `unique()` dengan kolom dan model adalah `uniqueRule($column, $record)` dari model itu; tanpa salah satunya, yang ditambahkan adalah aturan `'unique'` polos. Setiap method mengembalikan instance baru, jadi satu base bisa dipakai ulang. `decimal()` butuh setidaknya satu argumen, atau akan melempar `BadMethodCallException`. `min()` dan `max()` menerima satu angka (string numerik juga), `digits()` satu `int` dan `digitsBetween()` dua `int`, misalnya `digitsBetween(4, 6)` → `'digits_between:4,6'`; `regex()` menerima satu string atau `Regex`. Argumen lain melempar `InvalidArgumentException`.
+Isinya `required()`, `integer()`, `numeric()`, `boolean()`, `array()`, `min($number)`, `max($number)`, `digits($digits)`, `digitsBetween($from, $until)`, `decimal($min = null, $max = null)`, `regex($regex)` dan `unique($column = null, $model = null, $record = null)`, dan `build()` mengembalikan aturannya sebagai array. `unique()` dengan kolom dan model adalah `uniqueRule($column, $record)` dari model itu; tanpa salah satunya, yang ditambahkan adalah aturan `'unique'` polos. Setiap method mengembalikan instance baru, jadi satu base bisa dipakai ulang. `decimal()` butuh setidaknya satu argumen, atau akan melempar `BadMethodCallException`. `min()` dan `max()` menerima satu angka (string numerik juga), `digits()` satu `int` dan `digitsBetween()` dua `int`, misalnya `digitsBetween(4, 6)` → `'digits_between:4,6'`; `regex()` menerima satu string atau `Regex`. Argumen lain melempar `InvalidArgumentException`.
 
 ### AutoCast
 
@@ -989,7 +989,7 @@ Method Laravel yang mengembalikan hal lain (`explode()`, `length()`, `contains()
 
 ## Math
 
-`JundFauz\EloquentKompact\Math\Math` menghitung dan membandingkan dua angka dengan bcmath, untuk `int`, `float` dan string numerik, misalnya cast decimal seperti `'2.50'`. Float, eksponen seperti `'1E5'` dan angka yang diapit spasi dibaca sebagai angka. Desimal setelah precision dipotong:
+`JundFauz\EloquentKompact\Math\Math` menghitung dan membandingkan angka dengan bcmath, untuk `int`, `float` dan string numerik, misalnya cast decimal seperti `'2.50'`. Float, eksponen seperti `'1E5'` dan angka yang diapit spasi dibaca sebagai angka. Desimal setelah precision dipotong:
 
 ```php
 use JundFauz\EloquentKompact\Math\Math;
@@ -999,7 +999,8 @@ Math::divide('10', '3');            // '3.333'
 Math::higherThan('2.50', '2.00');   // true
 Math::equalTo('2.50', 2.5);         // true
 Math::higherThan('0.0005', '0');    // false, dipotong di 3 desimal
-Math::sum('1.9999', '1.9999', '1.9999'); // '5.999', dipotong hanya pada totalnya
+Math::sum('1.9999', '1.9999', '1.9999'); // '5.999', dipotong hanya pada hasil akhirnya
+Math::product('0.005', '0.5', '1000');   // '2.500'
 ```
 
 | Method | Hasil |
@@ -1007,9 +1008,9 @@ Math::sum('1.9999', '1.9999', '1.9999'); // '5.999', dipotong hanya pada totalny
 | `plus($a, $b)` / `minus($a, $b)` / `multiply($a, $b)` / `divide($a, $b)` | `$a + $b` / `$a - $b` / `$a * $b` / `$a / $b` sebagai string numerik dengan jumlah desimal sebanyak precision |
 | `higherThan($a, $b)` / `lowerThan($a, $b)` / `equalTo($a, $b)` | `$a > $b` / `$a < $b` / `$a == $b` sebagai angka |
 | `higherThanOrEqualTo($a, $b)` / `lowerThanOrEqualTo($a, $b)` | `$a >= $b` / `$a <= $b` sebagai angka |
-| `sum(...$numbers)` | Total dari angka sebanyak apa pun sebagai string numerik dengan jumlah desimal sebanyak precision, dipotong hanya pada totalnya; `'0'` tanpa angka |
+| `sum(...$numbers)` / `diff(...$numbers)` / `product(...$numbers)` / `quotient(...$numbers)` | Angka sebanyak apa pun (array bersarang diratakan) dijumlahkan / dikurangkan / dikalikan / dibagi dari angka pertama sebagai string numerik dengan jumlah desimal sebanyak precision, dipotong hanya pada hasil akhirnya; `'0'` tanpa angka |
 
-Setiap method kecuali `sum()` menerima tepat dua angka. Method melempar `InvalidArgumentException` untuk jumlah argumen lain, nilai yang bukan `float`, `int` atau string numerik, atau precision negatif, `DivisionByZeroError` untuk `divide()` dengan nol, dan `BadMethodCallException` untuk method lain.
+Setiap method kecuali `sum()`, `diff()`, `product()` dan `quotient()` menerima tepat dua angka. Method melempar `InvalidArgumentException` untuk jumlah argumen lain, nilai yang bukan `float`, `int` atau string numerik, atau precision negatif, `DivisionByZeroError` untuk `divide()` atau `quotient()` dengan nol, dan `BadMethodCallException` untuk method lain.
 
 Precision-nya adalah `$precision` milik class, atau config `decimal.default-precision` (`3`) kalau bernilai `null`. Untuk precision lain, extend `Math`:
 

@@ -398,7 +398,7 @@ protected function defineRules(?Model $record = null): array
 }
 ```
 
-It has `required()`, `integer()`, `numeric()`, `boolean()`, `min($number)`, `max($number)`, `digits($digits)`, `digitsBetween($from, $until)`, `decimal($min = null, $max = null)`, `regex($regex)` and `unique($column = null, $model = null, $record = null)`, and `build()` returns the rules as an array. `unique()` with a column and a model is the `uniqueRule($column, $record)` of that model; without either of them it adds the plain `'unique'` rule. Every method returns a new instance, so one base can be reused. `decimal()` needs at least one of its arguments, or it throws a `BadMethodCallException`. `min()` and `max()` take one number (a numeric string too), `digits()` one `int` and `digitsBetween()` two `int`s, e.g. `digitsBetween(4, 6)` → `'digits_between:4,6'`; `regex()` takes one string or `Regex`. Other arguments throw an `InvalidArgumentException`.
+It has `required()`, `integer()`, `numeric()`, `boolean()`, `array()`, `min($number)`, `max($number)`, `digits($digits)`, `digitsBetween($from, $until)`, `decimal($min = null, $max = null)`, `regex($regex)` and `unique($column = null, $model = null, $record = null)`, and `build()` returns the rules as an array. `unique()` with a column and a model is the `uniqueRule($column, $record)` of that model; without either of them it adds the plain `'unique'` rule. Every method returns a new instance, so one base can be reused. `decimal()` needs at least one of its arguments, or it throws a `BadMethodCallException`. `min()` and `max()` take one number (a numeric string too), `digits()` one `int` and `digitsBetween()` two `int`s, e.g. `digitsBetween(4, 6)` → `'digits_between:4,6'`; `regex()` takes one string or `Regex`. Other arguments throw an `InvalidArgumentException`.
 
 ### AutoCast
 
@@ -989,7 +989,7 @@ Laravel's methods that return something else (`explode()`, `length()`, `contains
 
 ## Math
 
-`JundFauz\EloquentKompact\Math\Math` calculates and compares two numbers with bcmath, for `int`, `float` and numeric strings, e.g. decimal casts like `'2.50'`. Floats, exponents such as `'1E5'` and numbers with surrounding spaces are read as numbers. Decimals after the precision are cut off:
+`JundFauz\EloquentKompact\Math\Math` calculates and compares numbers with bcmath, for `int`, `float` and numeric strings, e.g. decimal casts like `'2.50'`. Floats, exponents such as `'1E5'` and numbers with surrounding spaces are read as numbers. Decimals after the precision are cut off:
 
 ```php
 use JundFauz\EloquentKompact\Math\Math;
@@ -999,7 +999,8 @@ Math::divide('10', '3');            // '3.333'
 Math::higherThan('2.50', '2.00');   // true
 Math::equalTo('2.50', 2.5);         // true
 Math::higherThan('0.0005', '0');    // false, cut off at 3 decimals
-Math::sum('1.9999', '1.9999', '1.9999'); // '5.999', cut off only on the total
+Math::sum('1.9999', '1.9999', '1.9999'); // '5.999', cut off only on the final result
+Math::product('0.005', '0.5', '1000');   // '2.500'
 ```
 
 | Method | Result |
@@ -1007,9 +1008,9 @@ Math::sum('1.9999', '1.9999', '1.9999'); // '5.999', cut off only on the total
 | `plus($a, $b)` / `minus($a, $b)` / `multiply($a, $b)` / `divide($a, $b)` | `$a + $b` / `$a - $b` / `$a * $b` / `$a / $b` as a numeric string with the precision as its number of decimals |
 | `higherThan($a, $b)` / `lowerThan($a, $b)` / `equalTo($a, $b)` | `$a > $b` / `$a < $b` / `$a == $b` as numbers |
 | `higherThanOrEqualTo($a, $b)` / `lowerThanOrEqualTo($a, $b)` | `$a >= $b` / `$a <= $b` as numbers |
-| `sum(...$numbers)` | The total of any amount of numbers as a numeric string with the precision as its number of decimals, cut off only on the total; `'0'` without a number |
+| `sum(...$numbers)` / `diff(...$numbers)` / `product(...$numbers)` / `quotient(...$numbers)` | Any amount of numbers (nested arrays flattened) added / subtracted / multiplied / divided from the first as a numeric string with the precision as its number of decimals, cut off only on the final result; `'0'` without a number |
 
-Every method except `sum()` takes exactly two numbers. It throws an `InvalidArgumentException` for another number of arguments, a value that is not a `float`, an `int` or a numeric string, or a negative precision, a `DivisionByZeroError` for `divide()` by zero and a `BadMethodCallException` for another method.
+Every method except `sum()`, `diff()`, `product()` and `quotient()` takes exactly two numbers. It throws an `InvalidArgumentException` for another number of arguments, a value that is not a `float`, an `int` or a numeric string, or a negative precision, a `DivisionByZeroError` for `divide()` or `quotient()` by zero and a `BadMethodCallException` for another method.
 
 The precision is the `$precision` of the class, or the config `decimal.default-precision` (`3`) when it is `null`. For another precision, extend `Math`:
 
