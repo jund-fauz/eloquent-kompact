@@ -15,10 +15,12 @@ use Illuminate\Database\Eloquent\Relations\HasOne;
 use Illuminate\Database\Eloquent\Relations\MorphMany;
 use Illuminate\Database\Eloquent\Relations\Relation;
 use Illuminate\Support\Facades\Schema;
+use Illuminate\Support\Str as SupportStr;
 use JsonException;
 use JundFauz\EloquentKompact\Builder\Str;
 use JundFauz\EloquentKompact\Column\ColumnListing;
 use JundFauz\EloquentKompact\Column\ColumnCreator;
+use JundFauz\EloquentKompact\Column\Convert;
 use JundFauz\EloquentKompact\Model\KompactPivot;
 use JundFauz\EloquentKompact\Model\Traits\AutoRelation;
 use ReflectionClass;
@@ -41,7 +43,7 @@ use const JundFauz\EloquentKompact\NEW_LINE;
 
 final class IdeHelperCommand extends Command
 {
-    protected $signature = 'kompact:ide-helper';
+    protected $signature = 'make:ide-helper';
     protected $description = "Generate IDE autocomplete for AutoRelation's relation";
 
     public const string Filename = '_ide_helper_kompact.php';
@@ -58,6 +60,9 @@ final class IdeHelperCommand extends Command
     protected const string Indentation = '    ';
 
     /**
+     * Generates `_ide_helper_kompact.php` and updates `ide.json` with dynamic relation mixins.
+     *
+     * @return int
      * @throws ReflectionException
      * @throws JsonException
      */
@@ -148,6 +153,8 @@ final class IdeHelperCommand extends Command
     }
 
     /**
+     * Yields candidate dynamic relation names mapped to their expected related model class (or null for `belongsTo`).
+     *
      * @param string $parent
      * @param list<class-string<Model>> $models
      * @param Closure $call
@@ -160,18 +167,32 @@ final class IdeHelperCommand extends Command
             static fn (string $column): bool => ColumnCreator::getColumnType($column) === ColumnCreator::Relation
         );
 
+        $parentInstance = new $parent;
+        $parentTable = $parentInstance->getTable();
+        $tables = Schema::getTableListing(schemaQualified: false);
+
+        // KompactPivot own belongsTo endpoints (including custom foreign keys and aliases)
+        if (is_subclass_of($parent, KompactPivot::class) && in_array($parentTable, $tables, true)) {
+            foreach ($parent::pivotEndpoints() as $endpoint) {
+                foreach ($endpoint['relations'] as $rel) {
+                    $fk = $endpoint['foreign_key'] ?? ColumnCreator::relation(SupportStr::snake($rel));
+                    if (ColumnListing::has($parentTable, $fk)) {
+                        yield $rel => $endpoint['class'];
+                    }
+                }
+            }
+        }
+
         // belongsTo: author_user_id in its own table → authorUser
-        foreach ($relationColumns((new $parent)->getTable()) as $column) {
+        foreach ($relationColumns($parentTable) as $column) {
             yield (string) ColumnCreator::getPlainColumnName($column)->camel() => null;
         }
 
-        $parentInstance = new $parent;
         $parentName = Str::of($parent)->classBasename()->snake();
         $morphMap = Relation::morphMap();
-        $tables = Schema::getTableListing(schemaQualified: false);
         $customPivots = array_values(array_filter(
             $models,
-            static fn (string $class): bool => is_subclass_of($class, KompactPivot::class) && count($class::pivotBetween()) >= 2
+            static fn (string $class): bool => is_subclass_of($class, KompactPivot::class) && count($class::pivotEndpoints()) >= 2
         ));
 
         foreach ($models as $model) {
@@ -192,11 +213,111 @@ final class IdeHelperCommand extends Command
                 }
             }
 
+            // hasOne & hasMany onto KompactPivot models via custom endpoint foreign keys
+            if (in_array($model, $customPivots, true) && in_array($table, $tables, true)) {
+                $parentEndpoints = [];
+                foreach ($model::pivotEndpoints() as $ep) {
+                    if (! same_with($ep['class'], $parent)) {
+                        continue;
+                    }
+
+                    $fk = $ep['foreign_key'] ?? Convert::modelToColumn($parent);
+                    if (ColumnListing::has($table, $fk)) {
+                        $parentEndpoints[] = ['fk' => $fk, 'foreign_key' => $ep['foreign_key'], 'relations' => $ep['relations']];
+                    }
+                }
+
+                if (count($parentEndpoints) === 1 && $parentEndpoints[0]['foreign_key'] !== null) {
+                    yield (string) $singular->camel() => $model;
+                    yield (string) $plural->camel() => $model;
+                } elseif (count($parentEndpoints) > 1) {
+                    $nameMatchedCount = 0;
+                    foreach ($parentEndpoints as $ep) {
+                        foreach ($ep['relations'] as $rel) {
+                            if (str_starts_with($singular->value(), SupportStr::snake($rel).'_')) {
+                                $nameMatchedCount++;
+                                break;
+                            }
+                        }
+                    }
+
+                    if ($nameMatchedCount === 1) {
+                        yield (string) $singular->camel() => $model;
+                        yield (string) $plural->camel() => $model;
+                    }
+                }
+
+                foreach ($parentEndpoints as $ep) {
+                    if ($ep['foreign_key'] === null) {
+                        continue;
+                    }
+
+                    foreach ($ep['relations'] as $rel) {
+                        $relSnake = SupportStr::snake($rel);
+                        if (str_starts_with($singular->value(), "{$relSnake}_")) {
+                            continue;
+                        }
+
+                        $relFk = ColumnCreator::relation($relSnake);
+                        $matchingCount = 0;
+                        foreach ($parentEndpoints as $candidate) {
+                            if (in_array($rel, $candidate['relations'], true) || $candidate['fk'] === $relFk) {
+                                $matchingCount++;
+                            }
+                        }
+
+                        if ($matchingCount === 1) {
+                            yield SupportStr::camel("{$relSnake}_{$singular}") => $model;
+                            yield SupportStr::camel("{$relSnake}_{$plural}") => $model;
+                        }
+                    }
+                }
+            }
+
             // belongsToMany: standard joiningTable or custom KompactPivot::$pivotBetween
             $pivotTables = [$parentInstance->joiningTable($model)];
             foreach ($customPivots as $pivotClass) {
                 if ($pivotClass::connects($parent, $model)) {
                     $pivotTables[] = $pivotClass::tableName();
+
+                    $customPivotTable = $pivotClass::tableName();
+                    if (! same_with($parent, $model) && in_array($customPivotTable, $tables, true)) {
+                        $selfValid = [];
+                        $relatedValid = [];
+                        foreach ($pivotClass::pivotEndpoints() as $ep) {
+                            if (same_with($ep['class'], $parent)) {
+                                $fk = $ep['foreign_key'] ?? Convert::modelToColumn($parent);
+                                if (ColumnListing::has($customPivotTable, $fk)) {
+                                    $selfValid[] = ['fk' => $fk, 'foreign_key' => $ep['foreign_key'], 'relations' => $ep['relations']];
+                                }
+                            } elseif (same_with($ep['class'], $model)) {
+                                $rk = $ep['foreign_key'] ?? Convert::modelToColumn($model);
+                                if (ColumnListing::has($customPivotTable, $rk)) {
+                                    $relatedValid[] = ['fk' => $rk, 'foreign_key' => $ep['foreign_key'], 'relations' => $ep['relations']];
+                                }
+                            }
+                        }
+
+                        if (count($selfValid) === 1 && count($relatedValid) === 1) {
+                            yield (string) $plural->camel() => $model;
+                        } elseif (count($relatedValid) === 1 && count($selfValid) > 1) {
+                            foreach ($selfValid as $ep) {
+                                if ($ep['foreign_key'] !== null) {
+                                    foreach ($ep['relations'] as $rel) {
+                                        yield SupportStr::camel(SupportStr::snake($rel)."_{$plural}") => $model;
+                                    }
+                                }
+                            }
+                        } elseif (count($selfValid) === 1 && count($relatedValid) > 1) {
+                            foreach ($relatedValid as $ep) {
+                                if ($ep['foreign_key'] !== null) {
+                                    foreach ($ep['relations'] as $rel) {
+                                        yield SupportStr::camel(SupportStr::snake($rel)."_{$plural}") => $model;
+                                    }
+                                }
+                            }
+                        }
+                    }
                 }
             }
 
@@ -219,6 +340,46 @@ final class IdeHelperCommand extends Command
             // morphMany: The runtime accepts it in any parent, so it is restricted to morphMap if one exists.
             if (blank($morphMap) || in_array($parent, $morphMap, true) && $call('resolveMorphName', $model, $table)) {
                 yield (string) $plural->camel() => $model;
+            }
+        }
+
+        // belongsToMany plural endpoint aliases on custom KompactPivots (e.g. ParentLedger::subs())
+        $modelNamespace = config('eloquent-kompact.path.model');
+        foreach ($customPivots as $pivotClass) {
+            $pivotTable = $pivotClass::tableName();
+            if (! in_array($pivotTable, $tables, true)) {
+                continue;
+            }
+
+            $endpoints = $pivotClass::pivotEndpoints();
+            foreach ($endpoints as $targetIdx => $targetEp) {
+                if ($targetEp['foreign_key'] === null || ! ColumnListing::has($pivotTable, $targetEp['foreign_key'])) {
+                    continue;
+                }
+
+                $hasSelfOther = false;
+                foreach ($endpoints as $selfIdx => $selfEp) {
+                    if ($selfIdx === $targetIdx || ! same_with($selfEp['class'], $parent)) {
+                        continue;
+                    }
+
+                    $fk = $selfEp['foreign_key'] ?? Convert::modelToColumn($parent);
+                    if (ColumnListing::has($pivotTable, $fk)) {
+                        $hasSelfOther = true;
+                        break;
+                    }
+                }
+
+                if (! $hasSelfOther) {
+                    continue;
+                }
+
+                foreach ($targetEp['relations'] as $rel) {
+                    $pluralRel = SupportStr::plural($rel);
+                    if ($call('resolvePluralPivotAlias', $modelNamespace, SupportStr::singular($pluralRel)) !== null) {
+                        yield $pluralRel => $targetEp['class'];
+                    }
+                }
             }
         }
     }
@@ -252,6 +413,12 @@ final class IdeHelperCommand extends Command
         return same_with($builder, Builder::class) ? null : $builder;
     }
 
+    /**
+     * Fully qualified helper mixin class name for `$class`.
+     *
+     * @param string $class
+     * @return string
+     */
     protected function mixinFqn(string $class): string
     {
         return namespace_concat(
@@ -261,6 +428,13 @@ final class IdeHelperCommand extends Command
         );
     }
 
+    /**
+     * Renders the namespace block and docblock for a model's dynamic relation mixin class.
+     *
+     * @param string $parent
+     * @param array<string, array<string, mixed>> $relations
+     * @return string
+     */
     protected function renderMixin(string $parent, array $relations): string
     {
         $mixin = $this->mixinFqn($parent);
@@ -290,6 +464,12 @@ final class IdeHelperCommand extends Command
         );
     }
 
+    /**
+     * Renders the complete `_ide_helper_kompact.php` file content from rendered mixin blocks.
+     *
+     * @param array<int, string> $blocks
+     * @return string
+     */
     protected function renderFile(array $blocks): string
     {
         return concat(

@@ -11,8 +11,13 @@ use JundFauz\EloquentKompact\Model\Builder;
 use JundFauz\EloquentKompact\Model\KompactModel;
 use JundFauz\EloquentKompact\Tests\Fixtures\AutoRelation\Article;
 use JundFauz\EloquentKompact\Tests\Fixtures\AutoRelation\ArticleLabelConnector;
+use JundFauz\EloquentKompact\Tests\Fixtures\AutoRelation\Author;
+use JundFauz\EloquentKompact\Tests\Fixtures\AutoRelation\AuthorPostConnector;
+use JundFauz\EloquentKompact\Tests\Fixtures\AutoRelation\CastingConnector;
 use JundFauz\EloquentKompact\Tests\Fixtures\AutoRelation\Label;
 use JundFauz\EloquentKompact\Tests\Fixtures\AutoRelation\Note;
+use JundFauz\EloquentKompact\Tests\Fixtures\AutoRelation\ParentLedger;
+use JundFauz\EloquentKompact\Tests\Fixtures\AutoRelation\Post;
 use JundFauz\EloquentKompact\Tests\Fixtures\AutoRelation\Writer;
 use JundFauz\EloquentKompact\Tests\TestCase;
 use PHPUnit\Framework\Attributes\Test;
@@ -92,7 +97,7 @@ class IdeHelperCommandRunTest extends TestCase
     #[Test]
     public function it_writes_the_helper_file_and_ide_json(): void
     {
-        $this->artisan('kompact:ide-helper')
+        $this->artisan('make:ide-helper')
             ->expectsOutput('4 model(s) written to _ide_helper_kompact.php and ide.json.')
             ->assertSuccessful();
 
@@ -104,7 +109,7 @@ class IdeHelperCommandRunTest extends TestCase
     #[Test]
     public function it_writes_the_dynamic_relations_of_each_model(): void
     {
-        $this->artisan('kompact:ide-helper')->assertSuccessful();
+        $this->artisan('make:ide-helper')->assertSuccessful();
 
         $file = $this->helperFile();
         $writer = '\\'.Writer::class;
@@ -144,7 +149,7 @@ class IdeHelperCommandRunTest extends TestCase
         \Illuminate\Database\Eloquent\Relations\Relation::morphMap(['article' => Article::class]);
 
         try {
-            $this->artisan('kompact:ide-helper')
+            $this->artisan('make:ide-helper')
                 ->expectsOutput('2 model(s) written to _ide_helper_kompact.php and ide.json.')
                 ->assertSuccessful();
         } finally {
@@ -161,7 +166,7 @@ class IdeHelperCommandRunTest extends TestCase
     #[Test]
     public function it_skips_a_relation_declared_as_a_method(): void
     {
-        $this->artisan('kompact:ide-helper')->assertSuccessful();
+        $this->artisan('make:ide-helper')->assertSuccessful();
 
         $this->assertStringNotContainsString('$notable', $this->helperFile());
     }
@@ -169,7 +174,7 @@ class IdeHelperCommandRunTest extends TestCase
     #[Test]
     public function it_warns_about_a_relation_that_cannot_be_resolved(): void
     {
-        $this->artisan('kompact:ide-helper')
+        $this->artisan('make:ide-helper')
             ->expectsOutputToContain(Writer::class.'::labels')
             ->assertSuccessful();
 
@@ -179,7 +184,7 @@ class IdeHelperCommandRunTest extends TestCase
     #[Test]
     public function it_registers_the_mixins_in_ide_json(): void
     {
-        $this->artisan('kompact:ide-helper')->assertSuccessful();
+        $this->artisan('make:ide-helper')->assertSuccessful();
 
         $json = $this->ideJson();
 
@@ -203,7 +208,7 @@ class IdeHelperCommandRunTest extends TestCase
             'helperCode' => ['classMixins' => [$other, $old]],
         ]));
 
-        $this->artisan('kompact:ide-helper')->assertSuccessful();
+        $this->artisan('make:ide-helper')->assertSuccessful();
 
         $json = $this->ideJson();
         $mixins = $json['helperCode']['classMixins'];
@@ -220,7 +225,7 @@ class IdeHelperCommandRunTest extends TestCase
     {
         File::cleanDirectory($this->appPath);
 
-        $this->artisan('kompact:ide-helper')
+        $this->artisan('make:ide-helper')
             ->expectsOutput('0 model(s) written to _ide_helper_kompact.php and ide.json.')
             ->assertSuccessful();
 
@@ -238,7 +243,7 @@ class IdeHelperCommandRunTest extends TestCase
         });
         ColumnListing::flush();
 
-        $this->artisan('kompact:ide-helper')->assertSuccessful();
+        $this->artisan('make:ide-helper')->assertSuccessful();
 
         $file = $this->helperFile();
         $article = '\\'.Article::class;
@@ -269,7 +274,7 @@ class IdeHelperCommandRunTest extends TestCase
         \Illuminate\Database\Eloquent\Relations\Relation::morphMap(['article' => Article::class]);
 
         try {
-            $this->artisan('kompact:ide-helper')->assertSuccessful();
+            $this->artisan('make:ide-helper')->assertSuccessful();
         } finally {
             \Illuminate\Database\Eloquent\Relations\Relation::morphMap([], false);
         }
@@ -286,5 +291,107 @@ class IdeHelperCommandRunTest extends TestCase
         $this->assertStringContainsString("@method \\Illuminate\\Database\\Eloquent\\Relations\\BelongsToMany<$label, $article, $pivot>|$builder featuredLabels()", $file);
         $this->assertStringContainsString("@property-read \\Illuminate\\Database\\Eloquent\\Collection<int, $article> \$articles", $file);
         $this->assertStringContainsString("@method \\Illuminate\\Database\\Eloquent\\Relations\\BelongsToMany<$article, $label, $pivot>|$builder articles()", $file);
+    }
+
+    #[Test]
+    public function it_writes_mixins_for_mapped_self_pivot_and_its_connected_model(): void
+    {
+        $modelPath = $this->appPath.'/JundFauz/EloquentKompact/Tests/Fixtures/AutoRelation';
+        File::put($modelPath.'/ParentLedger.php', '<?php');
+        File::put($modelPath.'/CastingConnector.php', '<?php');
+
+        Schema::create('ar_parent_ledgers', function (Blueprint $table) {
+            $table->id();
+        });
+        Schema::create('ar_casting_connector', function (Blueprint $table) {
+            $table->id();
+            $table->foreignId('casting_id');
+            $table->foreignId('target_sub_id');
+        });
+        ColumnListing::flush();
+        KompactModel::flushKompactCache();
+
+        \Illuminate\Database\Eloquent\Relations\Relation::morphMap(['article' => Article::class]);
+
+        try {
+            $this->artisan('make:ide-helper')->assertSuccessful();
+        } finally {
+            \Illuminate\Database\Eloquent\Relations\Relation::morphMap([], false);
+        }
+
+        $file = $this->helperFile();
+        $ledger = '\\'.ParentLedger::class;
+        $connector = '\\'.CastingConnector::class;
+        $builder = '\\'.Builder::class;
+
+        // Mixin on CastingConnector itself (belongsTo endpoints & aliases)
+        $this->assertStringContainsString('class _EK_CastingConnector {}', $file);
+        $this->assertStringContainsString("@property-read $ledger|null \$casting", $file);
+        $this->assertStringContainsString("@method \\Illuminate\\Database\\Eloquent\\Relations\\BelongsTo<$ledger, $connector>|$builder casting()", $file);
+        $this->assertStringContainsString("@property-read $ledger|null \$sub", $file);
+        $this->assertStringContainsString("@method \\Illuminate\\Database\\Eloquent\\Relations\\BelongsTo<$ledger, $connector>|$builder sub()", $file);
+        $this->assertStringContainsString("@property-read $ledger|null \$targetSub", $file);
+        $this->assertStringContainsString("@method \\Illuminate\\Database\\Eloquent\\Relations\\BelongsTo<$ledger, $connector>|$builder targetSub()", $file);
+
+        // Mixin on ParentLedger (hasOne/hasMany onto CastingConnector + belongsToMany endpoint aliases)
+        $this->assertStringContainsString('class _EK_ParentLedger {}', $file);
+        $this->assertStringContainsString("@method \\Illuminate\\Database\\Eloquent\\Relations\\HasMany<$connector, $ledger>|$builder castingConnectors()", $file);
+        $this->assertStringContainsString("@method \\Illuminate\\Database\\Eloquent\\Relations\\HasMany<$connector, $ledger>|$builder subCastingConnectors()", $file);
+        $this->assertStringContainsString("@method \\Illuminate\\Database\\Eloquent\\Relations\\HasMany<$connector, $ledger>|$builder targetSubCastingConnectors()", $file);
+        $this->assertStringContainsString("@property-read \\Illuminate\\Database\\Eloquent\\Collection<int, $ledger> \$subs", $file);
+        $this->assertStringContainsString("@method \\Illuminate\\Database\\Eloquent\\Relations\\BelongsToMany<$ledger, $ledger, $connector>|$builder subs()", $file);
+        $this->assertStringContainsString("@method \\Illuminate\\Database\\Eloquent\\Relations\\BelongsToMany<$ledger, $ledger, $connector>|$builder targetSubs()", $file);
+        $this->assertStringContainsString("@method \\Illuminate\\Database\\Eloquent\\Relations\\BelongsToMany<$ledger, $ledger, $connector>|$builder castings()", $file);
+    }
+
+    #[Test]
+    public function it_writes_mixins_for_non_self_custom_pivot_with_custom_foreign_keys(): void
+    {
+        $modelPath = $this->appPath.'/JundFauz/EloquentKompact/Tests/Fixtures/AutoRelation';
+        File::put($modelPath.'/Author.php', '<?php');
+        File::put($modelPath.'/Post.php', '<?php');
+        File::put($modelPath.'/AuthorPostConnector.php', '<?php');
+
+        Schema::create('ar_authors', function (Blueprint $table) {
+            $table->id();
+        });
+        Schema::create('ar_posts', function (Blueprint $table) {
+            $table->id();
+        });
+        Schema::create('ar_author_post_connector', function (Blueprint $table) {
+            $table->id();
+            $table->foreignId('writer_id');
+            $table->foreignId('article_id');
+        });
+        ColumnListing::flush();
+        KompactModel::flushKompactCache();
+
+        \Illuminate\Database\Eloquent\Relations\Relation::morphMap(['article' => Article::class]);
+
+        try {
+            $this->artisan('make:ide-helper')->assertSuccessful();
+        } finally {
+            \Illuminate\Database\Eloquent\Relations\Relation::morphMap([], false);
+        }
+
+        $file = $this->helperFile();
+        $author = '\\'.Author::class;
+        $post = '\\'.Post::class;
+        $connector = '\\'.AuthorPostConnector::class;
+        $builder = '\\'.Builder::class;
+
+        $this->assertStringContainsString('class _EK_AuthorPostConnector {}', $file);
+        $this->assertStringContainsString("@method \\Illuminate\\Database\\Eloquent\\Relations\\BelongsTo<$author, $connector>|$builder writer()", $file);
+        $this->assertStringContainsString("@method \\Illuminate\\Database\\Eloquent\\Relations\\BelongsTo<$post, $connector>|$builder article()", $file);
+
+        $this->assertStringContainsString('class _EK_Author {}', $file);
+        $this->assertStringContainsString("@method \\Illuminate\\Database\\Eloquent\\Relations\\BelongsToMany<$post, $author, $connector>|$builder posts()", $file);
+        $this->assertStringContainsString("@method \\Illuminate\\Database\\Eloquent\\Relations\\BelongsToMany<$post, $author, $connector>|$builder articles()", $file);
+        $this->assertStringContainsString("@method \\Illuminate\\Database\\Eloquent\\Relations\\HasMany<$connector, $author>|$builder authorPostConnectors()", $file);
+
+        $this->assertStringContainsString('class _EK_Post {}', $file);
+        $this->assertStringContainsString("@method \\Illuminate\\Database\\Eloquent\\Relations\\BelongsToMany<$author, $post, $connector>|$builder authors()", $file);
+        $this->assertStringContainsString("@method \\Illuminate\\Database\\Eloquent\\Relations\\BelongsToMany<$author, $post, $connector>|$builder writers()", $file);
+        $this->assertStringContainsString("@method \\Illuminate\\Database\\Eloquent\\Relations\\HasMany<$connector, $post>|$builder authorPostConnectors()", $file);
     }
 }
