@@ -347,6 +347,12 @@ class AdditionalQueriesTest extends TestCase
         $keyed->assign(['note' => 'still_kept'], ['same_with' => null]);
 
         $this->assertSame(['paid', 'keep', 'filled_in'], $keyed->getMany('status', 'note', 'empty_note'));
+
+        // Positional null items in $condition are ignored
+        $positionalNull = (new MorphComment)->forceFill(['a' => 'old', 'b' => 'keep', 'c' => '   ']);
+        $positionalNull->assign('a', 'new', [null]);
+        $positionalNull->assign(['b' => 'overwritten', 'c' => 'trimmed'], [null, 'blank']);
+        $this->assertSame(['new', 'keep', 'trimmed'], $positionalNull->getMany('a', 'b', 'c'));
     }
 
     #[Test]
@@ -375,6 +381,18 @@ class AdditionalQueriesTest extends TestCase
         $nullCheckTarget = (new MorphComment)->forceFill(['commentable_type' => 'post', 'note' => null]);
         $nullCheckTarget->assignFromIf(['same_with' => null], $other, 'commentable_type', 'note');
         $this->assertSame(['post', 'from_other'], $nullCheckTarget->getMany('commentable_type', 'note'));
+
+        // Nullable $condition and positional null items in $condition
+        $positionalNullTarget = (new MorphComment)->forceFill(['commentable_type' => 'post', 'note' => '   ']);
+        $positionalNullTarget->assignFromIf([null, 'blank'], $other, 'commentable_type', 'note');
+        $this->assertSame(['post', 'from_other'], $positionalNullTarget->getMany('commentable_type', 'note'));
+
+        $positionalNullTarget->assignFromIf([null], $other, 'commentable_type');
+        $this->assertSame('video', $positionalNullTarget->commentable_type);
+
+        $nullCondTarget = (new MorphComment)->forceFill(['commentable_type' => 'post']);
+        $nullCondTarget->assignFromIf(null, $other, 'commentable_type');
+        $this->assertSame('video', $nullCondTarget->commentable_type);
     }
 
     #[Test]

@@ -10,6 +10,7 @@ use JundFauz\EloquentKompact\Column\Convert;
 use ReflectionClass;
 use ReflectionException;
 use ReflectionNamedType;
+use function JundFauz\EloquentKompact\Array\filter;
 use function JundFauz\EloquentKompact\Array\filter_filled;
 use function JundFauz\EloquentKompact\Array\flat;
 use function JundFauz\EloquentKompact\Array\is_count_zero;
@@ -490,7 +491,7 @@ trait AdditionalQueries
         } else {
             $condition ??= $valueOrCondition;
         }
-        $condition = wrap($condition);
+        $condition = filter(wrap($condition), fn ($value, $key) => is_string($key) || is_not_null($value));
         $notNeedCondition = is_count_zero($condition);
         foreach ($columns as $column => $value) {
             if ($notNeedCondition || $this->isAllOf($column, ...$condition)) {
@@ -509,16 +510,18 @@ trait AdditionalQueries
     /**
      * Copies each column from $other when it satisfies isAllOf($column, ...$condition), without saving
      *
-     * @param string|array $condition
+     * @param string|array|null $condition
      * @param Model $other
      * @param string ...$columns
      * @return void
      */
-    public function assignFromIf(string|array $condition, Model $other, string ...$columns): void
+    public function assignFromIf(string|array|null $condition, Model $other, string ...$columns): void
     {
+        $condition = filter(wrap($condition), fn ($value, $key) => is_string($key) || is_not_null($value));
+        $notNeedCondition = is_count_zero($condition);
         foreach ($columns as $column) {
-            if ($this->isAllOf($column, ...wrap($condition))) {
-                $this->assign($column, $other->{$column});
+            if ($notNeedCondition || $this->isAllOf($column, ...$condition)) {
+                $this->{$column} = $other->{$column};
             }
         }
     }
