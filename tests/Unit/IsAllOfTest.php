@@ -5,13 +5,24 @@ namespace JundFauz\EloquentKompact\Tests\Unit;
 use BadMethodCallException;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\Relation;
+use Illuminate\Database\Schema\Blueprint;
+use Illuminate\Support\Facades\Schema;
 use JundFauz\EloquentKompact\Column\ColumnCreator;
+use JundFauz\EloquentKompact\Model\KompactModel;
+use JundFauz\EloquentKompact\Model\KompactPivot;
 use JundFauz\EloquentKompact\Model\Traits\AdditionalQueries;
 use JundFauz\EloquentKompact\Tests\TestCase;
 use PHPUnit\Framework\Attributes\Test;
 
 class IsAllOfTest extends TestCase
 {
+    protected function tearDown(): void
+    {
+        Relation::morphMap([], false);
+
+        parent::tearDown();
+    }
+
     private function model(): IsAllOfModel
     {
         $model = (new IsAllOfModel)->forceFill(['note' => null, 'status' => 'draft', 'qty' => 5])->syncOriginal();
@@ -170,26 +181,6 @@ class IsAllOfTest extends TestCase
     }
 
     #[Test]
-    public function it_gives_the_same_result_as_the_deprecated_were_changed_methods(): void
-    {
-        foreach ([[], ['a'], ['b'], ['a', 'b']] as $changed) {
-            $m = (new IsAllOfModel)->forceFill(['a' => 1, 'b' => 2])->syncOriginal();
-            foreach ($changed as $column) {
-                $m->{$column} = 9;
-            }
-            $m->syncChanges();
-            $state = 'changed: ' . implode(', ', $changed);
-
-            foreach ([['a'], ['b'], ['a', 'b']] as $columns) {
-                $this->assertSame($m->wereChanged(...$columns), $m->isAll('was_changed', ...$columns), $state);
-                $this->assertSame($m->wereNotChanged(...$columns), $m->isAllNot('was_changed', ...$columns), $state);
-            }
-            $this->assertSame($m->wereChanged(), $m->wasChanged(), $state);
-            $this->assertSame($m->wereNotChanged(), ! $m->wasChanged(), $state);
-        }
-    }
-
-    #[Test]
     public function it_takes_a_logic_word_as_the_last_column_of_same_with_other(): void
     {
         $model = (new IsAllOfModel)->forceFill(['a' => 1, 'b' => 2]);
@@ -207,69 +198,163 @@ class IsAllOfTest extends TestCase
     }
 
     #[Test]
-    public function it_gives_the_same_result_as_the_deprecated_same_with_other_methods(): void
+    public function it_checks_dirty_with_same_with_and_not_same_with(): void
     {
-        $model = (new IsAllOfModel)->forceFill(['a' => 1, 'b' => 2]);
+        $model = (new IsAllOfModel)->forceFill(['a' => 1, 'b' => 2])->syncOriginal();
+        $this->assertFalse($model->isAllOf('a', 'dirty', sameWith: [1]));
+        $this->assertFalse($model->isAllOf('a', 'dirty', not_same_with: [5]));
 
-        foreach ([[1, 2], [1, 3], [0, 2], [0, 3]] as [$a, $b]) {
-            $other = (new IsAllOfModel)->forceFill(['a' => $a, 'b' => $b]);
-            foreach ([['a'], ['b'], ['a', 'b'], ['b', 'a']] as $columns) {
-                $state = "[$a, $b] " . implode(', ', $columns);
-                $this->assertSame($model->sameWithOtherOr($other, ...$columns), $model->sameWithOther($other, ...$columns, ...['or']), $state);
-                $this->assertSame($model->notSameWithOther($other, ...$columns), ! $model->sameWithOther($other, ...$columns, ...['or']), $state);
-                $this->assertSame($model->notSameWithOtherOr($other, ...$columns), ! $model->sameWithOther($other, ...$columns), $state);
-            }
-            $this->assertSame($model->sameWithOtherOr($other), $model->sameWithOther($other, ...['or']));
-        }
+        $model->a = 5;
+        $this->assertTrue($model->isAllOf('a', 'dirty', sameWith: [5]));
+        $this->assertFalse($model->isAllOf('a', 'dirty', sameWith: [1]));
+        $this->assertFalse($model->isAllOf('a', 'dirty', sameWith: ['5']));
+        $this->assertTrue($model->isAllOf('a', 'dirty', not_same_with: [1]));
+        $this->assertFalse($model->isAllOf('a', 'dirty', not_same_with: [5]));
     }
 
     #[Test]
-    public function it_gives_the_same_result_as_the_deprecated_not_same_with(): void
+    public function it_checks_dirty_with_blank_filled_null_and_not_null(): void
     {
-        $model = (new IsAllOfModel)->forceFill(['a' => null, 'b' => 3, 'c' => 'x'])->syncOriginal();
-        $model->b = 4;
+        $model = (new IsAllOfModel)->forceFill(['a' => 1, 'note' => 'x'])->syncOriginal();
+        $this->assertFalse($model->isAllOf('note', 'dirty', 'blank'));
+        $this->assertFalse($model->isAllOf('note', 'dirty', 'filled'));
+        $this->assertFalse($model->isAllOf('a', 'dirty', 'not_null'));
+        $this->assertFalse((new IsAllOfModel)->forceFill(['note' => ''])->syncOriginal()->isAllOf('note', 'dirty', 'blank'));
+        $this->assertFalse((new IsAllOfModel)->forceFill(['note' => null])->syncOriginal()->isAllOf('note', 'dirty', 'null'));
 
-        foreach ([['b', 4, null], ['b', '4', null], ['b', '4', 'integer'], ['b', 3, null], ['c', 'x', null], ['a', null, null], ['a', '', 'string']] as [$column, $value, $cast]) {
-            $state = json_encode([$column, $value, $cast]);
-            $this->assertSame($model->notSameWith($column, $value, $cast), $model->not('same_with', $column, $value, $cast), $state);
-            $this->assertSame($model->notSameWith($column, $value, $cast), $model->isAllOf($column, not_same_with: [$value, $cast]), $state);
-            $this->assertSame($model->isDirty($column) && $model->notSameWith($column, $value, $cast), $model->isAllOf($column, 'dirty', not_same_with: [$value, $cast]), $state);
-        }
+        $model->note = '   ';
+        $this->assertTrue($model->isAllOf('note', 'dirty', 'blank'));
+        $this->assertFalse($model->isAllOf('note', 'dirty', 'filled'));
+
+        $model->note = '0';
+        $this->assertFalse($model->isAllOf('note', 'dirty', 'blank'));
+        $this->assertTrue($model->isAllOf('note', 'dirty', 'filled'));
+
+        $model->note = 'y';
+        $this->assertFalse($model->isAllOf('note', 'dirty', 'blank'));
+        $this->assertTrue($model->isAllOf('note', 'dirty', 'filled'));
+
+        $model->a = null;
+        $this->assertTrue($model->isAllOf('a', 'dirty', 'null'));
+        $this->assertFalse($model->isAllOf('a', 'dirty', 'not_null'));
+
+        $model->a = 5;
+        $this->assertFalse($model->isAllOf('a', 'dirty', 'null'));
+        $this->assertTrue($model->isAllOf('a', 'dirty', 'not_null'));
     }
 
     #[Test]
-    public function it_gives_the_same_result_as_the_deprecated_and_dirty_methods(): void
+    public function it_checks_dirty_with_morph_type_and_morph_map(): void
     {
-        $other = (new IsAllOfModel)->forceFill(['a' => 10, 'b' => 20]);
         $type = ColumnCreator::type('owner');
-        $alias = Relation::getMorphAlias(IsAllOfModel::class);
-        $conditions = ['a' => 10, 'b' => [2, 20]];
+        $model = (new IsAllOfModel)->forceFill([$type => IsAllOfModel::class])->syncOriginal();
+        $this->assertFalse($model->isAllOf($type, 'dirty', sameWith: [Relation::getMorphAlias(IsAllOfModel::class)]));
 
-        foreach ([[1, 2], [10, 2], [1, 20], [10, 20]] as [$a0, $b0]) {
-            foreach ([[1, 2], [10, 2], [1, 20], [10, 20], [null, ''], [' ', null]] as [$a, $b]) {
-                $m = (new IsAllOfModel)->forceFill(['a' => $a0, 'b' => $b0, $type => 'x'])->syncOriginal();
-                $m->a = $a;
-                $m->b = $b;
-                if ($a === 10) {
-                    $m->{$type} = $alias;
-                }
-                $state = "[$a0, $b0] -> [" . var_export($a, true) . ', ' . var_export($b, true) . ']';
+        $model->{$type} = IsAllOfOther::class;
+        $this->assertTrue($model->isAllOf($type, 'dirty', sameWith: [Relation::getMorphAlias(IsAllOfOther::class)]));
+        $this->assertFalse($model->isAllOf($type, 'dirty', sameWith: [Relation::getMorphAlias(IsAllOfModel::class)]));
 
-                $this->assertSame($m->sameWithAndDirty('a', 10), $m->isAllOf('a', 'dirty', sameWith: [10, null]), $state);
-                $this->assertSame($m->sameWithAndDirty('a', '10', 'integer'), $m->isAllOf('a', 'dirty', sameWith: ['10', 'integer']), $state);
-                $this->assertSame($m->notSameWithAndDirty('a', 10), $m->isAllOf('a', 'dirty', notSameWith: [10, null]), $state);
-                $this->assertSame($m->sameWithOtherAndDirty($other, 'a', 'b'), $m->isAll('dirty', 'a', 'b') && $m->sameWithOther($other, 'a', 'b'), $state);
-                $this->assertSame($m->notSameWithOtherAndDirty($other, 'a', 'b'), $m->isAll('dirty', 'a', 'b') && ! $m->sameWithOther($other, 'a', 'b', 'or'), $state);
-                $this->assertSame($m->sameWithOtherOrAndDirty($other, 'a', 'b'), array_any(['a', 'b'], fn ($c) => $m->isAllOf($c, 'dirty', sameWith: [$other->{$c}])), $state);
-                $this->assertSame($m->notSameWithOtherOrAndDirty($other, 'a', 'b'), array_any(['a', 'b'], fn ($c) => $m->isAllOf($c, 'dirty', notSameWith: [$other->{$c}])), $state);
-                $this->assertSame($m->matchAndDirty($conditions), $m->isAll('dirty', array_keys($conditions)) && $m->match($conditions), $state);
-                $this->assertSame($m->matchAndDirty([]), $m->isAll('dirty', []) && $m->match([]), $state);
-                $this->assertSame($m->isMorphModelSameAndDirty('owner', IsAllOfModel::class), $m->isAllOf($type, 'dirty', sameWith: [$alias]), $state);
-                $this->assertSame($m->isBlankAndDirty('b'), $m->isAllOf('b', 'dirty', 'blank'), $state);
-                $this->assertSame($m->isFilledAndDirty('b'), $m->isAllOf('b', 'dirty', 'filled'), $state);
-                $this->assertSame($m->isNullAndDirty('a'), $m->isAllOf('a', 'dirty', 'null'), $state);
-                $this->assertSame($m->isNotNullAndDirty('a'), $m->isAllOf('a', 'dirty', 'not_null'), $state);
-            }
+        Relation::morphMap(['other' => IsAllOfOther::class], false);
+        $this->assertFalse($model->isAllOf($type, 'dirty', sameWith: [Relation::getMorphAlias(IsAllOfOther::class)]));
+
+        $model->{$type} = 'other';
+        $this->assertTrue($model->isAllOf($type, 'dirty', sameWith: [Relation::getMorphAlias(IsAllOfOther::class)]));
+    }
+
+    #[Test]
+    public function it_is_not_dirty_when_the_value_goes_back(): void
+    {
+        $model = (new IsAllOfModel)->forceFill(['a' => 1])->syncOriginal();
+        $model->a = 5;
+        $model->a = 1;
+
+        $this->assertFalse($model->isAllOf('a', 'dirty', sameWith: [1]));
+    }
+
+    #[Test]
+    public function it_treats_every_attribute_of_a_new_model_as_dirty(): void
+    {
+        $model = (new IsAllOfModel)->forceFill(['a' => 1]);
+
+        $this->assertTrue($model->isAllOf('a', 'dirty', sameWith: [1]));
+    }
+
+    #[Test]
+    public function it_is_not_dirty_after_saving(): void
+    {
+        $this->createLifecycleTable();
+
+        $model = (new IsAllOfLifecycleModel)->forceFill(['a' => 1]);
+        $model->save();
+
+        $this->assertFalse($model->isAllOf('a', 'dirty', sameWith: [1]));
+    }
+
+    #[Test]
+    public function it_is_still_dirty_in_the_saved_event(): void
+    {
+        $this->createLifecycleTable();
+
+        $results = [];
+        IsAllOfLifecycleModel::saving(function (IsAllOfLifecycleModel $model) use (&$results) {
+            $results['saving'] = $model->isAllOf('a', 'dirty', sameWith: [1]);
+        });
+        IsAllOfLifecycleModel::saved(function (IsAllOfLifecycleModel $model) use (&$results) {
+            $results['saved'] = $model->isAllOf('a', 'dirty', sameWith: [1]);
+        });
+
+        try {
+            (new IsAllOfLifecycleModel)->forceFill(['a' => 1])->save();
+        } finally {
+            IsAllOfLifecycleModel::flushEventListeners();
+        }
+
+        $this->assertSame(['saving' => true, 'saved' => true], $results);
+    }
+
+    #[Test]
+    public function it_checks_was_changed_across_columns_during_model_persistence(): void
+    {
+        $this->createLifecycleTable();
+
+        $model = IsAllOfLifecycleModel::create(['a' => 1, 'b' => 1]);
+        $this->assertFalse($model->isAll('was_changed', 'a', 'b'));
+        $this->assertTrue($model->isAllNot('was_changed', 'a', 'b'));
+
+        // Unsaved dirty changes do not count as was_changed
+        $model->a = 2;
+        $this->assertFalse($model->isAll('was_changed', 'a'));
+        $this->assertTrue($model->isAllNot('was_changed', 'a'));
+
+        // Saving updates was_changed, and a subsequent no-op save keeps the last update's changes
+        $model->save();
+        $this->assertTrue($model->isAll('was_changed', 'a'));
+        $this->assertFalse($model->isAll('was_changed', 'b'));
+        $this->assertFalse($model->isAll('was_changed', 'a', 'b'));
+        $this->assertFalse($model->isAllNot('was_changed', 'a'));
+        $this->assertTrue($model->isAllNot('was_changed', 'b'));
+        $this->assertFalse($model->isAllNot('was_changed', 'a', 'b'));
+
+        $model->save();
+        $this->assertTrue($model->isAll('was_changed', 'a'));
+
+        $model->update(['a' => 3, 'b' => 3]);
+        $this->assertTrue($model->isAll('was_changed', 'a', 'b'));
+        $this->assertFalse($model->isAllNot('was_changed', 'a', 'b'));
+    }
+
+    #[Test]
+    public function it_has_the_check_methods_on_the_kompact_models(): void
+    {
+        $methods = [
+            'matchAll', 'any', 'not', 'if',
+            'isAll', 'isAny', 'isAllNot', 'isAnyNot',
+            'isAllOf', 'isAnyOf',
+        ];
+
+        foreach ($methods as $method) {
+            $this->assertTrue(method_exists(KompactModel::class, $method), "KompactModel::$method");
+            $this->assertTrue(method_exists(KompactPivot::class, $method), "KompactPivot::$method");
         }
     }
 
@@ -279,6 +364,15 @@ class IsAllOfTest extends TestCase
         $this->expectException(BadMethodCallException::class);
 
         $this->model()->isAllOf('qty', 'kompact_missing_check');
+    }
+
+    private function createLifecycleTable(): void
+    {
+        Schema::create('is_all_of_lifecycle_models', function (Blueprint $table) {
+            $table->id();
+            $table->integer('a')->nullable();
+            $table->integer('b')->nullable();
+        });
     }
 }
 
@@ -300,3 +394,16 @@ class IsAllOfModel extends Model
         return 'not a bool';
     }
 }
+
+class IsAllOfLifecycleModel extends Model
+{
+    use AdditionalQueries;
+
+    protected $table = 'is_all_of_lifecycle_models';
+
+    protected $guarded = [];
+
+    public $timestamps = false;
+}
+
+class IsAllOfOther extends Model {}

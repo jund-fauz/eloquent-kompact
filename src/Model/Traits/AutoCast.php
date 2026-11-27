@@ -4,20 +4,27 @@ namespace JundFauz\EloquentKompact\Model\Traits;
 
 use JundFauz\EloquentKompact\Builder\Str;
 use JundFauz\EloquentKompact\Column\ColumnCreator;
+use JundFauz\EloquentKompact\Model\ModelCache;
 
 trait AutoCast
 {
-    /** @var array<class-string, array<string, string>> */
-    protected static array $autoCastCache = [];
+    use AutoFillable;
 
+    /**
+     * Explicit model casts merged over casts inferred from fillable column tokens.
+     *
+     * @return array<string, string>
+     */
     public function getCasts(): array
     {
         // The parent is placed on the left so that explicit $casts on the model
         // take precedence over the result of auto casting.
-        return parent::getCasts() + (static::$autoCastCache[static::class] ??= $this->resolveAutoCasts());
+        return parent::getCasts() + (ModelCache::$casts[static::class] ??= $this->resolveAutoCasts());
     }
 
     /**
+     * Infers casts for every fillable column from its column token.
+     *
      * @return array<string, string>
      */
     protected function resolveAutoCasts(): array
@@ -39,6 +46,12 @@ trait AutoCast
         return $casts;
     }
 
+    /**
+     * Backing enum FQCN under `path.database_enum` for `$column`, or `'string'` if no enum class exists.
+     *
+     * @param string $column
+     * @return string
+     */
     protected function resolveEnumCast(string $column): string
     {
         $enum = (string) Str::of($this->getTable())

@@ -186,10 +186,10 @@ class AdditionalQueriesTest extends TestCase
     {
         $comment = MorphComment::find(3);
 
-        $this->assertFalse($comment->notSameWith('commentable_type', 'video'));
-        $this->assertTrue($comment->notSameWith('commentable_type', MorphPost::class));
-        $this->assertTrue($comment->notSameWith('commentable_id', '1'));
-        $this->assertFalse($comment->notSameWith('missing', null));
+        $this->assertFalse($comment->not('same_with', 'commentable_type', 'video'));
+        $this->assertTrue($comment->not('same_with', 'commentable_type', MorphPost::class));
+        $this->assertTrue($comment->not('same_with', 'commentable_id', '1'));
+        $this->assertFalse($comment->not('same_with', 'missing', null));
     }
 
     #[Test]
@@ -226,38 +226,6 @@ class AdditionalQueriesTest extends TestCase
     }
 
     #[Test]
-    public function it_assigns_attributes_only_if_blank(): void
-    {
-        $comment = (new MorphComment)->forceFill(['commentable_type' => 'video', 'commentable_id' => '   ']);
-
-        $comment->assignIfBlank('commentable_type', 'post');
-        $comment->assignIfBlank('commentable_id', 5);
-        $comment->assignIfBlank('missing', 'x');
-
-        $this->assertSame(['video', 5, 'x'], $comment->getMany('commentable_type', 'commentable_id', 'missing'));
-    }
-
-    #[Test]
-    public function it_keeps_zero_and_false_because_they_are_not_blank(): void
-    {
-        $comment = (new MorphComment)->forceFill(['a' => 0, 'b' => '0', 'c' => false]);
-
-        $comment->assignIfBlank(['a' => 5, 'b' => 5, 'c' => 5]);
-
-        $this->assertSame([0, '0', false], $comment->getMany('a', 'b', 'c'));
-    }
-
-    #[Test]
-    public function it_assigns_many_attributes_only_if_blank(): void
-    {
-        $comment = (new MorphComment)->forceFill(['commentable_type' => 'video', 'commentable_id' => '']);
-
-        $comment->assignIfBlank(['commentable_type' => 'post', 'commentable_id' => 5, 'missing' => 'x']);
-
-        $this->assertSame(['video', 5, 'x'], $comment->getMany('commentable_type', 'commentable_id', 'missing'));
-    }
-
-    #[Test]
     public function it_checks_whether_an_attribute_is_blank(): void
     {
         $comment = (new MorphComment)->forceFill(['commentable_type' => 'video', 'commentable_id' => '   ', 'zero' => 0, 'off' => false]);
@@ -270,71 +238,30 @@ class AdditionalQueriesTest extends TestCase
     }
 
     #[Test]
-    public function it_assigns_attributes_from_another_model_only_if_blank(): void
-    {
-        $comment = (new MorphComment)->forceFill(['commentable_type' => '', 'commentable_id' => 7]);
-
-        $comment->assignIfBlankFrom(MorphComment::find(3), 'commentable_type', 'commentable_id');
-
-        $this->assertSame(['video', 7], $comment->getMany('commentable_type', 'commentable_id'));
-    }
-
-    #[Test]
-    public function it_assigns_attributes_only_if_null(): void
-    {
-        $comment = (new MorphComment)->forceFill(['commentable_type' => '', 'commentable_id' => 0]);
-
-        $comment->assignIfNull('commentable_type', 'post');
-        $comment->assignIfNull('commentable_id', 5);
-        $comment->assignIfNull('missing', 'x');
-
-        $this->assertSame(['', 0, 'x'], $comment->getMany('commentable_type', 'commentable_id', 'missing'));
-    }
-
-    #[Test]
-    public function it_assigns_many_attributes_only_if_null(): void
-    {
-        $comment = (new MorphComment)->forceFill(['commentable_type' => null, 'commentable_id' => 0]);
-
-        $comment->assignIfNull(['commentable_type' => 'post', 'commentable_id' => 5]);
-
-        $this->assertSame(['post', 0], $comment->getMany('commentable_type', 'commentable_id'));
-    }
-
-    #[Test]
-    public function it_assigns_attributes_from_another_model_only_if_null(): void
-    {
-        $comment = (new MorphComment)->forceFill(['commentable_type' => null, 'commentable_id' => 0]);
-
-        $comment->assignIfNullFrom(MorphComment::find(3), 'commentable_type', 'commentable_id');
-
-        $this->assertSame(['video', 0], $comment->getMany('commentable_type', 'commentable_id'));
-    }
-
-    #[Test]
     public function it_assigns_conditionally_with_single_and_array_columns(): void
     {
         $comment = (new MorphComment)->forceFill([
             'commentable_type' => 'video',
             'commentable_id' => '   ',
             'zero' => 0,
+            'zero_str' => '0',
             'off' => false,
         ]);
 
         $comment->assign('commentable_type', 'post', 'blank');
         $comment->assign('commentable_id', 5, 'blank');
         $comment->assign('missing', 'x', 'blank');
-        $comment->assign(['zero' => 9, 'off' => true], 'blank');
+        $comment->assign(['zero' => 9, 'zero_str' => '9', 'off' => true], 'blank');
 
         $this->assertSame(
-            ['video', 5, 'x', 0, false],
-            $comment->getMany('commentable_type', 'commentable_id', 'missing', 'zero', 'off'),
+            ['video', 5, 'x', 0, '0', false],
+            $comment->getMany('commentable_type', 'commentable_id', 'missing', 'zero', 'zero_str', 'off'),
         );
 
-        // Named condition: argument on an array of columns
-        $named = (new MorphComment)->forceFill(['a' => 'keep', 'b' => null]);
-        $named->assign(['a' => 'replaced', 'b' => 'set'], condition: 'null');
-        $this->assertSame(['keep', 'set'], $named->getMany('a', 'b'));
+        // Named condition: argument on an array of columns (including '' and 0 which are not null)
+        $named = (new MorphComment)->forceFill(['a' => 'keep', 'b' => null, 'empty_str' => '', 'zero' => 0]);
+        $named->assign(['a' => 'replaced', 'b' => 'set', 'empty_str' => 'replaced', 'zero' => 5], condition: 'null');
+        $this->assertSame(['keep', 'set', '', 0], $named->getMany('a', 'b', 'empty_str', 'zero'));
 
         // Keyed checks, including a null check value (must not strip ['same_with' => null])
         $keyed = new MorphComment;
@@ -372,6 +299,14 @@ class AdditionalQueriesTest extends TestCase
         $blankTarget->assignFromIf('blank', $other, 'commentable_type', 'commentable_id', 'note');
         $this->assertSame(['video', 0, 'keep'], $blankTarget->getMany('commentable_type', 'commentable_id', 'note'));
 
+        $nullTarget = (new MorphComment)->forceFill([
+            'commentable_type' => null,
+            'commentable_id' => 0,
+            'note' => '',
+        ]);
+        $nullTarget->assignFromIf('null', $other, 'commentable_type', 'commentable_id', 'note');
+        $this->assertSame(['video', 0, ''], $nullTarget->getMany('commentable_type', 'commentable_id', 'note'));
+
         $dirtyTarget = new MorphComment;
         $dirtyTarget->setRawAttributes(['commentable_type' => '', 'commentable_id' => 1, 'note' => null], true);
         $dirtyTarget->commentable_type = '   ';
@@ -393,69 +328,6 @@ class AdditionalQueriesTest extends TestCase
         $nullCondTarget = (new MorphComment)->forceFill(['commentable_type' => 'post']);
         $nullCondTarget->assignFromIf(null, $other, 'commentable_type');
         $this->assertSame('video', $nullCondTarget->commentable_type);
-    }
-
-    #[Test]
-    public function it_gives_the_same_result_as_the_deprecated_assign_if_methods(): void
-    {
-        $initial = [
-            'null_col' => null,
-            'empty_col' => '',
-            'space_col' => '   ',
-            'zero_col' => 0,
-            'zero_str' => '0',
-            'false_col' => false,
-            'filled_col' => 'keep',
-        ];
-        $columns = [...array_keys($initial), 'missing_col'];
-        $updates = array_fill_keys($columns, 'new');
-        $other = (new MorphComment)->forceFill(array_fill_keys($columns, 'from_other'));
-
-        // assignIfBlank (single column) vs assign(..., 'blank')
-        $legacy = (new MorphComment)->forceFill($initial);
-        $modern = (new MorphComment)->forceFill($initial);
-        foreach ($columns as $col) {
-            $legacy->assignIfBlank($col, 'new');
-            $modern->assign($col, 'new', 'blank');
-        }
-        $this->assertSame($legacy->getMany(...$columns), $modern->getMany(...$columns));
-
-        // assignIfBlank (array) vs assign($updates, 'blank')
-        $legacy = (new MorphComment)->forceFill($initial);
-        $modern = (new MorphComment)->forceFill($initial);
-        $legacy->assignIfBlank($updates);
-        $modern->assign($updates, 'blank');
-        $this->assertSame($legacy->getMany(...$columns), $modern->getMany(...$columns));
-
-        // assignIfNull (single column) vs assign(..., 'null')
-        $legacy = (new MorphComment)->forceFill($initial);
-        $modern = (new MorphComment)->forceFill($initial);
-        foreach ($columns as $col) {
-            $legacy->assignIfNull($col, 'new');
-            $modern->assign($col, 'new', 'null');
-        }
-        $this->assertSame($legacy->getMany(...$columns), $modern->getMany(...$columns));
-
-        // assignIfNull (array) vs assign($updates, 'null')
-        $legacy = (new MorphComment)->forceFill($initial);
-        $modern = (new MorphComment)->forceFill($initial);
-        $legacy->assignIfNull($updates);
-        $modern->assign($updates, 'null');
-        $this->assertSame($legacy->getMany(...$columns), $modern->getMany(...$columns));
-
-        // assignIfBlankFrom vs assignFromIf('blank', ...)
-        $legacy = (new MorphComment)->forceFill($initial);
-        $modern = (new MorphComment)->forceFill($initial);
-        $legacy->assignIfBlankFrom($other, ...$columns);
-        $modern->assignFromIf('blank', $other, ...$columns);
-        $this->assertSame($legacy->getMany(...$columns), $modern->getMany(...$columns));
-
-        // assignIfNullFrom vs assignFromIf('null', ...)
-        $legacy = (new MorphComment)->forceFill($initial);
-        $modern = (new MorphComment)->forceFill($initial);
-        $legacy->assignIfNullFrom($other, ...$columns);
-        $modern->assignFromIf('null', $other, ...$columns);
-        $this->assertSame($legacy->getMany(...$columns), $modern->getMany(...$columns));
     }
 
     #[Test]
@@ -490,9 +362,9 @@ class AdditionalQueriesTest extends TestCase
         $this->assertTrue($model->sameWith('qty', 5, 'integer'));
         $this->assertTrue($model->sameWith('price', '10.50', 'decimal:2'));
         $this->assertTrue($model->sameWith('flag', '1', 'string'));
-        $this->assertTrue($model->notSameWith('qty', 5));
-        $this->assertFalse($model->notSameWith('qty', 5, 'integer'));
-        $this->assertTrue($model->notSameWith('qty', 6, 'integer'));
+        $this->assertTrue($model->not('same_with', 'qty', 5));
+        $this->assertFalse($model->not('same_with', 'qty', 5, 'integer'));
+        $this->assertTrue($model->not('same_with', 'qty', 6, 'integer'));
 
         // The casts of the model stay as they are
         $this->assertSame('5', $model->qty);
@@ -526,12 +398,12 @@ class AdditionalQueriesTest extends TestCase
         $model->setRawAttributes(['qty' => '5', 'price' => '10.5'], true);
         $model->qty = '7';
 
-        $this->assertTrue($model->sameWithAndDirty('qty', 7, 'integer'));
-        $this->assertFalse($model->sameWithAndDirty('qty', 7));
-        $this->assertFalse($model->sameWithAndDirty('price', '10.50', 'decimal:2'));
-        $this->assertTrue($model->notSameWithAndDirty('qty', 5, 'integer'));
-        $this->assertFalse($model->notSameWithAndDirty('qty', 7, 'integer'));
-        $this->assertFalse($model->notSameWithAndDirty('price', 1, 'integer'));
+        $this->assertTrue($model->isAllOf('qty', 'dirty', sameWith: [7, 'integer']));
+        $this->assertFalse($model->isAllOf('qty', 'dirty', sameWith: [7]));
+        $this->assertFalse($model->isAllOf('price', 'dirty', sameWith: ['10.50', 'decimal:2']));
+        $this->assertTrue($model->isAllOf('qty', 'dirty', not_same_with: [5, 'integer']));
+        $this->assertFalse($model->isAllOf('qty', 'dirty', not_same_with: [7, 'integer']));
+        $this->assertFalse($model->isAllOf('price', 'dirty', not_same_with: [1, 'integer']));
     }
 
     #[Test]
@@ -542,16 +414,16 @@ class AdditionalQueriesTest extends TestCase
         $model->qty = '7';
 
         $this->assertTrue($model->sameWith('price', '10.5', 'decimal:2'));
-        $this->assertFalse($model->notSameWith('price', '10.5', 'decimal:2'));
+        $this->assertFalse($model->not('same_with', 'price', '10.5', 'decimal:2'));
         $this->assertTrue($model->sameWith('qty', '7', 'integer'));
-        $this->assertFalse($model->notSameWith('qty', '7', 'integer'));
-        $this->assertTrue($model->notSameWith('qty', '5', 'integer'));
-        $this->assertTrue($model->sameWithAndDirty('qty', '7', 'integer'));
-        $this->assertFalse($model->notSameWithAndDirty('qty', '7', 'integer'));
+        $this->assertFalse($model->not('same_with', 'qty', '7', 'integer'));
+        $this->assertTrue($model->not('same_with', 'qty', '5', 'integer'));
+        $this->assertTrue($model->isAllOf('qty', 'dirty', sameWith: ['7', 'integer']));
+        $this->assertFalse($model->isAllOf('qty', 'dirty', not_same_with: ['7', 'integer']));
 
         // Without a cast the value is compared as it is
         $this->assertFalse($model->sameWith('qty', 7));
-        $this->assertTrue($model->notSameWith('qty', 7));
+        $this->assertTrue($model->not('same_with', 'qty', 7));
     }
 
     #[Test]
@@ -572,6 +444,7 @@ class AdditionalQueriesTest extends TestCase
         $other->commentable_id = '1';
 
         $this->assertFalse(MorphComment::find(1)->sameWithOther($other, 'commentable_id'));
+        $this->assertFalse(MorphComment::find(1)->sameWithOther($other, 'commentable_id', 'or'));
         $this->assertTrue(MorphComment::find(1)->sameWithOther(new MorphComment, 'missing'));
     }
 
@@ -586,44 +459,11 @@ class AdditionalQueriesTest extends TestCase
     {
         $comment = MorphComment::find(1);
 
-        $this->assertTrue($comment->sameWithOtherOr(MorphComment::find(1), 'commentable_type', 'commentable_id'));
-        $this->assertTrue($comment->sameWithOtherOr(MorphComment::find(2), 'commentable_type', 'commentable_id'));
-        $this->assertTrue($comment->sameWithOtherOr(MorphComment::find(2), 'commentable_id', 'commentable_type'));
-        $this->assertFalse(MorphComment::find(2)->sameWithOtherOr(MorphComment::find(3), 'commentable_type', 'commentable_id'));
-        $this->assertFalse($comment->sameWithOtherOr(MorphComment::find(1)));
-    }
-
-    #[Test]
-    public function it_checks_that_every_column_is_not_the_same_as_another_model(): void
-    {
-        $comment = MorphComment::find(2);
-
-        $this->assertTrue($comment->notSameWithOther(MorphComment::find(3), 'commentable_type', 'commentable_id'));
-        $this->assertFalse($comment->notSameWithOther(MorphComment::find(1), 'commentable_id', 'commentable_type'));
-        $this->assertFalse($comment->notSameWithOther(MorphComment::find(2), 'commentable_type', 'commentable_id'));
-        $this->assertFalse($comment->notSameWithOther(MorphComment::find(3)));
-    }
-
-    #[Test]
-    public function it_checks_that_one_column_is_not_the_same_as_another_model(): void
-    {
-        $comment = MorphComment::find(1);
-
-        $this->assertTrue($comment->notSameWithOtherOr(MorphComment::find(2), 'commentable_id', 'commentable_type'));
-        $this->assertTrue($comment->notSameWithOtherOr(MorphComment::find(2), 'commentable_type', 'commentable_id'));
-        $this->assertFalse($comment->notSameWithOtherOr(MorphComment::find(1), 'commentable_type', 'commentable_id'));
-        $this->assertFalse($comment->notSameWithOtherOr(MorphComment::find(2)));
-    }
-
-    #[Test]
-    public function it_compares_strictly_when_it_is_not_the_same_as_another_model(): void
-    {
-        $other = MorphComment::find(1);
-        $other->commentable_id = '1';
-
-        $this->assertTrue(MorphComment::find(1)->notSameWithOther($other, 'commentable_id'));
-        $this->assertTrue(MorphComment::find(1)->notSameWithOtherOr($other, 'commentable_id'));
-        $this->assertFalse(MorphComment::find(1)->sameWithOtherOr($other, 'commentable_id'));
+        $this->assertTrue($comment->sameWithOther(MorphComment::find(1), 'commentable_type', 'commentable_id', 'or'));
+        $this->assertTrue($comment->sameWithOther(MorphComment::find(2), 'commentable_type', 'commentable_id', 'or'));
+        $this->assertTrue($comment->sameWithOther(MorphComment::find(2), 'commentable_id', 'commentable_type', 'or'));
+        $this->assertFalse(MorphComment::find(2)->sameWithOther(MorphComment::find(3), 'commentable_type', 'commentable_id', 'or'));
+        $this->assertFalse($comment->sameWithOther(MorphComment::find(1), 'or'));
     }
 
     #[Test]
@@ -805,6 +645,48 @@ class AdditionalQueriesTest extends TestCase
         CopyOrder::find(2)->copyRelationsTo(CopyOrder::find(1), ['items' => ['product', 'qty']]);
 
         $this->assertSame(2, DB::table('copy_items')->count());
+    }
+
+    #[Test]
+    public function it_checks_a_single_condition_on_a_column_with_if(): void
+    {
+        $model = new CastCompareModel;
+        $model->setRawAttributes(['qty' => '5', 'note' => '   ', 'missing_col' => null], true);
+        $model->qty = '12';
+
+        $this->assertTrue($model->if('dirty', 'qty'));
+        $this->assertFalse($model->if('dirty', 'note'));
+        $this->assertTrue($model->if('blank', 'note'));
+        $this->assertTrue($model->if('numeric', 'qty'));
+        $this->assertTrue($model->if('null', 'missing_col'));
+        $this->assertTrue($model->if('not_null', 'qty'));
+    }
+
+    #[Test]
+    public function it_compares_a_column_against_an_array_of_values_unless_the_column_itself_is_an_array(): void
+    {
+        $model = new CastCompareModel;
+        $model->setRawAttributes([
+            'status' => 'paid',
+            'qty' => '5',
+            'tags' => '["a","b"]',
+        ]);
+        $model->mergeCasts(['tags' => 'array']);
+
+        $this->assertTrue($model->sameWith('status', ['draft', 'paid']));
+        $this->assertFalse($model->sameWith('status', ['draft', 'sent']));
+        $this->assertFalse($model->sameWith('status', []));
+        $this->assertTrue($model->sameWith('qty', [3, 5], 'integer'));
+        $this->assertFalse($model->sameWith('qty', [3, 4], 'integer'));
+
+        // Array-cast column compares against the array as a whole
+        $this->assertTrue($model->sameWith('tags', ['a', 'b']));
+        $this->assertFalse($model->sameWith('tags', ['a']));
+
+        $other = new CastCompareModel;
+        $other->setRawAttributes(['tags' => '["a","b"]']);
+        $other->mergeCasts(['tags' => 'array']);
+        $this->assertTrue($model->sameWithOther($other, 'tags'));
     }
 
     private function createCopyTables(): void

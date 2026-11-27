@@ -6,23 +6,37 @@ use Illuminate\Support\Str as SupportStr;
 use JundFauz\EloquentKompact\Builder\Str;
 use JundFauz\EloquentKompact\Column\ColumnCheck;
 use JundFauz\EloquentKompact\Column\ColumnListing;
+use JundFauz\EloquentKompact\Model\ModelCache;
 use function JundFauz\EloquentKompact\Array\get;
 use function JundFauz\EloquentKompact\not;
 use function JundFauz\EloquentKompact\same_with;
 
 trait AutoFillable
 {
-    // INFO: AF is a short form of 'AutoFillable'
-    protected static ?array $AFCache = null;
     protected static bool $includeTimestampColumn = false;
 
+    /**
+     * Fillable columns resolved from the table schema, filtered by config rules, and merged with explicit and custom fillables.
+     *
+     * @return array<int, string>
+     */
     public function getFillable(): array
+    {
+        return ModelCache::$fillable[static::class] ??= $this->resolveAutoFillable();
+    }
+
+    /**
+     * Computes the fillable column list for this model from the table schema and package configuration.
+     *
+     * @return array<int, string>
+     */
+    protected function resolveAutoFillable(): array
     {
         $config = config('eloquent-kompact.fillable', []);
         $includedColumnsFromConfig = get($config['include_explicitly'], []);
         $excludeConfig = get($config['exclude_column_by'], []);
-        return static::$AFCache[static::class] ??=
-            collect(ColumnListing::of($this->getTable()))
+
+        return collect(ColumnListing::of($this->getTable()))
                 ->reject(function ($column) use ($excludeConfig) {
                     foreach (get($excludeConfig['exact'], []) as $value) {
                         if (same_with($column, $value)) {

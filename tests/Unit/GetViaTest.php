@@ -128,7 +128,7 @@ class GetViaTest extends TestCase
 
         $this->assertSame(
             ['ana@example.com', 'Ana'],
-            $comment->getManyVia(['email', 'name'], GetViaPost::class, GetViaUser::class),
+            $comment->getVia(['email', 'name'], GetViaPost::class, GetViaUser::class),
         );
     }
 
@@ -137,14 +137,14 @@ class GetViaTest extends TestCase
     {
         $this->assertSame(
             [null, null],
-            GetViaComment::find(3)->getManyVia(['name', 'email'], GetViaPost::class, GetViaUser::class),
+            GetViaComment::find(3)->getVia(['name', 'email'], GetViaPost::class, GetViaUser::class),
         );
     }
 
     #[Test]
     public function it_gets_no_values_without_columns(): void
     {
-        $this->assertSame([], GetViaComment::find(1)->getManyVia([], GetViaPost::class));
+        $this->assertSame([], GetViaComment::find(1)->getVia([], GetViaPost::class));
     }
 
     #[Test]
@@ -155,25 +155,7 @@ class GetViaTest extends TestCase
         $this->assertSame('First', $comment->getVia('title', ['latest' => GetViaPost::class]));
         $this->assertSame('Ana', $comment->getVia('name', ['latest' => GetViaPost::class], GetViaUser::class));
         $this->assertInstanceOf(GetViaPost::class, $comment->getVia('', ['latest' => GetViaPost::class]));
-        $this->assertSame(['First'], $comment->getManyVia(['title'], ['latest' => GetViaPost::class]));
-    }
-
-    #[Test]
-    public function it_gives_the_same_result_as_the_deprecated_get_many_via(): void
-    {
-        foreach ([1, 3] as $id) {
-            $comment = GetViaComment::find($id);
-            foreach ([[], ['name'], ['email', 'name']] as $columns) {
-                $this->assertSame(
-                    $comment->getManyVia($columns, GetViaPost::class, GetViaUser::class),
-                    $comment->getVia($columns, GetViaPost::class, GetViaUser::class),
-                );
-            }
-            $this->assertSame(
-                $comment->getManyVia(['title'], ['latest' => GetViaPost::class]),
-                $comment->getVia(['title'], ['latest' => GetViaPost::class]),
-            );
-        }
+        $this->assertSame(['First'], $comment->getVia(['title'], ['latest' => GetViaPost::class]));
     }
 
     #[Test]
@@ -208,7 +190,7 @@ class GetViaTest extends TestCase
         );
         $this->assertSame([], $missingPost->withDefault('-')->getVia([], GetViaPost::class, GetViaUser::class));
         $this->assertSame(
-            $missingPost->withDefault('-')->getManyVia(['name', 'email'], GetViaPost::class, GetViaUser::class),
+            ['-', '-'],
             $missingPost->withDefault('-')->getVia(['name', 'email'], GetViaPost::class, GetViaUser::class),
         );
 
@@ -227,7 +209,7 @@ class GetViaTest extends TestCase
     #[Test]
     public function it_has_the_methods_on_the_kompact_models(): void
     {
-        foreach (['withDefault', 'getOr', 'getVia', 'getRelVia', 'getManyVia'] as $method) {
+        foreach (['withDefault', 'getOr', 'getVia', 'getRelVia'] as $method) {
             $this->assertTrue(method_exists(KompactModel::class, $method), "KompactModel::$method");
             $this->assertTrue(method_exists(KompactPivot::class, $method), "KompactPivot::$method");
         }

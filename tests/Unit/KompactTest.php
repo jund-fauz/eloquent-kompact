@@ -7,6 +7,7 @@ use Illuminate\Database\Eloquent\Collection as EloquentCollection;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use Illuminate\Database\Eloquent\Relations\HasMany;
+use Illuminate\Database\Eloquent\Relations\HasOne;
 use Illuminate\Database\Events\MigrationsEnded;
 use Illuminate\Database\Schema\Blueprint;
 use Illuminate\Support\Collection as BaseCollection;
@@ -20,6 +21,8 @@ use JundFauz\EloquentKompact\Model\Collection;
 use JundFauz\EloquentKompact\Model\KompactModel;
 use JundFauz\EloquentKompact\Model\KompactPivot;
 use JundFauz\EloquentKompact\Model\KompactUser;
+use JundFauz\EloquentKompact\Model\ModelCache;
+use JundFauz\EloquentKompact\Model\Traits\AutoCast;
 use JundFauz\EloquentKompact\Model\Traits\AutoFillable;
 use JundFauz\EloquentKompact\Model\Traits\AutoRelation;
 use JundFauz\EloquentKompact\Model\Traits\Kompact;
@@ -69,8 +72,7 @@ class KompactTest extends TestCase
     {
         Model::automaticallyEagerLoadRelationships(false);
         ColumnListing::flush();
-        KompactModel::flushKompactCache();
-        KompactUser::flushKompactCache();
+        ModelCache::flush();
 
         parent::tearDown();
     }
@@ -207,6 +209,40 @@ class KompactTest extends TestCase
         event(new MigrationsEnded('up'));
 
         $this->assertSame(['email', 'phone'], (new KompactTestFlushUser)->getFillable());
+    }
+
+    #[Test]
+    public function it_flushes_the_caches_of_standalone_traits_and_custom_kompact_models_after_migrating(): void
+    {
+        config(['eloquent-kompact.path.model' => __NAMESPACE__]);
+
+        Schema::create('kompact_standalone_items', function (Blueprint $table) {
+            $table->id();
+            $table->string('email')->nullable();
+        });
+        Schema::table('kompact_parents', function (Blueprint $table) {
+            $table->foreignId('kompact_test_standalone_rel_id')->nullable();
+        });
+        ColumnListing::flush();
+        ModelCache::flush();
+
+        $this->assertSame(['email'], (new KompactTestStandaloneFillable)->getFillable());
+        $this->assertArrayNotHasKey('active_is', (new KompactTestStandaloneCast)->getCasts());
+        $this->assertSame(['email'], (new KompactTestCustomKompactModel)->getFillable());
+        $this->assertArrayNotHasKey('active_is', (new KompactTestCustomKompactModel)->getCasts());
+        $this->assertInstanceOf(HasOne::class, (new KompactTestStandaloneRel)->kompactTestParent());
+
+        Schema::table('kompact_standalone_items', function (Blueprint $table) {
+            $table->boolean('active_is')->default(false);
+            $table->foreignId('kompact_test_parent_id')->nullable();
+        });
+        event(new MigrationsEnded('up'));
+
+        $this->assertSame(['email', 'active_is', 'kompact_test_parent_id'], (new KompactTestStandaloneFillable)->getFillable());
+        $this->assertSame('boolean', (new KompactTestStandaloneCast)->getCasts()['active_is']);
+        $this->assertSame(['email', 'active_is', 'kompact_test_parent_id'], (new KompactTestCustomKompactModel)->getFillable());
+        $this->assertSame('boolean', (new KompactTestCustomKompactModel)->getCasts()['active_is']);
+        $this->assertInstanceOf(BelongsTo::class, (new KompactTestStandaloneRel)->kompactTestParent());
     }
 
     #[Test]
@@ -473,4 +509,42 @@ class KompactTestOwnCollection extends KompactModel
     protected $table = 'kompact_parents';
 
     protected static string $collectionClass = KompactTestOtherCollection::class;
+}
+
+abstract class KompactTestThirdPartyBase extends Model {}
+
+class KompactTestCustomKompactModel extends KompactTestThirdPartyBase
+{
+    use Kompact;
+
+    public $timestamps = false;
+
+    protected $table = 'kompact_standalone_items';
+}
+
+class KompactTestStandaloneFillable extends Model
+{
+    use AutoFillable;
+
+    public $timestamps = false;
+
+    protected $table = 'kompact_standalone_items';
+}
+
+class KompactTestStandaloneCast extends Model
+{
+    use AutoFillable, AutoCast;
+
+    public $timestamps = false;
+
+    protected $table = 'kompact_standalone_items';
+}
+
+class KompactTestStandaloneRel extends Model
+{
+    use AutoRelation;
+
+    public $timestamps = false;
+
+    protected $table = 'kompact_standalone_items';
 }
