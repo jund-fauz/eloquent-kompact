@@ -81,7 +81,7 @@ Eloquent Kompact berawal dari boilerplate yang terus saya tulis ulang saat memba
 
 Setelah itu cakupannya meluas melewati definisi model. ERP yang sama terus butuh pola query dan perbandingan yang sama, jadi package ini juga menyediakan:
 
-- **`AdditionalQueries` di `KompactModel`**: membaca relasi bertingkat tanpa cek null (`getVia()`), perbandingan ketat setelah casting (`sameWith()`, `match()`), assignment bersyarat (`assignIfBlank()`, `assignIfNull()`), beberapa cek sekaligus (`isAllOf()`, `isAll()`), `copyRelationsTo()`, dan lainnya.
+- **`AdditionalQueries` di `KompactModel`**: membaca relasi bertingkat tanpa cek null (`getVia()`), perbandingan ketat setelah casting (`sameWith()`, `match()`), assignment bersyarat (`assign()`, `assignFromIf()`), beberapa cek sekaligus (`isAllOf()`, `isAll()`), `copyRelationsTo()`, dan lainnya.
 - **`Builder` query yang diperluas**: `whereSameWith()`, `whereMorphType()`, dan `whereInRelation()`.
 - **[`RawQuery`](#rawquery)**: builder fluent dan immutable untuk ekspresi SQL mentah yang berjalan di MySQL, MariaDB, PostgreSQL, dan SQLite.
 - **[Helper pengecekan](#pengecekan)**: `is_not()`, `is_all()`, `is_any()` beserta variannya, yang menerima nama pengecekan, misalnya `is_all('null', $a, $b)`.
@@ -466,8 +466,9 @@ $comment->getVia('name', ['latest' => Post::class]);               // $comment->
 // Model terkait dari relasi bersarang, tanpa kolom
 $comment->getRelVia(Post::class, User::class);                     // $comment->post?->user
 
-// Nilai default untuk getOr(), getVia() dan getRelVia() saat hasilnya (atau elemen array getVia()) null; mengembalikan clone
+// Nilai default untuk getOr(), getMany(), getVia() dan getRelVia() saat hasilnya (atau elemen getMany() / getVia()) null; mengembalikan clone
 $user->withDefault('-')->getOr('nickname', 'name');
+$user->withDefault('-')->getMany('name', 'nickname');
 $comment->withDefault('-')->getVia('name', Post::class, User::class);
 $comment->withDefault('-')->getVia(['name', 'email'], Post::class, User::class);
 $comment->withDefault(new User)->getRelVia(Post::class, User::class);
@@ -483,10 +484,16 @@ $user->compactId(); // ['user_id' => 1]
 // update() dengan beberapa array digabung, key yang belakangan menang
 $order->updateMany($data, $order->compact('note'), ['status' => 'paid']);
 
-// Mengisi atribut, tanpa menyimpan
+// Mengisi atribut, tanpa menyimpan; berikan cek (atau array cek, lihat isAllOf()) untuk mengisi secara bersyarat
 $order->assign('status', 'paid');
 $order->assign(['status' => 'paid', 'note' => '-']);
+$order->assign('note', '-', 'blank');
+$order->assign(['note' => '-', 'status' => 'new'], 'blank');
+$order->assign('status', 'paid', ['dirty', 'in' => 'draft,pending']);
 $order->assignFrom($otherOrder, 'tenant_id', 'branch_id');
+$order->assignFromIf('blank', $otherOrder, 'tenant_id', 'branch_id');
+
+// Deprecated, dihapus di 3.0: pakai assign() dengan kondisi dan assignFromIf() seperti di atas
 $order->assignIfBlank('note', '-');
 $order->assignIfBlank(['note' => '-', 'status' => 'new']);
 $order->assignIfBlankFrom($otherOrder, 'tenant_id', 'branch_id');
@@ -556,7 +563,7 @@ Order::randomId();
 Order::randomId('status', 'paid'); // argumen untuk where()
 ```
 
-`assignIfBlank()`, `assignIfBlankFrom()` dan `isBlank()` memakai `blank()` dari Laravel, jadi `null`, string kosong (juga `'   '`) dan array kosong dihitung blank, sedangkan `0`, `'0'` dan `false` tidak. `isFilled()` memakai `filled()`, kebalikannya. `assignIfNull()` dan `assignIfNullFrom()` hanya mengganti `null`.
+`isBlank()` (serta `assignIfBlank()` dan `assignIfBlankFrom()` yang deprecated) memakai `blank()` dari Laravel, jadi `null`, string kosong (juga `'   '`) dan array kosong dihitung blank, sedangkan `0`, `'0'` dan `false` tidak. `isFilled()` memakai `filled()`, kebalikannya. `assignIfNull()` dan `assignIfNullFrom()` yang deprecated hanya mengganti `null`.
 
 `match()` dan keluarga `sameWithOther()` mengembalikan `false` kalau tidak ada kondisi atau kolom yang diberikan. Kolom terakhir `sameWithOther()` bisa diganti kata logika: `'and'` atau `'all'` (default) untuk semua kolom, `'or'` atau `'any'` untuk setidaknya satu, jadi kolom yang namanya sama dengan salah satunya tidak bisa jadi kolom terakhir. `notSameWithOther()` yang deprecated bukan kebalikan `sameWithOther()`: kebalikannya adalah `notSameWithOtherOr()`. Object seperti tanggal Carbon dari kolom `datetime` dibandingkan berdasarkan identitas, jadi dua model tidak pernah punya tanggal yang sama. Nilai array cocok kalau atributnya sama dengan salah satu item-nya, kecuali atributnya sendiri berupa array.
 
@@ -1162,6 +1169,7 @@ Di `JundFauz\EloquentKompact\Array`.
 | `flat(&$array)` | Meratakan array di tempat |
 | `wrap($value)` | `Arr::wrap()` Laravel: nilainya sebagai array, `[]` untuk `null` |
 | `cast($value, $delimiter = null)` | Item-item sebuah collection, string atau `Stringable` yang dipecah dengan `$delimiter` kalau diberikan (`cast('a,b', ',')` → `['a', 'b']`), atau `wrap()` dari nilai lain |
+| `filter($array, $callback = null)` | `array_filter()` dari array itu, key dipertahankan |
 | `filter_filled($array)` | Nilai yang `filled()` menurut Laravel, key dipertahankan: `null`, string kosong dan array atau collection kosong dihapus; `0`, `'0'` dan `false` dipertahankan |
 | `key_change(&$array, $oldKey, $newKey)` | Mengganti nama key di tempat. Key pindah ke akhir array, `$newKey` yang sudah ada diganti, dan `$oldKey` yang tidak ada memunculkan warning `Undefined array key` dari PHP |
 | `key_values($array)` | `[key, value]` dari array dengan satu item; dengan beberapa item, semua key lalu semua value dalam satu list datar |

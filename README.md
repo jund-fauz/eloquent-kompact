@@ -81,7 +81,7 @@ Eloquent Kompact started as boilerplate I kept rewriting while building a Larave
 
 It then grew past the model definition. The same ERP kept needing the same query and comparison patterns, so the package also ships:
 
-- **`AdditionalQueries` on `KompactModel`**: read nested relations without null checks (`getVia()`), strict comparisons after casting (`sameWith()`, `match()`), conditional assignment (`assignIfBlank()`, `assignIfNull()`), several checks at once (`isAllOf()`, `isAll()`), `copyRelationsTo()` and more.
+- **`AdditionalQueries` on `KompactModel`**: read nested relations without null checks (`getVia()`), strict comparisons after casting (`sameWith()`, `match()`), conditional assignment (`assign()`, `assignFromIf()`), several checks at once (`isAllOf()`, `isAll()`), `copyRelationsTo()` and more.
 - **An extended query `Builder`**: `whereSameWith()`, `whereMorphType()` and `whereInRelation()`.
 - **[`RawQuery`](#rawquery)**: a fluent, immutable builder for raw SQL expressions that works on MySQL, MariaDB, PostgreSQL and SQLite.
 - **[Check helpers](#checks)**: `is_not()`, `is_all()`, `is_any()` and their variants, which take a check by name, e.g. `is_all('null', $a, $b)`.
@@ -466,8 +466,9 @@ $comment->getVia('name', ['latest' => Post::class]);               // $comment->
 // The related model of nested relations, without a column
 $comment->getRelVia(Post::class, User::class);                     // $comment->post?->user
 
-// Default value for getOr(), getVia() and getRelVia() when the result (or an array item of getVia()) is null; returns a clone
+// Default value for getOr(), getMany(), getVia() and getRelVia() when the result (or an item of getMany() / getVia()) is null; returns a clone
 $user->withDefault('-')->getOr('nickname', 'name');
+$user->withDefault('-')->getMany('name', 'nickname');
 $comment->withDefault('-')->getVia('name', Post::class, User::class);
 $comment->withDefault('-')->getVia(['name', 'email'], Post::class, User::class);
 $comment->withDefault(new User)->getRelVia(Post::class, User::class);
@@ -483,10 +484,16 @@ $user->compactId(); // ['user_id' => 1]
 // update() with several arrays merged, where a later key wins
 $order->updateMany($data, $order->compact('note'), ['status' => 'paid']);
 
-// Set attributes, without saving
+// Set attributes, without saving; pass a check (or array of checks, see isAllOf()) to assign conditionally
 $order->assign('status', 'paid');
 $order->assign(['status' => 'paid', 'note' => '-']);
+$order->assign('note', '-', 'blank');
+$order->assign(['note' => '-', 'status' => 'new'], 'blank');
+$order->assign('status', 'paid', ['dirty', 'in' => 'draft,pending']);
 $order->assignFrom($otherOrder, 'tenant_id', 'branch_id');
+$order->assignFromIf('blank', $otherOrder, 'tenant_id', 'branch_id');
+
+// Deprecated, removed in 3.0: use assign() with a condition and assignFromIf() as above
 $order->assignIfBlank('note', '-');
 $order->assignIfBlank(['note' => '-', 'status' => 'new']);
 $order->assignIfBlankFrom($otherOrder, 'tenant_id', 'branch_id');
@@ -556,7 +563,7 @@ Order::randomId();
 Order::randomId('status', 'paid'); // the arguments of where()
 ```
 
-`assignIfBlank()`, `assignIfBlankFrom()` and `isBlank()` use Laravel's `blank()`, so `null`, blank strings (also `'   '`) and empty arrays count as blank, while `0`, `'0'` and `false` do not. `isFilled()` uses `filled()`, its opposite. `assignIfNull()` and `assignIfNullFrom()` only replace `null`.
+`isBlank()` (and the deprecated `assignIfBlank()` and `assignIfBlankFrom()`) uses Laravel's `blank()`, so `null`, blank strings (also `'   '`) and empty arrays count as blank, while `0`, `'0'` and `false` do not. `isFilled()` uses `filled()`, its opposite. The deprecated `assignIfNull()` and `assignIfNullFrom()` only replace `null`.
 
 `match()` and the `sameWithOther()` family return `false` when no condition or column is given. The last column of `sameWithOther()` can be a logic word instead: `'and'` or `'all'` (the default) for every column, `'or'` or `'any'` for at least one, so a column named like one of them cannot be the last one. The deprecated `notSameWithOther()` is not the opposite of `sameWithOther()`: that is `notSameWithOtherOr()`. Objects such as the Carbon dates of `datetime` columns are compared by identity, so two models never have the same date. An array value matches if the attribute equals one of its items, unless the attribute itself is an array.
 
@@ -1162,6 +1169,7 @@ In `JundFauz\EloquentKompact\Array`.
 | `flat(&$array)` | Flattens the array in place |
 | `wrap($value)` | Laravel's `Arr::wrap()`: the value as an array, `[]` for `null` |
 | `cast($value, $delimiter = null)` | The items of a collection, a string or a `Stringable` split by `$delimiter` when it is given (`cast('a,b', ',')` → `['a', 'b']`), or `wrap()` of any other value |
+| `filter($array, $callback = null)` | `array_filter()` of the array, keeping the keys |
 | `filter_filled($array)` | The values that are Laravel's `filled()`, keeping the keys: `null`, blank strings and empty arrays or collections are removed; `0`, `'0'` and `false` are kept |
 | `key_change(&$array, $oldKey, $newKey)` | Renames a key in place. The key moves to the end of the array, an existing `$newKey` is replaced, and a missing `$oldKey` gives PHP's `Undefined array key` warning |
 | `key_values($array)` | `[key, value]` of an array with one item; with several items, every key and then every value in one flat list |
