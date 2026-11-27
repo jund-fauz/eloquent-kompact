@@ -2,27 +2,42 @@
 
 namespace JundFauz\EloquentKompact\Column\Builder\Concerns;
 
+use BadMethodCallException;
 use JundFauz\EloquentKompact\Column\ColumnCreator;
 use JundFauz\EloquentKompact\Helper\Error\ErrorThrow;
-use function JundFauz\EloquentKompact\collect;
-use function JundFauz\EloquentKompact\is_not;
-use function JundFauz\EloquentKompact\not_in_array;
 
+/**
+ * @method static string categorical()
+ * @method static string viewed()
+ */
 class RelationBuilder
 {
     use ErrorThrow;
 
+    /** @var array<int, string> */
+    private static array $defaultRelation = ['categorical', 'viewed'];
+
     /** @var array<string|int, string> */
     protected static array $relation = [];
 
-    public static function __callStatic(string $name, array $arguments)
+    /**
+     * Resolve a registered relation key into its foreign-key column name via `ColumnCreator::relation()`.
+     *
+     * @param string $name
+     * @param array<int, mixed> $arguments
+     * @return string
+     * @throws BadMethodCallException When `$name` is not registered in `$defaultRelation` or `$relation`
+     * @final
+     */
+    public static function __callStatic(string $name, array $arguments): string
     {
-        $relation = static::$relation;
-        $keys = collect($relation)->map(fn ($value, $key) => is_int($key) ? $value : $key)->toArray();
-        if (is_not('in_array', $name, $keys)) {
-            self::methodNotFound($name);
+        $relation = array_merge(self::$defaultRelation, static::$relation);
+        foreach ($relation as $key => $value) {
+            if ($key === $name || (is_int($key) && $value === $name)) {
+                return ColumnCreator::relation($relation[$name] ?? $value);
+            }
         }
 
-        return ColumnCreator::relation($relation[$name] ?? $name);
+        self::methodNotFound($name);
     }
 }

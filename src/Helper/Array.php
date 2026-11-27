@@ -89,7 +89,12 @@ function pull_list(array &$array, string ...$keys): mixed
  */
 function get_or(array $array, string ...$keys): mixed
 {
-    return array_reduce($keys, fn ($acc, $key) => $acc ?? Arr::get($array, $key));
+    foreach ($keys as $key) {
+        if (is_not_null($result = Arr::get($array, $key))) {
+            return $result;
+        }
+    }
+    return null;
 }
 
 /**
@@ -101,6 +106,19 @@ function get_or(array $array, string ...$keys): mixed
 function wrap(mixed $data): array
 {
     return Arr::wrap($data);
+}
+
+/**
+ * The value wrapped in an array, `[null]` for null (unlike `wrap()`, which returns `[]`)
+ *
+ * @param mixed $data
+ * @return array
+ */
+function simple_wrap(mixed $data): array
+{
+    return is_array($data)
+        ? $data
+        : [$data];
 }
 
 /**
@@ -396,4 +414,27 @@ function merge_mixed(array $data): array
             },
             $data
         ));
+}
+
+/**
+ * Chains static methods of Laravel's Arr on $array, passing the current array as the first argument of each call.
+ * Positional strings take no extra arguments, named arguments pass their parameters through wrap() (wrap an array
+ * parameter once more), and a blank() value calls the method with only the current array
+ *
+ * @see \JundFauz\EloquentKompact\chain()
+ * @param array $array
+ * @param mixed ...$methods An Arr method name, or method name => its extra parameter(s) (blank for none)
+ * @return mixed
+ */
+function arrs(array $array, mixed ...$methods): mixed
+{
+    $result = $array;
+    foreach ($methods as $key => $value) {
+        $result = match (true) {
+            blank($value) => Arr::{$key}($result),
+            is_string($key) => Arr::{$key}($result, ...wrap($value)),
+            default => Arr::{$value}($result)
+        };
+    }
+    return $result;
 }

@@ -27,6 +27,8 @@ use function JundFauz\EloquentKompact\schema_concat;
 use function JundFauz\EloquentKompact\String\str;
 
 /**
+ * Immutable fluent builder for Laravel validation rule arrays.
+ *
  * @method $this integer()
  * @method $this numeric()
  * @method $this boolean()
@@ -37,6 +39,7 @@ use function JundFauz\EloquentKompact\String\str;
  * @method $this digits(int $num)
  * @method $this regex(string|Regex $regex)
  * @method $this digitsBetween(int $from, int $until)
+ * @final
  */
 class Validation
 {
@@ -44,16 +47,35 @@ class Validation
 
     private Collection $payload;
 
+    /**
+     * Initialize a validation rule builder with an optional collection of rules.
+     *
+     * @param Collection<int, string|Unique>|null $payload
+     */
     private function __construct(?Collection $payload = null)
     {
         $this->payload = $payload ?? collect();
     }
 
+    /**
+     * Create a new empty validation rule builder instance.
+     *
+     * @return static
+     */
     public static function init(): static
     {
         return new static();
     }
 
+    /**
+     * Dynamically append supported Laravel validation rules (`integer`, `min`, `digitsBetween`, etc.).
+     *
+     * @param string $name
+     * @param array<int, mixed> $arguments
+     * @return static
+     * @throws InvalidArgumentException
+     * @throws BadMethodCallException
+     */
     public function __call(string $name, array $arguments): static
     {
         if (in($name, 'integer,numeric,boolean,required,array')) {
@@ -82,6 +104,14 @@ class Validation
         self::methodNotFound($name);
     }
 
+    /**
+     * Append a `decimal` validation rule with minimum and/or maximum decimal places.
+     *
+     * @param int|null $minDecimal
+     * @param int|null $maxDecimal
+     * @return static
+     * @throws BadMethodCallException
+     */
     public function decimal(?int $minDecimal = null, ?int $maxDecimal = null): static
     {
         if (is_all('null', $minDecimal, $maxDecimal)) {
@@ -101,6 +131,8 @@ class Validation
     }
 
     /**
+     * Append a `unique` validation rule, either plain or scoped to a Kompact model and optional record.
+     *
      * @param string|null $columnName
      * @param class-string<KompactModel|KompactUser|KompactPivot>|null $model
      * @param Model|null $record
@@ -111,16 +143,32 @@ class Validation
         return $this->add(is_any('null', $columnName, $model) ? 'unique' : $model::uniqueRule($columnName, $record));
     }
 
+    /**
+     * Return the accumulated validation rules as an array.
+     *
+     * @return array<int, string|Unique>
+     */
     public function payload(): array
     {
         return $this->payload->toArray();
     }
 
+    /**
+     * Alias for `payload()` returning the accumulated validation rules array.
+     *
+     * @return array<int, string|Unique>
+     */
     public function build(): array
     {
         return $this->payload();
     }
 
+    /**
+     * Return a new `Validation` instance with the given rule appended.
+     *
+     * @param string|Str|Stringable|Unique $payload
+     * @return static
+     */
     private function add(string|Str|Stringable|Unique $payload): static
     {
         $newInstance = new static(collect($this->payload));

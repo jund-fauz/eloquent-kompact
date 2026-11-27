@@ -9,11 +9,12 @@ const word = ' ';
 const schema = ':';
 const relation = '.';
 const snake = '_';
+const strip = '-';
 
 /**
  * The values joined with the delimiter, nested arrays flattened, e.g. concat_by(relation, 'posts', ['user'])
  * for 'posts.user'. The delimiters of the other *_concat() functions are the constants path, word, schema,
- * relation and snake
+ * relation, snake and strip
  *
  * @param string $by The delimiter
  * @param string|array ...$values
@@ -23,6 +24,28 @@ function concat_by(string $by, string|array ...$values): string
 {
     flat($values);
     return join($by, $values);
+}
+
+/**
+ * The values joined with '-', nested arrays flattened
+ *
+ * @param string|array ...$values
+ * @return string
+ */
+function strip_concat(string|array ...$values): string
+{
+    return concat_by(strip, $values);
+}
+
+/**
+ * The values joined with '_', nested arrays flattened
+ *
+ * @param string|array ...$values
+ * @return string
+ */
+function snake_concat(string|array ...$values): string
+{
+    return concat_by(snake, $values);
 }
 
 /**

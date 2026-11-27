@@ -3,15 +3,19 @@
 namespace JundFauz\EloquentKompact;
 
 use BadMethodCallException;
+use JundFauz\EloquentKompact\Builder\Collection;
 use JundFauz\EloquentKompact\Builder\Str;
 use ReflectionException;
 use ReflectionFunction;
 use ReflectionNamedType;
 use function JundFauz\EloquentKompact\Array\flat;
+use function JundFauz\EloquentKompact\Array\is_count_many;
 use function JundFauz\EloquentKompact\Array\merge;
 use function JundFauz\EloquentKompact\Array\merge_as_array;
+use function JundFauz\EloquentKompact\Array\simple_wrap;
 use function JundFauz\EloquentKompact\Array\wrap;
 use function JundFauz\EloquentKompact\String\str;
+use function JundFauz\EloquentKompact\String\strs;
 
 /**
  * is_$what, or $what itself when it already starts with is
@@ -58,9 +62,13 @@ function is_function_eligible(string $function): bool
  */
 function execute_what_function(string $what, ...$parameters): bool
 {
-    static $cache = [];
-    [$isNegation, $function] = is_negation_and_get_raw_function($what);
-    $result = ($cache[$function] ??= resolve_what_function($function))(...$parameters);
+    static $cache = [], $rawCache = [];
+    if (! isset($cache[$what])) {
+        [$isNegation, $rawFunction] = is_negation_and_get_raw_function($what);
+        $cache[$what] = [$isNegation, $rawCache[$rawFunction] ??= resolve_what_function($rawFunction)];
+    }
+    [$isNegation, $function] = $cache[$what];
+    $result = $function(...$parameters);
     return $isNegation
         ? not($result)
         : $result;
@@ -76,7 +84,9 @@ function execute_what_function(string $what, ...$parameters): bool
  */
 function is_negation_and_get_raw_function(string $function): array
 {
-    $isNegativeFunction = ($words = Str::of($function)->snake()->explode('_'))->contains('not');
+    /** @var Collection $words */
+    $words = strs($function, 'snake', explode: '_');
+    $isNegativeFunction = $words->contains('not') && is_count_many($words);
     $rawFunction = $isNegativeFunction
         ? chain($words, diff: ['not'], implode: '_')
         : $function;
@@ -130,7 +140,7 @@ function execute(mixed $value, int|string $key, mixed $mainValue = null): bool
         $arguments[] = $mainValue;
     }
     if ($isKeyString) {
-        $arguments = merge($arguments, wrap($value));
+        $arguments = merge($arguments, simple_wrap($value));
     }
     return execute_what_function(...$arguments);
 }
@@ -237,12 +247,19 @@ function is_all_of(mixed $value, mixed ...$whats): bool
 }
 
 /**
- * Calls the methods one after another, each on what the previous one returned. A named argument is
- * the method with its parameters, e.g. chain(Str::of('isDirty'), 'snake', startsWith: 'is')
- * for Str::of('isDirty')->snake()->startsWith('is')
+ * Calls the methods on $object one after another, each on what the previous one returned, and returns the last result.
+ * - A positional string calls the method without arguments ('snake'; arrays passed without ... are not flattened).
+ * - A named argument (or an unpacked [method => parameters] array) passes its parameters through wrap():
+ *   one non-array value is one argument (startsWith: 'is'), a list passes several positional arguments
+ *   (replace: ['-', '_']), an associative array passes named parameters to that method
+ *   (replace: ['search' => '-', 'replace' => '_']), and an array parameter itself is wrapped once more
+ *   (diff: [['not']], swap: [['a' => 'b']]).
+ * - A blank() value ('', ' ', [], null) calls the method without arguments (lower: '', trim: []), so parameterless
+ *   methods can follow named arguments; wrap a single blank argument as [' '].
+ * - A method name cannot appear twice as a named argument in one call.
  *
  * @param object $object
- * @param mixed ...$methods A method name, or method name => its parameter(s)
+ * @param mixed ...$methods A method name, or method name => its parameter(s) (blank for none)
  * @return mixed What the last method returns
  */
 function chain(object $object, ...$methods): mixed
@@ -255,32 +272,4 @@ function chain(object $object, ...$methods): mixed
         };
     }
     return $object;
-}
-
-/**
- * Whether the check is false for every value, nested arrays flattened
- *
- * @deprecated Will be removed in 3.0. Use is_all("not_$what", ...$values), e.g. is_all('not_null', $a, $b)
- * @param string $what See is_not()
- * @param mixed ...$values
- * @return bool
- * @throws BadMethodCallException When no function returning a bool is found for $what
- */
-function is_all_not(string $what, ...$values): bool
-{
-    return not(is_any($what, ...$values));
-}
-
-/**
- * Whether the check is false for at least one value, nested arrays flattened
- *
- * @deprecated Will be removed in 3.0. Use is_any("not_$what", ...$values), e.g. is_any('not_int', $a, $b)
- * @param string $what See is_not()
- * @param mixed ...$values
- * @return bool
- * @throws BadMethodCallException When no function returning a bool is found for $what
- */
-function is_any_not(string $what, ...$values): bool
-{
-    return not(is_all($what, ...$values));
 }

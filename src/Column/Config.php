@@ -6,9 +6,16 @@ use Illuminate\Database\Schema\ColumnDefinition;
 use Illuminate\Database\Schema\ForeignKeyDefinition;
 use Illuminate\Support\Arr;
 
+/**
+ * Apply batch schema modifiers (`all`, exact names, regexes, and `rest`) onto Blueprint column definitions.
+ *
+ * @final
+ */
 class Config
 {
     /**
+     * Apply configured modifier payloads across a list of Blueprint column and foreign key definitions.
+     *
      * @param array<int, ColumnDefinition|ForeignKeyDefinition> $columns
      * @param array<string, string|array> $payloads
      * @return void
@@ -49,6 +56,13 @@ class Config
         }
     }
 
+    /**
+     * Invoke one or more Blueprint modifier methods on a single column or foreign key definition.
+     *
+     * @param ColumnDefinition|ForeignKeyDefinition $column
+     * @param mixed $payloads
+     * @return ColumnDefinition|ForeignKeyDefinition
+     */
     public static function applies(ColumnDefinition|ForeignKeyDefinition $column, mixed $payloads): ColumnDefinition|ForeignKeyDefinition
     {
         if (! is_array($payloads)) {

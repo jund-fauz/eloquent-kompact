@@ -71,6 +71,13 @@ final class ColumnCreator
 
     protected static ?string $matcher = null;
 
+    /**
+     * Dynamically append a built-in or custom column-type token suffix to a base column name.
+     *
+     * @param string $method
+     * @param array<int, string> $parameters
+     * @return string
+     */
     public static function __callStatic(string $method, array $parameters): string
     {
         $constant = constant(self::class, str('pascal', $method));
@@ -86,11 +93,22 @@ final class ColumnCreator
         self::methodNotFound($method);
     }
 
+    /**
+     * Get the delimiter separating base column names from column-type tokens.
+     *
+     * @return string
+     */
     public static function getDelimiter(): string
     {
         return self::$delimiter;
     }
 
+    /**
+     * Set the delimiter separating base column names from column-type tokens and reset the regex cache.
+     *
+     * @param string $delimiter
+     * @return void
+     */
     public static function configureDelimiter(string $delimiter): void
     {
         self::$delimiter = $delimiter;
@@ -121,11 +139,22 @@ final class ColumnCreator
         return self::$customTokens;
     }
 
+    /**
+     * Resolve a custom column token string by its configuration key, or `null` if unregistered.
+     *
+     * @param string $key
+     * @return string|null
+     */
     public static function getCustomToken(string $key): ?string
     {
         return self::customTokens()[str('snake', $key)]['token'] ?? null;
     }
 
+    /**
+     * Return the default pair of quantity column names (`quantity_gram` and `quantity_pcs`).
+     *
+     * @return array{0: string, 1: string}
+     */
     public static function quantity(): array
     {
         return [
@@ -154,6 +183,8 @@ final class ColumnCreator
 
     /**
      * Token-matching regex; its position is derived directly from the config.
+     *
+     * @return string
      */
     protected static function matcher(): string
     {
@@ -172,6 +203,12 @@ final class ColumnCreator
                 ->value();
     }
 
+    /**
+     * Strip any recognized column-type token suffix from the given column name.
+     *
+     * @param string $column
+     * @return Str
+     */
     public static function getPlainColumnName(string $column): Str
     {
         return Str::of($column)->removeByRegex(self::matcher());
@@ -179,6 +216,10 @@ final class ColumnCreator
 
     /**
      * A column's type token, or ‘’ if the column doesn't have token.
+     *
+     * @param string $column
+     * @param bool $withDelimiter
+     * @return string
      */
     public static function getColumnType(string $column, bool $withDelimiter = false): string
     {
@@ -192,6 +233,9 @@ final class ColumnCreator
 
     /**
      * An Eloquent cast for a token, or null if no cast is needed.
+     *
+     * @param string $token
+     * @return string|null
      */
     public static function castOf(string $token): ?string
     {

@@ -69,6 +69,15 @@ class ColumnBuilderTest extends TestCase
     }
 
     #[Test]
+    public function it_always_provides_default_categorical_and_viewed_relation_columns(): void
+    {
+        $this->assertSame('categorical_id', RelationBuilder::categorical());
+        $this->assertSame('viewed_id', RelationBuilder::viewed());
+        $this->assertSame('categorical_id', TestRelation::categorical());
+        $this->assertSame('viewed_id', TestRelation::viewed());
+    }
+
+    #[Test]
     public function it_uses_the_delimiter_for_the_relation_columns(): void
     {
         ColumnCreator::configureDelimiter('-');

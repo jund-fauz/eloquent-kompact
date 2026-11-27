@@ -2,9 +2,12 @@
 
 namespace JundFauz\EloquentKompact;
 
-use Illuminate\Database\Eloquent\Model;
+use Illuminate\Contracts\Support\Arrayable;
+use Illuminate\Support\Collection as SupportCollection;
 use Illuminate\Support\Facades\App;
+use Illuminate\Support\Stringable;
 use JundFauz\EloquentKompact\Builder\Collection;
+use JundFauz\EloquentKompact\Internal\Helper\Caster;
 use function JundFauz\EloquentKompact\Array\merge_mixed;
 
 /**
@@ -21,9 +24,9 @@ function cast_as(mixed $value, ?string $cast = null): mixed
     }
 
     static $caster;
-    $caster ??= new class extends Model { };
+    $caster ??= new Caster;
 
-    return (clone $caster)->mergeCasts(['value' => $cast])->setRawAttributes(['value' => $value])->value;
+    return $caster->castValue($value, $cast);
 }
 
 /**
@@ -37,9 +40,13 @@ function cast_as(mixed $value, ?string $cast = null): mixed
  */
 function object_compact(object $object, string|array ...$variables): array
 {
-    return collect(merge_mixed($variables))
-        ->mapWithKeys(fn (string $variable, mixed $key) => [(is_string($key) ? $key : $variable) => $object->{$variable} ?? null])
-        ->toArray();
+    $result = [];
+    foreach (merge_mixed($variables) as $key => $value) {
+        $result[is_string($key) ? $key : $value] = ($tempResult = $object->{$value} ?? null) instanceof Arrayable
+            ? $tempResult->toArray()
+            : $tempResult;
+    }
+    return $result;
 }
 
 /**
@@ -58,6 +65,25 @@ function collect(mixed ...$data): Collection
 }
 
 /**
+ * Chains the methods on a Collection of $array via chain(), returning a plain array for a Collection,
+ * a plain string for a Stringable, or what the last method returns otherwise
+ *
+ * @param array|SupportCollection $array
+ * @param mixed ...$methods A Collection method name, or method name => its parameter(s) (blank for none)
+ * @return mixed
+ * @see chain()
+ */
+function collects(array|SupportCollection $array, mixed ...$methods): mixed
+{
+    $result = chain(collect($array), ...$methods);
+    return match (true) {
+        $result instanceof SupportCollection => $result->toArray(),
+        $result instanceof Stringable => $result->value(),
+        default => $result
+    };
+}
+
+/**
  * Whether the app runs locally or runs its unit tests
  *
  * @return bool
@@ -65,17 +91,4 @@ function collect(mixed ...$data): Collection
 function is_app_local_or_test(): bool
 {
     return App::isLocal() || App::runningUnitTests();
-}
-
-/**
- * Column => value of the model; a string key or a named argument renames the column, e.g. model_compact($user, nama: 'name')
- *
- * @deprecated Will be removed in 3.0. Use object_compact($model, ...$columns)
- * @param Model $model
- * @param string|array ...$columns
- * @return array
- */
-function model_compact(Model $model, string|array ...$columns): array
-{
-    return object_compact($model, ...$columns);
 }

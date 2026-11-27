@@ -23,6 +23,13 @@ final class ColumnCheck
 {
     use ErrorThrow;
 
+    /**
+     * Dynamically check whether a column name or definition matches a built-in or custom column token.
+     *
+     * @param string $method
+     * @param array<int, mixed> $parameters
+     * @return bool
+     */
     public static function __callStatic(string $method, array $parameters)
     {
         $method = Str::of($method);

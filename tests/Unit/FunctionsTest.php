@@ -4,16 +4,23 @@ namespace JundFauz\EloquentKompact\Tests\Unit;
 
 use ArrayObject;
 use BadMethodCallException;
+use Carbon\CarbonImmutable;
+use Illuminate\Contracts\Database\Eloquent\CastsInboundAttributes;
+use Illuminate\Database\Eloquent\Casts\AsArrayObject;
+use Illuminate\Database\Eloquent\Casts\AsCollection;
 use Illuminate\Database\Eloquent\Model;
+use Illuminate\Support\Carbon;
 use Illuminate\Support\Collection as SupportCollection;
 use Illuminate\Support\Facades\File;
 use JundFauz\EloquentKompact\Array as Arr;
 use JundFauz\EloquentKompact\Builder\Relation;
+use JundFauz\EloquentKompact\Cast\UuidCast;
 use JundFauz\EloquentKompact\String as Str;
 use JundFauz\EloquentKompact\Builder\Str as KompactStr;
 use JundFauz\EloquentKompact\Tests\TestCase;
 use PHPUnit\Framework\Attributes\DataProvider;
 use PHPUnit\Framework\Attributes\Test;
+use Ramsey\Uuid\Uuid;
 use stdClass;
 use function JundFauz\EloquentKompact\add_extension;
 use function JundFauz\EloquentKompact\add_php_extension;
@@ -32,10 +39,8 @@ use function JundFauz\EloquentKompact\null_if_not;
 use function JundFauz\EloquentKompact\nullIf;
 use function JundFauz\EloquentKompact\is;
 use function JundFauz\EloquentKompact\is_all;
-use function JundFauz\EloquentKompact\is_all_not;
 use function JundFauz\EloquentKompact\is_all_type_of;
 use function JundFauz\EloquentKompact\is_any;
-use function JundFauz\EloquentKompact\is_any_not;
 use function JundFauz\EloquentKompact\is_any_not_type_of;
 use function JundFauz\EloquentKompact\is_all_of;
 use function JundFauz\EloquentKompact\is_any_of;
@@ -43,13 +48,10 @@ use function JundFauz\EloquentKompact\is_app_local_or_test;
 use function JundFauz\EloquentKompact\is_file_exist;
 use function JundFauz\EloquentKompact\is_not;
 use function JundFauz\EloquentKompact\is_not_null;
-use function JundFauz\EloquentKompact\model_compact;
 use function JundFauz\EloquentKompact\object_compact;
 use function JundFauz\EloquentKompact\namespace_concat;
 use function JundFauz\EloquentKompact\namespace_trim;
 use function JundFauz\EloquentKompact\not;
-use function JundFauz\EloquentKompact\not_in;
-use function JundFauz\EloquentKompact\not_in_array;
 use function JundFauz\EloquentKompact\not_same_with;
 use function JundFauz\EloquentKompact\path_concat;
 use function JundFauz\EloquentKompact\relation_concat;
@@ -558,15 +560,15 @@ class FunctionsTest extends TestCase
     #[Test]
     public function it_checks_every_value_and_any_value_negated(): void
     {
-        $this->assertTrue(is_all_not('null', 0, ['', [false]]));
-        $this->assertFalse(is_all_not('null', 0, [null]));
-        $this->assertTrue(is_all_not('numeric', 'abc', null));
-        $this->assertFalse(is_all_not('numeric', 'abc', 1));
+        $this->assertTrue(is_all('not_null', 0, ['', [false]]));
+        $this->assertFalse(is_all('not_null', 0, [null]));
+        $this->assertTrue(is_all('not_numeric', 'abc', null));
+        $this->assertFalse(is_all('not_numeric', 'abc', 1));
 
-        $this->assertTrue(is_any_not('null', null, [null, 0]));
-        $this->assertFalse(is_any_not('null', null, [null]));
-        $this->assertTrue(is_any_not('numeric', 1, null));
-        $this->assertFalse(is_any_not('numeric', 1, '2'));
+        $this->assertTrue(is_any('not_null', null, [null, 0]));
+        $this->assertFalse(is_any('not_null', null, [null]));
+        $this->assertTrue(is_any('not_numeric', 1, null));
+        $this->assertFalse(is_any('not_numeric', 1, '2'));
     }
 
     #[Test]
@@ -621,33 +623,12 @@ class FunctionsTest extends TestCase
     }
 
     #[Test]
-    public function it_gives_the_same_result_as_the_negated_checks_with_not(): void
-    {
-        foreach ([[], [null], [1], [null, 1], [[null, 1]], ['5', 5.0]] as $values) {
-            foreach (['null', 'int', 'numeric'] as $what) {
-                $this->assertSame(is_all_not($what, ...$values), is_all("not_$what", ...$values));
-                $this->assertSame(is_any_not($what, ...$values), is_any("not_$what", ...$values));
-            }
-        }
-    }
-
-    #[Test]
     public function it_finds_an_array_is_function(): void
     {
         $this->assertTrue(execute_what_function('list', [1, 2]));
         $this->assertFalse(execute_what_function('list', ['a' => 1]));
         $this->assertTrue(is_any_of(['a' => 1], 'not_count_one', 'list') === false);
         $this->assertTrue(is_any_of([1], 'not_count_one', 'list'));
-    }
-
-    #[Test]
-    public function it_gives_the_same_result_as_the_deprecated_not_in_functions(): void
-    {
-        foreach ([['c', ['a', 'b'], false], ['a', ['a', 'b'], false], ['1', [1], false], ['1', [1], true]] as [$needle, $haystack, $strict]) {
-            $this->assertSame(not_in_array($needle, $haystack, $strict), is_not('in_array', $needle, $haystack, $strict));
-            $this->assertSame(not_in($needle, $haystack, $strict), is_not('in', $needle, $haystack, $strict));
-            $this->assertSame(not_in($needle, collect($haystack), $strict), is_not('in', $needle, collect($haystack), $strict));
-        }
     }
 
     #[Test]
@@ -852,14 +833,6 @@ class FunctionsTest extends TestCase
     }
 
     #[Test]
-    public function it_wraps_laravel_str_methods(): void
-    {
-        $this->assertSame('App\Models', Str\before_last('App\Models\User', '\\'));
-        $this->assertSame('äöü', Str\lower('ÄÖÜ'));
-        $this->assertSame('ÄÖÜ', Str\upper('äöü'));
-    }
-
-    #[Test]
     public function it_calls_a_laravel_str_method_by_name(): void
     {
         $this->assertSame('foo_bar', Str\str('snake', 'FooBar'));
@@ -977,8 +950,8 @@ class FunctionsTest extends TestCase
     {
         $model = self::model(['name' => 'a', 'email' => 'a@b.c', 'active' => 1, 'tags' => ['x']]);
 
-        $this->assertSame(['name' => 'a', 'active' => true], model_compact($model, 'name', 'active'));
-        $this->assertSame(['tags' => ['x']], model_compact($model, 'tags'));
+        $this->assertSame(['name' => 'a', 'active' => true], object_compact($model, 'name', 'active'));
+        $this->assertSame(['tags' => ['x']], object_compact($model, 'tags'));
     }
 
     #[Test]
@@ -994,24 +967,14 @@ class FunctionsTest extends TestCase
     }
 
     #[Test]
-    public function it_gives_the_same_result_as_the_deprecated_model_compact(): void
-    {
-        $model = self::model(['name' => 'a', 'email' => 'a@b.c', 'active' => 1, 'tags' => ['x']]);
-
-        foreach ([['name', 'active'], ['tags'], [['name', 'email']], [['nama' => 'name'], 'email'], ['missing'], []] as $columns) {
-            $this->assertSame(model_compact($model, ...$columns), object_compact($model, ...$columns));
-        }
-    }
-
-    #[Test]
     public function it_compacts_model_attributes_with_an_alias(): void
     {
         $model = self::model(['name' => 'a', 'email' => 'a@b.c', 'active' => 1]);
 
-        $this->assertSame(['name' => 'a', 'email' => 'a@b.c'], model_compact($model, ['name', 'email']));
-        $this->assertSame(['nama' => 'a', 'surel' => 'a@b.c'], model_compact($model, ['nama' => 'name', 'surel' => 'email']));
-        $this->assertSame(['nama' => 'a', 'email' => 'a@b.c'], model_compact($model, ['nama' => 'name'], 'email'));
-        $this->assertSame(['active' => true, 'nama' => 'a'], model_compact($model, 'active', nama: 'name'));
+        $this->assertSame(['name' => 'a', 'email' => 'a@b.c'], object_compact($model, ['name', 'email']));
+        $this->assertSame(['nama' => 'a', 'surel' => 'a@b.c'], object_compact($model, ['nama' => 'name', 'surel' => 'email']));
+        $this->assertSame(['nama' => 'a', 'email' => 'a@b.c'], object_compact($model, ['nama' => 'name'], 'email'));
+        $this->assertSame(['active' => true, 'nama' => 'a'], object_compact($model, 'active', nama: 'name'));
     }
 
     #[Test]
@@ -1053,19 +1016,19 @@ class FunctionsTest extends TestCase
     {
         $model = self::model(['name' => 'a', 'email' => 'a@b.c']);
 
-        $this->assertSame(['email', 'name'], array_keys(model_compact($model, 'email', 'name')));
+        $this->assertSame(['email', 'name'], array_keys(object_compact($model, 'email', 'name')));
     }
 
     #[Test]
     public function it_returns_null_for_missing_attributes(): void
     {
-        $this->assertSame(['missing' => null], model_compact(self::model([]), 'missing'));
+        $this->assertSame(['missing' => null], object_compact(self::model([]), 'missing'));
     }
 
     #[Test]
     public function it_returns_an_empty_array_without_columns(): void
     {
-        $this->assertSame([], model_compact(self::model(['name' => 'a'])));
+        $this->assertSame([], object_compact(self::model(['name' => 'a'])));
     }
 
     #[Test]
@@ -1074,21 +1037,21 @@ class FunctionsTest extends TestCase
         $model = self::model(['name' => 'a']);
         $model->setRelation('owner', self::model(['name' => 'b']));
 
-        $this->assertSame(['owner' => ['name' => 'b']], model_compact($model, 'owner'));
+        $this->assertSame(['owner' => ['name' => 'b']], object_compact($model, 'owner'));
     }
 
     #[Test]
     public function it_checks_a_value_is_not_in_a_list(): void
     {
-        $this->assertTrue(not_in_array('c', ['a', 'b']));
-        $this->assertFalse(not_in_array('a', ['a', 'b']));
-        $this->assertFalse(not_in_array('1', [1]));
-        $this->assertTrue(not_in_array('1', [1], true));
+        $this->assertTrue(is_not('in_array', 'c', ['a', 'b']));
+        $this->assertFalse(is_not('in_array', 'a', ['a', 'b']));
+        $this->assertFalse(is_not('in_array', '1', [1]));
+        $this->assertTrue(is_not('in_array', '1', [1], true));
 
-        $this->assertTrue(not_in('c', collect(['a', 'b'])));
-        $this->assertFalse(not_in('a', new SupportCollection(['a'])));
-        $this->assertFalse(not_in('a', ['a']));
-        $this->assertTrue(not_in('1', collect([1]), true));
+        $this->assertTrue(is_not('in', 'c', collect(['a', 'b'])));
+        $this->assertFalse(is_not('in', 'a', new SupportCollection(['a'])));
+        $this->assertFalse(is_not('in', 'a', ['a']));
+        $this->assertTrue(is_not('in', '1', collect([1]), true));
     }
 
     #[Test]
@@ -1246,6 +1209,150 @@ class FunctionsTest extends TestCase
     {
         $this->assertSame(['a' => 2, 0 => 'x', 1 => 'y'], Arr\merge(['a' => 1, 'x'], ['a' => 2, 'y']));
         $this->assertSame([], Arr\merge());
+    }
+
+    #[Test]
+    public function it_chains_methods_with_blank_named_arguments(): void
+    {
+        $this->assertSame(
+            'scrap',
+            Str\strs('hasScrap', removeStart: 'has', lower: '', trim: []),
+        );
+        $this->assertSame(
+            ['a'],
+            \JundFauz\EloquentKompact\chain(collect(['a', 'b']), diff: [['b']], values: null)->all(),
+        );
+    }
+
+    #[Test]
+    public function it_chains_collection_methods_with_collects(): void
+    {
+        $this->assertSame(
+            ['A', 'B'],
+            \JundFauz\EloquentKompact\collects(['a', null, 'b'], 'filterFilled', map: [fn (string $v) => strtoupper($v)], values: ''),
+        );
+        $this->assertSame(
+            'a, b',
+            \JundFauz\EloquentKompact\collects(['a', 'b'], implodeAsStr: [', ']),
+        );
+        $this->assertSame(
+            6,
+            \JundFauz\EloquentKompact\collects([1, 2, 3], 'sum'),
+        );
+        $this->assertTrue(
+            \JundFauz\EloquentKompact\collects(new SupportCollection(['x', 'y']), contains: 'y'),
+        );
+    }
+
+    #[Test]
+    public function it_chains_laravel_arr_methods_with_arrs(): void
+    {
+        $this->assertSame(
+            [1, 2, 3],
+            Arr\arrs([[1, [2]], [3]], 'flatten'),
+        );
+        $this->assertSame(
+            ['a' => 1],
+            Arr\arrs(['a' => 1, 'b' => null, 'c' => 2], only: [['a', 'b']], whereNotNull: ''),
+        );
+        $this->assertSame(
+            'a, b and c',
+            Arr\arrs(['a', 'b', 'c'], join: [', ', ' and ']),
+        );
+    }
+
+    #[Test]
+    public function it_wraps_values_including_null_with_simple_wrap(): void
+    {
+        $this->assertSame([null], Arr\simple_wrap(null));
+        $this->assertSame(['a'], Arr\simple_wrap('a'));
+        $this->assertSame(['a', 'b'], Arr\simple_wrap(['a', 'b']));
+        $this->assertSame([], Arr\simple_wrap([]));
+    }
+
+    #[Test]
+    public function it_joins_values_with_strip_and_snake_concat(): void
+    {
+        $this->assertSame('-', \JundFauz\EloquentKompact\strip);
+        $this->assertSame('a-b-c', \JundFauz\EloquentKompact\strip_concat('a', ['b', ['c']]));
+        $this->assertSame('a_b_c', \JundFauz\EloquentKompact\snake_concat('a', ['b', ['c']]));
+        $this->assertSame('', \JundFauz\EloquentKompact\strip_concat());
+        $this->assertSame('', \JundFauz\EloquentKompact\snake_concat());
+    }
+
+    #[Test]
+    public function it_joins_values_with_concat_class(): void
+    {
+        $this->assertSame('a/b/c', \JundFauz\EloquentKompact\Helper\Concat::path('a', ['b', ['c']]));
+        $this->assertSame('a b', \JundFauz\EloquentKompact\Helper\Concat::word('a', 'b'));
+        $this->assertSame('decimal:2', \JundFauz\EloquentKompact\Helper\Concat::schema('decimal', '2'));
+        $this->assertSame('posts.user', \JundFauz\EloquentKompact\Helper\Concat::relation('posts', 'user'));
+        $this->assertSame('a_b', \JundFauz\EloquentKompact\Helper\Concat::snake('a', 'b'));
+        $this->assertSame('a-b', \JundFauz\EloquentKompact\Helper\Concat::strip('a', 'b'));
+
+        $this->expectException(BadMethodCallException::class);
+        \JundFauz\EloquentKompact\Helper\Concat::unknown('a', 'b');
+    }
+
+    #[Test]
+    public function it_casts_objects_arrays_and_dates_with_cast_as(): void
+    {
+        // Dates & Carbon (including without an active DB connection)
+        $previousResolver = Model::getConnectionResolver();
+        Model::unsetConnectionResolver();
+        try {
+            $date = cast_as('2026-01-15 10:20:30', 'datetime');
+            $this->assertInstanceOf(Carbon::class, $date);
+            $this->assertSame('2026-01-15 10:20:30', $date->format('Y-m-d H:i:s'));
+
+            $carbonInput = Carbon::parse('2026-01-15 10:20:30.123456');
+            $castedCarbon = cast_as($carbonInput, 'datetime');
+            $this->assertInstanceOf(Carbon::class, $castedCarbon);
+            $this->assertSame('123456', $castedCarbon->format('u'));
+
+            $immutable = cast_as($carbonInput, 'immutable_datetime');
+            $this->assertInstanceOf(CarbonImmutable::class, $immutable);
+            $this->assertSame($carbonInput->getTimestamp(), cast_as($carbonInput, 'timestamp'));
+            $this->assertSame('2026-01-15 10:20:30', cast_as(Carbon::parse('2026-01-15 10:20:30'), 'string'));
+        } finally {
+            Model::setConnectionResolver($previousResolver);
+        }
+
+        // Arrays, Collections, Objects & Built-in Eloquent Cast Classes
+        $this->assertSame(['a' => 1], cast_as(['a' => 1], 'array'));
+        $this->assertSame([1, 2], cast_as(collect([1, 2]), 'array'));
+        $this->assertTrue(same_with('[1,2]', [1, 2], 'array'));
+        $this->assertTrue(same_with('[1,2]', collect([1, 2]), 'array'));
+
+        $castedCollection = cast_as([1, 2], 'collection');
+        $this->assertInstanceOf(SupportCollection::class, $castedCollection);
+        $this->assertSame([1, 2], $castedCollection->all());
+
+        $castedObj = cast_as(['a' => 1], 'object');
+        $this->assertInstanceOf(stdClass::class, $castedObj);
+        $this->assertSame(1, $castedObj->a);
+
+        $this->assertInstanceOf(\Illuminate\Database\Eloquent\Casts\ArrayObject::class, cast_as(['a' => 1], AsArrayObject::class));
+        $this->assertInstanceOf(SupportCollection::class, cast_as(new ArrayObject([1, 2]), AsCollection::class));
+
+        // Custom CastsAttributes (UuidCast) & CastsInboundAttributes
+        $uuid = Uuid::fromString('550e8400-e29b-41d4-a716-446655440000');
+        $castedUuid = cast_as($uuid, UuidCast::class);
+        $this->assertSame('550e8400-e29b-41d4-a716-446655440000', (string) $castedUuid);
+        $this->assertSame('HELLO', cast_as('hello', FunctionsTestUppercaseInboundCast::class));
+
+        // Stringable & BackedEnum unwrapping on primitive casts
+        $this->assertSame(5, cast_as(KompactStr::of('5'), 'integer'));
+        $this->assertSame([1, 2], cast_as(KompactStr::of('[1,2]'), 'array'));
+        $this->assertSame('paid', cast_as(FunctionsTestStatus::Paid, 'string'));
+    }
+}
+
+class FunctionsTestUppercaseInboundCast implements CastsInboundAttributes
+{
+    public function set(Model $model, string $key, mixed $value, array $attributes): string
+    {
+        return strtoupper((string) $value);
     }
 }
 

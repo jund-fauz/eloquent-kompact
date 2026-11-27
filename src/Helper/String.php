@@ -50,11 +50,17 @@ function str(string $methodName, mixed ...$parameters): mixed
 }
 
 /**
- * Chains the methods of this package's Str on the string, see chain(), and gives back the string,
- * or what the last method returns when it is not a string, e.g. strs('isDirty', 'snake', startsWith: 'is')
+ * Chains the methods of this package's Str on $string via chain(), returning the plain string when the last
+ * result is a Stringable, or what the last method returns otherwise. Method names are called directly on Str
+ * (camelCase, unlike str()): positional strings take no arguments, named arguments (or unpacked
+ * [method => parameters]) pass parameters through wrap() (wrap an array parameter once more, e.g.
+ * swap: [['a' => 'b']]), and a blank() value ('', ' ', [], null) calls the method without arguments
+ * (wrap a single blank argument as [' ']), e.g. strs('isDirty', 'snake', startsWith: 'is') or
+ * strs($name, removeStart: 'has', lower: '', singular: '', sameWith: 'scrap')
  *
+ * @see chain()
  * @param string $string
- * @param mixed ...$methods A method name, or method name => its parameter(s)
+ * @param mixed ...$methods A Str method name (camelCase), or method name => its parameter(s) (blank for none)
  * @return mixed
  */
 function strs(string $string, mixed ...$methods): mixed
@@ -114,41 +120,4 @@ function rtrim_multiline(string $value, string $characters = " \n\r\t\v\0"): str
         ->explode("\n")
         ->map(fn ($value) => rtrim($value, $characters))
         ->implode("\n");
-}
-
-/**
- * Shorthand for Str::beforeLast()
- *
- * @param string $subject
- * @param string $search
- * @return string
- * @deprecated Will be removed in 3.0. Use str('before_last', $subject, $search)
- */
-function before_last(string $subject, string $search): string
-{
-    return SupportStr::beforeLast($subject, $search);
-}
-
-/**
- * Shorthand for Str::lower()
- *
- * @param string $subject
- * @return string
- * @deprecated Will be removed in 3.0. Use str('lower', $subject)
- */
-function lower(string $subject): string
-{
-    return SupportStr::lower($subject);
-}
-
-/**
- * Shorthand for Str::upper()
- *
- * @param string $subject
- * @return string
- * @deprecated Will be removed in 3.0. Use str('upper', $subject)
- */
-function upper(string $subject): string
-{
-    return SupportStr::upper($subject);
 }

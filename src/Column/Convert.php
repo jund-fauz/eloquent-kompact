@@ -10,6 +10,12 @@ use function JundFauz\EloquentKompact\is_any_of;
 
 final class Convert
 {
+    /**
+     * Convert a boolean column name into translated `[falseLabel, trueLabel]` display strings.
+     *
+     * @param string $columnName
+     * @return array{0: string, 1: string}
+     */
     public static function booleanToString(string $columnName): array
     {
         $trueValue = __((string) ColumnCreator::getPlainColumnName($columnName)->ucfirst());
@@ -18,16 +24,35 @@ final class Convert
         return [$falseValue, $trueValue];
     }
 
+    /**
+     * Convert hours into seconds.
+     *
+     * @param int $hour
+     * @return int
+     */
     public static function hourToSecond(int $hour): int
     {
         return $hour * 3600;
     }
 
+    /**
+     * Convert days into seconds.
+     *
+     * @param int $day
+     * @return int
+     */
     public static function dayToSecond(int $day): int
     {
         return self::hourToSecond($day * 24);
     }
 
+    /**
+     * Convert a model class name into a foreign-key relation column name, optionally prefixed.
+     *
+     * @param string $model
+     * @param string|null $prefix
+     * @return string
+     */
     public static function modelToColumn(string $model, ?string $prefix = null): string
     {
         $result = chain(Str::of($model, true), 'classBasename', 'snake', 'relation');
@@ -38,6 +63,15 @@ final class Convert
         return (string) $result;
     }
 
+    /**
+     * Convert a model class or `[prefix => model]` entry into a relation or table name.
+     *
+     * @param string|array<string, string> $model
+     * @param bool $isPlural
+     * @param bool $isSnakeCase
+     * @return string
+     * @throws InvalidArgumentException
+     */
     public static function modelToRelation(string|array $model, bool $isPlural = false, bool $isSnakeCase = false): string
     {
         $prefix = null;

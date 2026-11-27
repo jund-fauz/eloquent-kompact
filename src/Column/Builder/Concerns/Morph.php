@@ -12,7 +12,11 @@ class Morph
      * Resolve `{prefix}Id()` and `{prefix}Model()` calls, where the prefix is either
      * a constant name (e.g. `attributeId`) or its morph name (e.g. `sourceableId`).
      *
-     * @param  array<int, mixed>  $arguments
+     * @param string $name
+     * @param array<int, mixed> $arguments
+     * @return string
+     * @throws BadMethodCallException
+     * @final
      */
     public static function __callStatic(string $name, array $arguments): string
     {
