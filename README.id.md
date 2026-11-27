@@ -1169,7 +1169,7 @@ Di `JundFauz\EloquentKompact\Array`.
 | `flat(&$array)` | Meratakan array di tempat |
 | `wrap($value)` | `Arr::wrap()` Laravel: nilainya sebagai array, `[]` untuk `null` |
 | `cast($value, $delimiter = null)` | Item-item sebuah collection, string atau `Stringable` yang dipecah dengan `$delimiter` kalau diberikan (`cast('a,b', ',')` → `['a', 'b']`), atau `wrap()` dari nilai lain |
-| `filter($array, $callback = null)` | `array_filter()` dari array itu, key dipertahankan |
+| `filter($array, $callback = null)` | `array_filter()` yang juga memberikan key (`fn ($value, $key)`), key dipertahankan |
 | `filter_filled($array)` | Nilai yang `filled()` menurut Laravel, key dipertahankan: `null`, string kosong dan array atau collection kosong dihapus; `0`, `'0'` dan `false` dipertahankan |
 | `key_change(&$array, $oldKey, $newKey)` | Mengganti nama key di tempat. Key pindah ke akhir array, `$newKey` yang sudah ada diganti, dan `$oldKey` yang tidak ada memunculkan warning `Undefined array key` dari PHP |
 | `key_values($array)` | `[key, value]` dari array dengan satu item; dengan beberapa item, semua key lalu semua value dalam satu list datar |
