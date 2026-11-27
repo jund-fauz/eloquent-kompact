@@ -163,6 +163,25 @@ class AdditionalQueriesTest extends TestCase
     }
 
     #[Test]
+    public function it_uses_the_default_from_with_default_in_get_many(): void
+    {
+        $model = (new MorphComment)->forceFill([
+            'name' => 'Ana',
+            'nickname' => null,
+            'zero' => 0,
+            'empty' => '',
+            'off' => false,
+        ]);
+
+        $this->assertSame(
+            ['Ana', '-', 0, '', false, '-'],
+            $model->withDefault('-')->getMany('name', 'nickname', 'zero', 'empty', 'off', 'missing'),
+        );
+        $this->assertSame([], $model->withDefault('-')->getMany());
+        $this->assertSame([null, null], $model->getMany('nickname', 'missing'));
+    }
+
+    #[Test]
     public function it_checks_that_an_attribute_is_not_the_value(): void
     {
         $comment = MorphComment::find(3);
@@ -290,6 +309,135 @@ class AdditionalQueriesTest extends TestCase
         $comment->assignIfNullFrom(MorphComment::find(3), 'commentable_type', 'commentable_id');
 
         $this->assertSame(['video', 0], $comment->getMany('commentable_type', 'commentable_id'));
+    }
+
+    #[Test]
+    public function it_assigns_conditionally_with_single_and_array_columns(): void
+    {
+        $comment = (new MorphComment)->forceFill([
+            'commentable_type' => 'video',
+            'commentable_id' => '   ',
+            'zero' => 0,
+            'off' => false,
+        ]);
+
+        $comment->assign('commentable_type', 'post', 'blank');
+        $comment->assign('commentable_id', 5, 'blank');
+        $comment->assign('missing', 'x', 'blank');
+        $comment->assign(['zero' => 9, 'off' => true], 'blank');
+
+        $this->assertSame(
+            ['video', 5, 'x', 0, false],
+            $comment->getMany('commentable_type', 'commentable_id', 'missing', 'zero', 'off'),
+        );
+
+        // Named condition: argument on an array of columns
+        $named = (new MorphComment)->forceFill(['a' => 'keep', 'b' => null]);
+        $named->assign(['a' => 'replaced', 'b' => 'set'], condition: 'null');
+        $this->assertSame(['keep', 'set'], $named->getMany('a', 'b'));
+
+        // Keyed checks, including a null check value (must not strip ['same_with' => null])
+        $keyed = new MorphComment;
+        $keyed->setRawAttributes(['status' => 'draft', 'note' => 'keep', 'empty_note' => null], true);
+        $keyed->status = 'pending';
+
+        $keyed->assign('status', 'paid', ['dirty', 'in' => 'draft,pending']);
+        $keyed->assign('note', 'overwritten', ['same_with' => null]);
+        $keyed->assign('empty_note', 'filled_in', ['same_with' => null]);
+        $keyed->assign(['note' => 'still_kept'], ['same_with' => null]);
+
+        $this->assertSame(['paid', 'keep', 'filled_in'], $keyed->getMany('status', 'note', 'empty_note'));
+    }
+
+    #[Test]
+    public function it_assigns_from_another_model_conditionally(): void
+    {
+        $other = (new MorphComment)->forceFill([
+            'commentable_type' => 'video',
+            'commentable_id' => 9,
+            'note' => 'from_other',
+        ]);
+
+        $blankTarget = (new MorphComment)->forceFill([
+            'commentable_type' => '   ',
+            'commentable_id' => 0,
+            'note' => 'keep',
+        ]);
+        $blankTarget->assignFromIf('blank', $other, 'commentable_type', 'commentable_id', 'note');
+        $this->assertSame(['video', 0, 'keep'], $blankTarget->getMany('commentable_type', 'commentable_id', 'note'));
+
+        $dirtyTarget = new MorphComment;
+        $dirtyTarget->setRawAttributes(['commentable_type' => '', 'commentable_id' => 1, 'note' => null], true);
+        $dirtyTarget->commentable_type = '   ';
+        $dirtyTarget->assignFromIf(['dirty', 'blank'], $other, 'commentable_type', 'note');
+        $this->assertSame(['video', null], $dirtyTarget->getMany('commentable_type', 'note'));
+
+        $nullCheckTarget = (new MorphComment)->forceFill(['commentable_type' => 'post', 'note' => null]);
+        $nullCheckTarget->assignFromIf(['same_with' => null], $other, 'commentable_type', 'note');
+        $this->assertSame(['post', 'from_other'], $nullCheckTarget->getMany('commentable_type', 'note'));
+    }
+
+    #[Test]
+    public function it_gives_the_same_result_as_the_deprecated_assign_if_methods(): void
+    {
+        $initial = [
+            'null_col' => null,
+            'empty_col' => '',
+            'space_col' => '   ',
+            'zero_col' => 0,
+            'zero_str' => '0',
+            'false_col' => false,
+            'filled_col' => 'keep',
+        ];
+        $columns = [...array_keys($initial), 'missing_col'];
+        $updates = array_fill_keys($columns, 'new');
+        $other = (new MorphComment)->forceFill(array_fill_keys($columns, 'from_other'));
+
+        // assignIfBlank (single column) vs assign(..., 'blank')
+        $legacy = (new MorphComment)->forceFill($initial);
+        $modern = (new MorphComment)->forceFill($initial);
+        foreach ($columns as $col) {
+            $legacy->assignIfBlank($col, 'new');
+            $modern->assign($col, 'new', 'blank');
+        }
+        $this->assertSame($legacy->getMany(...$columns), $modern->getMany(...$columns));
+
+        // assignIfBlank (array) vs assign($updates, 'blank')
+        $legacy = (new MorphComment)->forceFill($initial);
+        $modern = (new MorphComment)->forceFill($initial);
+        $legacy->assignIfBlank($updates);
+        $modern->assign($updates, 'blank');
+        $this->assertSame($legacy->getMany(...$columns), $modern->getMany(...$columns));
+
+        // assignIfNull (single column) vs assign(..., 'null')
+        $legacy = (new MorphComment)->forceFill($initial);
+        $modern = (new MorphComment)->forceFill($initial);
+        foreach ($columns as $col) {
+            $legacy->assignIfNull($col, 'new');
+            $modern->assign($col, 'new', 'null');
+        }
+        $this->assertSame($legacy->getMany(...$columns), $modern->getMany(...$columns));
+
+        // assignIfNull (array) vs assign($updates, 'null')
+        $legacy = (new MorphComment)->forceFill($initial);
+        $modern = (new MorphComment)->forceFill($initial);
+        $legacy->assignIfNull($updates);
+        $modern->assign($updates, 'null');
+        $this->assertSame($legacy->getMany(...$columns), $modern->getMany(...$columns));
+
+        // assignIfBlankFrom vs assignFromIf('blank', ...)
+        $legacy = (new MorphComment)->forceFill($initial);
+        $modern = (new MorphComment)->forceFill($initial);
+        $legacy->assignIfBlankFrom($other, ...$columns);
+        $modern->assignFromIf('blank', $other, ...$columns);
+        $this->assertSame($legacy->getMany(...$columns), $modern->getMany(...$columns));
+
+        // assignIfNullFrom vs assignFromIf('null', ...)
+        $legacy = (new MorphComment)->forceFill($initial);
+        $modern = (new MorphComment)->forceFill($initial);
+        $legacy->assignIfNullFrom($other, ...$columns);
+        $modern->assignFromIf('null', $other, ...$columns);
+        $this->assertSame($legacy->getMany(...$columns), $modern->getMany(...$columns));
     }
 
     #[Test]

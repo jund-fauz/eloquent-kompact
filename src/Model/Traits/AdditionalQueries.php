@@ -12,6 +12,7 @@ use ReflectionException;
 use ReflectionNamedType;
 use function JundFauz\EloquentKompact\Array\filter_filled;
 use function JundFauz\EloquentKompact\Array\flat;
+use function JundFauz\EloquentKompact\Array\is_count_zero;
 use function JundFauz\EloquentKompact\Array\merge;
 use function JundFauz\EloquentKompact\Array\merge_as_array;
 use function JundFauz\EloquentKompact\Array\wrap;
@@ -51,7 +52,7 @@ trait AdditionalQueries
     }
 
     /**
-     * Returns a clone whose getOr(), getVia() and getRelVia() fall back to $value instead of null
+     * Returns a clone whose getOr(), getMany(), getVia() and getRelVia() fall back to $value instead of null
      *
      * @param mixed $value
      * @return static
@@ -439,9 +440,15 @@ trait AdditionalQueries
         return $this->sameWith(ColumnCreator::type($morphName), Relation::getMorphAlias($modelClass));
     }
 
+    /**
+     * The attributes of the columns in the given order, falling back to the default set by withDefault() (null by default)
+     *
+     * @param string ...$columns
+     * @return array
+     */
     public function getMany(string ...$columns): array
     {
-        return array_map(fn (string $column) => $this->{$column}, $columns);
+        return array_map(fn (string $column) => $this->{$column} ?? $this->defaultValue, $columns);
     }
 
     /**
@@ -466,10 +473,29 @@ trait AdditionalQueries
         }
     }
 
-    public function assign(string|array $columns, mixed $value = null): void
+    /**
+     * Sets one attribute ($columns as string, $valueOrCondition as value) or several ($columns as [column => value],
+     * $valueOrCondition as condition), without saving. When a condition is given, only columns satisfying
+     * isAllOf($column, ...$condition) are assigned
+     *
+     * @param string|array $columns
+     * @param mixed $valueOrCondition
+     * @param string|array|null $condition
+     * @return void
+     */
+    public function assign(string|array $columns, mixed $valueOrCondition = null, string|array|null $condition = null): void
     {
-        foreach (is_string($columns) ? [$columns => $value] : $columns as $column => $value) {
-            $this->{$column} = $value;
+        if (is_string($columns)) {
+            $columns = [$columns => $valueOrCondition];
+        } else {
+            $condition ??= $valueOrCondition;
+        }
+        $condition = wrap($condition);
+        $notNeedCondition = is_count_zero($condition);
+        foreach ($columns as $column => $value) {
+            if ($notNeedCondition || $this->isAllOf($column, ...$condition)) {
+                $this->{$column} = $value;
+            }
         }
     }
 
@@ -480,55 +506,18 @@ trait AdditionalQueries
         }
     }
 
-    public function assignIfBlank(string|array $columns, mixed $value = null): void
-    {
-        if (is_string($columns)) {
-            if ($this->isBlank($columns)) {
-                $this->assign($columns, $value);
-            }
-        } else {
-            foreach ($columns as $column => $value) {
-                if ($this->isBlank($column)) {
-                    $this->assign($column, $value);
-                }
-            }
-        }
-    }
-
     /**
-     * @experimental
+     * Copies each column from $other when it satisfies isAllOf($column, ...$condition), without saving
+     *
+     * @param string|array $condition
      * @param Model $other
      * @param string ...$columns
      * @return void
      */
-    public function assignIfBlankFrom(Model $other, string ...$columns): void
+    public function assignFromIf(string|array $condition, Model $other, string ...$columns): void
     {
         foreach ($columns as $column) {
-            if ($this->isBlank($column)) {
-                $this->assign($column, $other->{$column});
-            }
-        }
-    }
-
-    public function assignIfNull(string|array $columns, mixed $value = null): void
-    {
-        if (is_string($columns)) {
-            if ($this->isNull($columns)) {
-                $this->assign($columns, $value);
-            }
-        } else {
-            foreach ($columns as $column => $value) {
-                if ($this->isNull($column)) {
-                    $this->assign($column, $value);
-                }
-            }
-        }
-    }
-
-    public function assignIfNullFrom(Model $other, string ...$columns): void
-    {
-        foreach ($columns as $column) {
-            if ($this->isNull($column)) {
+            if ($this->isAllOf($column, ...wrap($condition))) {
                 $this->assign($column, $other->{$column});
             }
         }
@@ -850,5 +839,85 @@ trait AdditionalQueries
             $result[] = $this->getVia($columnName, ...$relationClasses);
         }
         return $result;
+    }
+
+    /**
+     * Sets the column or [column => value] entries whose current attribute is blank(), without saving
+     *
+     * @param string|array $columns
+     * @param mixed $value
+     * @return void
+     * @deprecated Will be removed in 3.0. Use $this->assign($columns, $value, 'blank'), or $this->assign($columns, 'blank') for an array
+     */
+    public function assignIfBlank(string|array $columns, mixed $value = null): void
+    {
+        if (is_string($columns)) {
+            if ($this->isBlank($columns)) {
+                $this->assign($columns, $value);
+            }
+        } else {
+            foreach ($columns as $column => $value) {
+                if ($this->isBlank($column)) {
+                    $this->assign($column, $value);
+                }
+            }
+        }
+    }
+
+    /**
+     * Copies each column whose current attribute is blank() from $other, without saving
+     *
+     * @param Model $other
+     * @param string ...$columns
+     * @return void
+     * @deprecated Will be removed in 3.0. Use $this->assignFromIf('blank', $other, ...$columns)
+     */
+    public function assignIfBlankFrom(Model $other, string ...$columns): void
+    {
+        foreach ($columns as $column) {
+            if ($this->isBlank($column)) {
+                $this->assign($column, $other->{$column});
+            }
+        }
+    }
+
+    /**
+     * Sets the column or [column => value] entries whose current attribute is null, without saving
+     *
+     * @param string|array $columns
+     * @param mixed $value
+     * @return void
+     * @deprecated Will be removed in 3.0. Use $this->assign($columns, $value, 'null'), or $this->assign($columns, 'null') for an array
+     */
+    public function assignIfNull(string|array $columns, mixed $value = null): void
+    {
+        if (is_string($columns)) {
+            if ($this->isNull($columns)) {
+                $this->assign($columns, $value);
+            }
+        } else {
+            foreach ($columns as $column => $value) {
+                if ($this->isNull($column)) {
+                    $this->assign($column, $value);
+                }
+            }
+        }
+    }
+
+    /**
+     * Copies each column whose current attribute is null from $other, without saving
+     *
+     * @param Model $other
+     * @param string ...$columns
+     * @return void
+     * @deprecated Will be removed in 3.0. Use $this->assignFromIf('null', $other, ...$columns)
+     */
+    public function assignIfNullFrom(Model $other, string ...$columns): void
+    {
+        foreach ($columns as $column) {
+            if ($this->isNull($column)) {
+                $this->assign($column, $other->{$column});
+            }
+        }
     }
 }
