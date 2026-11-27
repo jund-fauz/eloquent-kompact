@@ -6,6 +6,7 @@ use Exception;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\Relation;
 use Illuminate\Database\Events\MigrationsEnded;
+use Illuminate\Database\Schema\Blueprint as BaseBlueprint;
 use Illuminate\Support\Facades\Artisan;
 use Illuminate\Support\Facades\Event;
 use Illuminate\Support\Facades\File;
@@ -16,22 +17,31 @@ use JundFauz\EloquentKompact\Console\ColumnBuilderCommand;
 use JundFauz\EloquentKompact\Console\IdeHelperCommand;
 use JundFauz\EloquentKompact\Console\MathCommand;
 use JundFauz\EloquentKompact\Internal\Path\Path;
-use JundFauz\EloquentKompact\Model\KompactModel;
-use JundFauz\EloquentKompact\Model\KompactPivot;
-use JundFauz\EloquentKompact\Model\KompactUser;
+use JundFauz\EloquentKompact\Model\ModelCache;
+use JundFauz\EloquentKompact\Schema\Blueprint;
 use ReflectionClass;
 use Symfony\Component\Finder\SplFileInfo;
 use function config;
 use function JundFauz\EloquentKompact\String\concat;
 
+/** @final */
 class EloquentKompactServiceProvider extends ServiceProvider
 {
+    /**
+     * Merges the default `eloquent-kompact` package configuration and binds the Kompact schema `Blueprint`.
+     *
+     * @return void
+     */
     public function register(): void
     {
         $this->mergeConfigFrom(Path::fileConfig(), 'eloquent-kompact');
+        $this->app->bind(BaseBlueprint::class, Blueprint::class);
     }
 
     /**
+     * Bootstraps translations, publishable assets, Artisan commands, morph map, and migration listeners.
+     *
+     * @return void
      * @throws Exception
      */
     public function boot(): void
@@ -44,6 +54,11 @@ class EloquentKompactServiceProvider extends ServiceProvider
         $this->eventListener();
     }
 
+    /**
+     * Registers publishable translation and configuration files.
+     *
+     * @return void
+     */
     public function publish(): void
     {
         $this->publishes([
@@ -55,6 +70,11 @@ class EloquentKompactServiceProvider extends ServiceProvider
         ], 'eloquent-kompact-config');
     }
 
+    /**
+     * Registers package Artisan commands when running in the console.
+     *
+     * @return void
+     */
     public function configureArtisan(): void
     {
         if ($this->app->runningInConsole()) {
@@ -67,12 +87,15 @@ class EloquentKompactServiceProvider extends ServiceProvider
     }
 
     /**
+     * Enforces Eloquent's morph map from concrete models under `path.model` when configured.
+     *
+     * @return void
      * @throws Exception
      */
     protected function configureMorphMap(): void
     {
         if ($config = config('eloquent-kompact.morph_model_use')) {
-            if (not_in_array($config, ['table', 'model'], true)) {
+            if (is_not('in_array', $config, ['table', 'model'], true)) {
                 throw new Exception("$config as morph doesn't available yet. Request new feature at https://github.com/jund-fauz/eloquent-kompact/issues/new or give your contribution at https://github.com/jund-fauz/eloquent-kompact/pulls");
             }
             $modelNamespace = config('eloquent-kompact.path.model');
@@ -98,13 +121,16 @@ class EloquentKompactServiceProvider extends ServiceProvider
         }
     }
 
+    /**
+     * Listens for `MigrationsEnded` to flush static caches and regenerate local column builders and IDE helpers.
+     *
+     * @return void
+     */
     public function eventListener(): void
     {
         Event::listen(MigrationsEnded::class, function () {
             ColumnListing::flush();
-            KompactModel::flushKompactCache();
-            KompactPivot::flushKompactCache();
-            KompactUser::flushKompactCache();
+            ModelCache::flush();
 
             if ($this->app->isLocal()) {
                 foreach (ColumnBuilderCommand::generatedNamespaces() as $namespace) {
