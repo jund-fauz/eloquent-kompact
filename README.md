@@ -698,6 +698,8 @@ Set `KOMPACT_IDE_HELPER=true` in `.env` to run it automatically after every `php
 
 `EloquentKompactServiceProvider` automatically binds Laravel's `Illuminate\Database\Schema\Blueprint` to `JundFauz\EloquentKompact\Schema\Blueprint`, so `Schema::create('orders', function (Blueprint $table) { ... })` receives `JundFauz\EloquentKompact\Schema\Blueprint` without changing the `Blueprint` import. (If your application binds its own custom `Blueprint` subclass, have it extend `JundFauz\EloquentKompact\Schema\Blueprint`.)
 
+Run `php artisan make:ide-helper` to generate IDE autocomplete for the blueprint helpers and their supported plural calls in schema callbacks.
+
 | Method | Creates |
 |---|---|
 | `stringCastsEnum($column, $defaultValue = null)` | `string("{$column}_enum")`, applying `default()` when `$defaultValue !== null` (unwrapping `BackedEnum`) |
@@ -1191,6 +1193,7 @@ In `JundFauz\EloquentKompact`.
 | Function | Result |
 |---|---|
 | `concat_by($delimiter, ...$values)` | Joined with the delimiter, e.g. one of the constants `path`, `word`, `schema`, `relation`, `snake` and `strip`: `concat_by(relation, 'posts', 'user')` → `'posts.user'`, `concat_by('-', 'a', 'b')` → `'a-b'` |
+| `concat_between($delimiter, ...$values)` | Joins values with the delimiter and surrounds the result with it: `concat_between('-', 'a', 'b')` → `'-a-b-'` |
 | `word_concat(...$values)` | Joined with a space |
 | `snake_concat(...$values)` / `strip_concat(...$values)` | Joined with `_` / `-` |
 | `schema_concat(...$values)` | Joined with `:` |
