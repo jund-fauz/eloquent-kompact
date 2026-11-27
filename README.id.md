@@ -90,7 +90,7 @@ Keputusan desain:
 
 - **Baca skema, tidak men-generate apa pun.** Kode hasil generate akan tertinggal setiap kali ada migration. Membaca tabel saat runtime (dengan [cache kolom](#cache-kolom)) membuat model dan database selalu selaras.
 - **Konvensi dulu, tetap ada jalan keluar.** Token kustom, delimiter, dan column builder membuat sebuah project bisa menyesuaikan konvensi, bukan melawannya.
-- **Rilis yang bisa diprediksi.** Semantic versioning sejak `1.0.0`, [panduan upgrade](UPGRADE.id.md) untuk `2.0.0`, dan test yang berjalan di GitHub Actions.
+- **Rilis yang bisa diprediksi.** Semantic versioning sejak `1.0.0`, [panduan upgrade](UPGRADE.id.md) untuk rilis major, dan test yang berjalan di GitHub Actions.
 
 Dipakai di: lapisan model dan query ERP produksi tempat library ini diekstrak, dan fondasi [Filament Kompact](https://github.com/jund-fauz/filament-kompact).
 
@@ -100,11 +100,11 @@ Linimasa (dari riwayat git): repository dibuat 2026-10-22, `1.0.0` dirilis 2026-
 
 ## Versi
 
-Package ini mengikuti [Semantic Versioning](https://semver.org) dan stabil sejak `1.0.0`: breaking change hanya datang di rilis major (`2.0.0`), fitur baru di rilis minor (`2.x.0`) dan perbaikan di rilis patch (`2.x.y`). Pasang dengan `^2.0`.
+Package ini mengikuti [Semantic Versioning](https://semver.org) dan stabil sejak `1.0.0`: breaking change hanya datang di rilis major (`3.0.0`), fitur baru di rilis minor (`3.x.0`) dan perbaikan di rilis patch (`3.x.y`). Pasang dengan `^3.0`.
 
-Upgrade dari `1.x`? Lihat [UPGRADE.id.md](UPGRADE.id.md).
+Upgrade dari versi major sebelumnya? Lihat [UPGRADE.id.md](UPGRADE.id.md).
 
-Class dan method yang ditandai `@internal` atau `@experimental` tidak termasuk dalam janji ini dan bisa berubah di rilis mana pun.
+Class dan method yang ditandai `@internal` atau `@experimental` tidak termasuk dalam janji ini dan bisa berubah di rilis mana pun. Meng-extend class atau meng-override method yang ditandai `@final` juga tidak termasuk dalam janji ini.
 
 ## Konfigurasi
 
@@ -118,7 +118,7 @@ php artisan vendor:publish --tag=eloquent-kompact-config
 |---|---|---|
 | `path.model` | `App\Models` | Namespace tempat relasi dinamis dan `StaticH::getModel()` mencari model |
 | `path.database_enum` | `App\Enums` | Namespace tempat `AutoCast` mencari enum |
-| `path.math` | `App\Logic` | Namespace default class yang dibuat [`make:kompact-math`](#math) |
+| `path.math` | `App\Logic` | Namespace default class yang dibuat [`make:math`](#math) |
 | `column.custom_tokens` | `[]` | Token kolom milikmu sendiri, lihat [Token kustom](#token-kustom) |
 | `fillable.exclude_column_by.exact` | `['id']` | Nama kolom yang dikeluarkan dari daftar fillable dinamis |
 | `fillable.exclude_column_by.contain` | `[]` | Potongan nama kolom: kolom yang mengandung salah satunya dikeluarkan dari daftar fillable dinamis |
@@ -128,7 +128,7 @@ php artisan vendor:publish --tag=eloquent-kompact-config
 | `fillable.exclude_column_by.regex` | `[]` | Regex kolom yang dikeluarkan dari daftar fillable dinamis |
 | `fillable.include_explicitly` | `[]` | Kolom yang selalu masuk daftar fillable dinamis pada model yang tabelnya punya kolom itu, walaupun dikeluarkan oleh `exclude_column_by` |
 | `morph_model_use` | `''` | `'table'` atau `'model'` untuk mendaftarkan morph map dari model-model di `path.model`, lihat [Morph map](#morph-map) |
-| `ide-helper.auto_generate` | `env('KOMPACT_IDE_HELPER', false)` | Menjalankan `kompact:ide-helper` setelah `php artisan migrate` di environment local |
+| `ide-helper.auto_generate` | `env('KOMPACT_IDE_HELPER', false)` | Menjalankan `make:ide-helper` setelah `php artisan migrate` di environment local |
 | `decimal.default-precision` | `3` | Jumlah desimal [`Math`](#math) kalau class-nya tidak punya precision |
 
 Namespace boleh ditulis dengan atau tanpa backslash di akhir (`App\Models` atau `App\Models\`).
@@ -143,10 +143,10 @@ Cache dibersihkan otomatis setelah `php artisan migrate` (termasuk `migrate:fres
 
 ```php
 \JundFauz\EloquentKompact\Column\ColumnListing::flush();
-\JundFauz\EloquentKompact\Model\KompactModel::flushKompactCache();
-\JundFauz\EloquentKompact\Model\KompactPivot::flushKompactCache();
-\JundFauz\EloquentKompact\Model\KompactUser::flushKompactCache();
+\JundFauz\EloquentKompact\Model\ModelCache::flush();
 ```
+
+`KompactModel::flushKompactCache()`, `KompactPivot::flushKompactCache()` dan `KompactUser::flushKompactCache()` mendelegasikan pembersihan ke `ModelCache::flush()`, yang menghapus cache di memori untuk semua model (termasuk model yang memakai `Kompact` atau trait satuan di atas parent class sendiri).
 
 Proses yang berjalan lama (queue worker, Octane) menyimpan salinan di memori sampai di-restart, jadi jalankan `php artisan queue:restart` / `php artisan octane:reload` setelah migrate di production.
 
@@ -226,7 +226,7 @@ Hanya token yang mendapat delimiter: namanya sendiri, termasuk prefix, tetap sna
 Column builder adalah class per token yang static method-nya memberikan nama kolom, jadi nama kolom ditulis sekali dan bisa ditemukan oleh IDE: `Gram::netWeight()` → `net_weight_gram`. Generate dari kolom-kolom database-mu:
 
 ```bash
-php artisan kompact:column-builder -o "App\Constant\Column"
+php artisan make:column-builder -o "App\Constant\Column"
 ```
 
 Tanpa `-o` (`--output`), command akan menanyakan namespace-nya, di dalam `app/`. Command ini menulis satu class untuk setiap token kecuali `id` (`ArrayC`, `Boolean`, `Enum`, `Gram`, `Pcs`, …, dan satu per token kustom, misalnya `PerUnit`), dengan `@method` untuk setiap kolom token itu di database, serta class `Morph` dengan konstanta untuk setiap morph (kolom `*_type` beserta `*_id`-nya):
@@ -250,7 +250,7 @@ Morph::sourceableModel();  // sourceable_type
 
 Token yang merupakan keyword PHP mendapat `C` di akhir nama class-nya, seperti `ArrayC`, dan `ColumnBuilder` membuangnya lagi untuk menemukan token. Setelah command ini pernah dijalankan, command ini berjalan lagi sendiri setelah setiap `php artisan migrate` di environment `local`, untuk setiap namespace yang berisi class hasil generate-nya (dicari dari docblock-nya di dalam `app/`). Command ini juga bisa dijalankan ulang manual: class yang di-generate-nya diperbarui ke kolom terbaru, dan konstanta yang di-rename di `Morph` (`public const string source = 'sourceable';`, lalu `Morph::sourceId()`) tetap dipertahankan. Class dengan nama yang sama yang tidak di-generate oleh command ini akan dilewati, kecuali diberi `--force`.
 
-Command ini tidak membuat class untuk token `id`. Tulis sendiri dengan `Column\Builder\Concerns\RelationBuilder`, dengan daftar relasi di `$relation`: item tanpa key dipanggil dengan namanya sendiri, dan item dengan key dipanggil dengan key-nya:
+Command ini tidak membuat class untuk token `id`. Tulis sendiri dengan `Column\Builder\Concerns\RelationBuilder`, dengan daftar relasi di `$relation`: item tanpa key dipanggil dengan namanya sendiri, dan item dengan key dipanggil dengan key-nya. `RelationBuilder` juga menyertakan `'categorical'` (`categorical()` → `'categorical_id'`) dan `'viewed'` (`viewed()` → `'viewed_id'`) di dalam daftar default `private static` miliknya sendiri, jadi keduanya langsung tersedia di `RelationBuilder` maupun seluruh subclass-nya tanpa tertimpa saat subclass mendefinisikan `protected static array $relation = [...]`:
 
 ```php
 use JundFauz\EloquentKompact\Column\Builder\Concerns\RelationBuilder;
@@ -262,6 +262,8 @@ class Relation extends RelationBuilder
 
 Relation::customer_user(); // customer_user_id
 Relation::author();        // author_user_id
+Relation::categorical();   // categorical_id (bawaan)
+Relation::viewed();        // viewed_id (bawaan)
 ```
 
 Nama method-nya persis item atau key yang ditulis, dan nama lain akan melempar `BadMethodCallException`.
@@ -424,7 +426,34 @@ Relasi diselesaikan dari nama relasi dan kolom-kolomnya, tanpa mendeklarasikan m
 | `$post->tags` | `belongsToMany(Tag::class, 'post_tag', 'post_id', 'tag_id')` | tidak ada `tags.post_id` atau morph di `Tag`, dan tabel pivot `post_tag` ada dengan kolom `post_id` dan `tag_id` |
 | `$post->tags` | `belongsToMany(Tag::class, PostTagConnector::class, 'post_id', 'tag_id')` | ada subclass `KompactPivot` di `path.model` dengan `protected static array $pivotBetween = [Post::class, Tag::class];` yang tabelnya punya kolom `post_id` dan `tag_id` |
 
+Selain `[Post::class, Tag::class]`, `KompactPivot::$pivotBetween` juga menerima foreign key kustom (atau stem-nya) serta alias endpoint — yang diekspos lewat `KompactPivot::pivotEndpoints()` — dalam bentuk `[foreignKeyOrStem => Model::class]`, `[foreignKeyOrStem => [Model::class, 'alias']]`, atau `['alias' => [Model::class, foreignKeyOrStem]]`:
+
+```php
+class CastingConnector extends KompactPivot
+{
+    protected static array $pivotBetween = [
+        'casting_id' => ParentLedger::class,
+        'target_sub_id' => [ParentLedger::class, 'sub'],
+    ];
+}
+
+$pivot->casting;                  // belongsTo(ParentLedger::class, 'casting_id') pada pivot
+$pivot->sub;                      // belongsTo(ParentLedger::class, 'target_sub_id') lewat alias
+$pivot->targetSub;                // belongsTo(ParentLedger::class, 'target_sub_id') lewat stem kolom
+$ledger->castingConnectors;       // hasMany(CastingConnector::class, 'casting_id') (atau hasOne tunggal)
+$ledger->subCastingConnectors;    // hasMany(CastingConnector::class, 'target_sub_id')
+$ledger->subs;                    // belongsToMany(ParentLedger::class, CastingConnector::class, 'casting_id', 'target_sub_id')
+```
+
+Semua relasi pivot yang dipetakan ini juga didukung di `php artisan make:ide-helper`.
+
 Nama tunggal atau jamak tanpa kolom atau morph yang cocok akan melempar `BadMethodCallException`. Relasi yang dideklarasikan sebagai method selalu menang. Relasi dinamis menghormati `Model::preventLazyLoading()` dan bisa di-eager load (`Post::with('authorUser')`).
+
+Saat diatur pada model yang memakai soft delete, relasi dinamis yang menunjuk ke model tersebut (`belongsTo`, `hasOne`, `hasMany`, `morphMany` dan `belongsToMany`) otomatis menerapkan `withTrashed()`:
+
+```php
+protected static bool $includeSoftDeletedData = true;
+```
 
 Untuk mendapatkan autocomplete relasi-relasi ini, lihat [IDE helper](#ide-helper).
 
@@ -473,9 +502,6 @@ $comment->withDefault('-')->getVia('name', Post::class, User::class);
 $comment->withDefault('-')->getVia(['name', 'email'], Post::class, User::class);
 $comment->withDefault(new User)->getRelVia(Post::class, User::class);
 
-// Deprecated, dihapus di 3.0: pakai getVia() dengan array kolom, yang mempertahankan key-nya
-$comment->getManyVia(['name', 'email'], Post::class, User::class);
-
 // [kolom => nilai] untuk kolom yang diberikan, setelah casting (yang tidak ada bernilai null)
 $user->compact('name', 'email'); // ['name' => 'Ana', 'email' => 'ana@example.com']
 $user->compact('name', ['mail' => 'email']); // ['name' => 'Ana', 'mail' => 'ana@example.com'], juga compact('name', mail: 'email')
@@ -493,14 +519,6 @@ $order->assign('status', 'paid', ['dirty', 'in' => 'draft,pending']);
 $order->assignFrom($otherOrder, 'tenant_id', 'branch_id');
 $order->assignFromIf('blank', $otherOrder, 'tenant_id', 'branch_id');
 
-// Deprecated, dihapus di 3.0: pakai assign() dengan kondisi dan assignFromIf() seperti di atas
-$order->assignIfBlank('note', '-');
-$order->assignIfBlank(['note' => '-', 'status' => 'new']);
-$order->assignIfBlankFrom($otherOrder, 'tenant_id', 'branch_id');
-$order->assignIfNull('note', '-');
-$order->assignIfNull(['note' => '-', 'status' => 'new']);
-$order->assignIfNullFrom($otherOrder, 'tenant_id', 'branch_id');
-
 // Apakah atribut blank, filled atau null
 $order->isBlank('note');
 $order->isFilled('note');
@@ -509,33 +527,14 @@ $order->isNotNull('note');
 
 // Perbandingan ketat atribut, setelah casting
 $user->sameWith('role', 'admin');
-$user->not('same_with', 'role', 'admin');                       // notSameWith() deprecated, dihapus di 3.0
-$order->sameWith('qty', '5', 'integer');                         // dengan cast lain, hanya untuk perbandingan ini
+$user->sameWith('role', ['admin', 'editor']);                      // cocok dengan salah satu item (kecuali kolomnya sendiri berupa array)
+$user->not('same_with', 'role', 'admin');
+$order->sameWith('qty', '5', 'integer');                           // dengan cast lain, hanya untuk perbandingan ini
 $user->sameWithOther($otherUser, 'tenant_id', 'branch_id');        // semua kolom sama
 $user->sameWithOther($otherUser, 'tenant_id', 'branch_id', 'or');  // setidaknya satu kolom sama
 ! $user->sameWithOther($otherUser, 'tenant_id', 'branch_id', 'or');// semua kolom berbeda
 ! $user->sameWithOther($otherUser, 'tenant_id', 'branch_id');      // setidaknya satu kolom berbeda
 $user->match(['role' => ['admin', 'editor'], 'active_is' => true]);
-
-// Deprecated, dihapus di 3.0: pakai sameWithOther() dengan 'or' dan ! seperti di atas
-$user->sameWithOtherOr($otherUser, 'tenant_id', 'branch_id');    // setidaknya satu kolom sama
-$user->notSameWithOther($otherUser, 'tenant_id', 'branch_id');   // semua kolom berbeda
-$user->notSameWithOtherOr($otherUser, 'tenant_id', 'branch_id'); // setidaknya satu kolom berbeda
-
-// Deprecated, dihapus di 3.0: perbandingan yang sama, untuk kolom yang berubah dan belum disimpan.
-// Pakai isAllOf() atau isDirty() bersama perbandingannya, misalnya $order->isAllOf('note', 'dirty', 'blank')
-$user->sameWithAndDirty('role', 'admin');
-$user->notSameWithAndDirty('role', 'admin');
-$user->sameWithOtherAndDirty($otherUser, 'tenant_id', 'branch_id');      // semua kolom sama dan dirty
-$user->sameWithOtherOrAndDirty($otherUser, 'tenant_id', 'branch_id');    // setidaknya satu kolom sama dan dirty
-$user->notSameWithOtherAndDirty($otherUser, 'tenant_id', 'branch_id');   // semua kolom berbeda dan dirty
-$user->notSameWithOtherOrAndDirty($otherUser, 'tenant_id', 'branch_id'); // setidaknya satu kolom berbeda dan dirty
-$user->matchAndDirty(['role' => ['admin', 'editor'], 'active_is' => true]);
-$comment->isMorphModelSameAndDirty('commentable', Post::class);
-$order->isBlankAndDirty('note');
-$order->isFilledAndDirty('note');
-$order->isNullAndDirty('note');
-$order->isNotNullAndDirty('note');
 
 // Beberapa cek pada satu kolom: method bool milik model ('blank' untuk isBlank(), 'dirty' untuk isDirty()),
 // kalau tidak ada, fungsi bool yang dijalankan pada atributnya ('numeric', 'in', …). Parameter tambahan lewat named argument
@@ -545,39 +544,29 @@ $order->isAnyOf('status', in: 'paid,sent');     // in($order->status, 'paid,sent
 $user->isAllOf(['role' => 'admin'], 'match');   // argumen pertama diteruskan ke method yang tidak menerima kolom
 $order->matchAll(isDirty: 'status', filled: 'status'); // semua cek bernama bernilai true
 $order->any(isClean: 'note', isDirty: 'status');       // setidaknya satu cek bernama bernilai true
+$order->if('blank', 'note');                    // $order->isBlank('note')
 $order->not('null', 'note');                    // ! $order->isNull('note')
 $order->isAll('dirty', 'status', 'note');      // satu cek, true untuk semua kolom
 $order->isAny('null', ['status', 'note']);     // satu cek, true untuk setidaknya satu kolom
 $order->isAllNot('was_changed', 'status', 'note'); // satu cek, false untuk semua kolom
 $order->isAnyNot('filled', 'status', 'note');   // satu cek, false untuk setidaknya satu kolom
 
-// Deprecated, dihapus di 3.0: apakah kolom diubah oleh save terakhir.
-// Pakai isAll('was_changed', ...) dan isAllNot('was_changed', ...), atau wasChanged() tanpa kolom
-$order->wereChanged('status', 'note');    // semua kolom diubah
-$order->wereNotChanged('status', 'note'); // semua kolom tidak diubah
-$order->wereChanged();                    // ada kolom yang diubah
-$order->wereNotChanged();                 // tidak ada kolom yang diubah
-
 // id dari baris acak, atau null kalau tidak ada
 Order::randomId();
 Order::randomId('status', 'paid'); // argumen untuk where()
 ```
 
-`isBlank()` (serta `assignIfBlank()` dan `assignIfBlankFrom()` yang deprecated) memakai `blank()` dari Laravel, jadi `null`, string kosong (juga `'   '`) dan array kosong dihitung blank, sedangkan `0`, `'0'` dan `false` tidak. `isFilled()` memakai `filled()`, kebalikannya. `assignIfNull()` dan `assignIfNullFrom()` yang deprecated hanya mengganti `null`.
+`isBlank()` memakai `blank()` dari Laravel, jadi `null`, string kosong (juga `'   '`) dan array kosong dihitung blank, sedangkan `0`, `'0'` dan `false` tidak. `isFilled()` memakai `filled()`, kebalikannya.
 
-`match()` dan keluarga `sameWithOther()` mengembalikan `false` kalau tidak ada kondisi atau kolom yang diberikan. Kolom terakhir `sameWithOther()` bisa diganti kata logika: `'and'` atau `'all'` (default) untuk semua kolom, `'or'` atau `'any'` untuk setidaknya satu, jadi kolom yang namanya sama dengan salah satunya tidak bisa jadi kolom terakhir. `notSameWithOther()` yang deprecated bukan kebalikan `sameWithOther()`: kebalikannya adalah `notSameWithOtherOr()`. Object seperti tanggal Carbon dari kolom `datetime` dibandingkan berdasarkan identitas, jadi dua model tidak pernah punya tanggal yang sama. Nilai array cocok kalau atributnya sama dengan salah satu item-nya, kecuali atributnya sendiri berupa array.
+`match()` dan `sameWithOther()` mengembalikan `false` kalau tidak ada kondisi atau kolom yang diberikan. Kolom terakhir `sameWithOther()` bisa diganti kata logika: `'and'` atau `'all'` (default) untuk semua kolom, `'or'` atau `'any'` untuk setidaknya satu, jadi kolom yang namanya sama dengan salah satunya tidak bisa jadi kolom terakhir. Object seperti tanggal Carbon dari kolom `datetime` dibandingkan berdasarkan identitas, jadi dua model tidak pernah punya tanggal yang sama. Nilai array cocok kalau atributnya sama dengan salah satu item-nya, kecuali atributnya sendiri berupa array.
 
-`sameWith()`, `notSameWith()` yang deprecated, `sameWithAndDirty()` dan `notSameWithAndDirty()` menerima cast Laravel sebagai argumen ketiga (`'integer'`, `'decimal:2'`, `'string'`, class enum, …), yang dipakai menggantikan cast kolom hanya untuk perbandingan itu, dan juga diterapkan ke nilainya dengan [`cast_as()`](#helper-lain); cast model tetap seperti semula. Tanpa cast, nilainya dibandingkan apa adanya. Accessor kolom tetap menang atasnya, dan cast tanggal tetap menghasilkan object yang dibandingkan berdasarkan identitas.
+`sameWith()` menerima cast Laravel sebagai argumen ketiga (`'integer'`, `'decimal:2'`, `'string'`, class enum, …), yang dipakai menggantikan cast kolom hanya untuk perbandingan itu, dan juga diterapkan ke nilainya dengan [`cast_as()`](#helper-lain); cast model tetap seperti semula. Tanpa cast, nilainya dibandingkan apa adanya. Accessor kolom tetap menang atasnya, dan cast tanggal tetap menghasilkan object yang dibandingkan berdasarkan identitas.
 
-Method `AndDirty` yang deprecated memakai `isDirty()` dari Eloquent pada setiap kolom, jadi `sameWithOtherOrAndDirty()` butuh satu kolom yang dirty sekaligus sama, sedangkan `sameWithOtherAndDirty()` dan `matchAndDirty()` bernilai `false` kalau salah satu kolom tidak dirty. Setiap atribut yang diisi pada model baru itu dirty. Kolom yang berubah masih dirty di event `saving`, `saved`, `updating`, `updated`, `creating` dan `created`, dan tidak ada yang dirty setelah `save()` selesai.
+`isAll()` dan `isAny()` menjalankan satu cek pada beberapa kolom, array bersarang di-flatten, seperti [`is_all()`](#pengecekan); tanpa kolom `isAll()` bernilai `true` dan `isAny()` bernilai `false`. `isAllNot()` dan `isAnyNot()` adalah kebalikannya, seperti `is_all('not_…')` dan `is_any('not_…')`: tanpa kolom `isAllNot()` bernilai `true` dan `isAnyNot()` bernilai `false`.
 
-`isAll()` dan `isAny()` menjalankan satu cek pada beberapa kolom, array bersarang di-flatten, seperti [`is_all()`](#pengecekan); tanpa kolom `isAll()` bernilai `true` dan `isAny()` bernilai `false`. `isAllNot()` dan `isAnyNot()` adalah kebalikannya, seperti `is_all('not_…')` dan `is_any('not_…')`: tanpa kolom `isAllNot()` bernilai `true` dan `isAnyNot()` bernilai `false`. Keduanya menggantikan method `AndDirty` untuk beberapa kolom, misalnya `isAll('dirty', 'a', 'b') && sameWithOther($other, 'a', 'b')` untuk `sameWithOtherAndDirty($other, 'a', 'b')`.
-
-`isAllOf()`, `isAnyOf()` dan `not()` mencari method model lebih dulu (`$what`, lalu `is_$what`, dalam camel case) dan hanya memakainya kalau method itu mengembalikan `bool`; kalau tidak, dipakai fungsi bool, seperti [`is_not()`](#pengecekan). Method tanpa return type native tetap dihitung kalau docblock-nya menyebut `@return bool`, dan begitulah `isDirty()` dan `isClean()` dari Eloquent ditemukan. Catatan: kalau docblock dibuang (`opcache.save_comments=0`), method itu tidak ditemukan lagi dan cek-nya beralih ke fungsi, atau melempar `BadMethodCallException`. Parameter tambahan hanya lewat named argument, jadi satu cek tidak bisa dipakai dua kali dalam satu panggilan. Cek yang tidak dikenal melempar `BadMethodCallException` saat dijalankan.
+`isAllOf()`, `isAnyOf()`, `if()` dan `not()` mencari method model lebih dulu (`$what`, lalu `is_$what`, dalam camel case) dan hanya memakainya kalau method itu mengembalikan `bool`; kalau tidak, dipakai fungsi bool, seperti [`is_not()`](#pengecekan). Method tanpa return type native tetap dihitung kalau docblock-nya menyebut `@return bool`, dan begitulah `isDirty()` dan `isClean()` dari Eloquent ditemukan. Catatan: kalau docblock dibuang (`opcache.save_comments=0`), method itu tidak ditemukan lagi dan cek-nya beralih ke fungsi, atau melempar `BadMethodCallException`. Parameter tambahan hanya lewat named argument, jadi satu cek tidak bisa dipakai dua kali dalam satu panggilan. Cek yang tidak dikenal melempar `BadMethodCallException` saat dijalankan.
 
 `matchAll()` dan `any()` menjalankan beberapa cek pada model tanpa argumen kolom bersama. Named argument berisi nama cek dan parameternya, misalnya `matchAll(isDirty: 'status', filled: 'status')`; argumen posisional adalah cek tanpa parameter, misalnya `matchAll('isDirty')`. Tanpa cek, `matchAll()` bernilai `true` dan `any()` bernilai `false`.
-
-`wereChanged()` dan `wereNotChanged()` yang deprecated memakai `wasChanged()` dari Eloquent pada setiap kolom. Berbeda dengan `wasChanged('a', 'b')` yang butuh satu kolom berubah, `wereChanged('a', 'b')` butuh semuanya. `wereNotChanged()` bukan kebalikan `wereChanged()` saat sebagian kolom berubah dan sebagian tidak: keduanya `false`. Seperti `wasChanged()`, keduanya tidak melihat perubahan tepat setelah `create()`, dan `save()` tanpa perubahan tetap menyimpan perubahan dari update terakhir.
 
 `updateMany()` hanya menerima array dan mengabaikan yang kosong. Kalau salah satunya berupa list, method ini tidak mengubah apa pun dan mengembalikan `false` tanpa error, jadi cek hasilnya kalau datanya bisa berupa list. Seperti `update()`, method ini hanya mengisi kolom fillable dan mengembalikan `false` pada model yang belum disimpan.
 
@@ -652,12 +641,49 @@ Post::getModel($table);        // App\Models\Post
 
 `foreignFrom()` dan `qualify()` mengembalikan [`RawQuery`](#rawquery) yang sudah di-quote oleh grammar koneksi model, beserta table prefix-nya, jadi tetap benar di join dan sepanjang chain. Keduanya memakai `$table` model, dan kolom yang sudah punya tabel (`other.name`) tetap memakai tabel itu. Keduanya membuat model, tanpa membaca database. Kolom kosong menghasilkan SQL yang tidak valid. `pluck()` mencari property dengan tanda kutip di namanya dan gagal, jadi tulis kolomnya sebagai string di sana: `pluck('blog_posts.title')`.
 
+### ViewedId
+
+Disertakan di `Kompact` (`KompactModel` dan `KompactUser`). Mengatur bagaimana [`$table->viewedId()`](#helper-migration) membangun kolom generated ID tampilan untuk tabel model tersebut:
+
+```php
+class Order extends KompactModel
+{
+    public static function getPrefixId(): string|array|null
+    {
+        return 'ORD'; // atau ["'retail'" => "'RTL'", "'wholesale'" => "'WHL'"] untuk RawQuery::switchCase()
+    }
+
+    public static function getSourceColumnNameForViewedId(): string
+    {
+        return 'id';
+    }
+}
+```
+
+`getPrefixId()` mengembalikan `null` secara default (tanpa prefix), string (`'ORD'` → `'ORD-1'`), atau array yang memetakan nilai enum ke prefix (ekspresi `CASE` pada `$enumColumn`). `getSourceColumnNameForViewedId()` mengembalikan `'id'` secara default.
+
+### Kolom real
+
+Bagian dari `AdditionalQueries` (jadi tersedia di `Kompact`, `KompactModel` dan `KompactUser`). Helper untuk model yang memasangkan kolom nominal dengan kolom `real_*`:
+
+```php
+// [kolom => nilai] dari atribut real_*, menghapus prefix 'real_' dari key, atau memetakan [sourceColumn => targetKey]
+$item->customCompact('real_qty_gram', ['real_weight_gram' => 'net_gram']);
+// ['qty_gram' => $item->real_qty_gram, 'net_gram' => $item->real_weight_gram]
+
+// Menyalin $item->{$col} ke $item->{"real_$col"} tanpa menyimpan
+$item->assignSelfToReal('qty_gram', 'qty_pcs');
+
+// Menyalin $item->{$col} ke $item->{"real_$col"} hanya saat $item->{$col} memenuhi condition (seperti assignFromIf()), tanpa menyimpan
+$item->assignSelfToRealIf('filled', 'qty_gram', 'qty_pcs');
+```
+
 ## IDE helper
 
 Relasi dinamis bukan method, jadi IDE tidak bisa melihatnya. Generate file helper:
 
 ```bash
-php artisan kompact:ide-helper
+php artisan make:ide-helper
 ```
 
 Command ini menulis `_ide_helper_kompact.php` (`@property-read` dan `@method` untuk setiap relasi dinamis dari model yang langsung berada di `path.model` dan memakai `AutoRelation`) lalu mendaftarkannya sebagai class mixin di `ide.json` untuk Laravel Idea. Setiap mixin adalah class berawalan `_EK_` di dalam `EloquentKompact\IdeHelper`, misalnya `EloquentKompact\IdeHelper\App\Models\_EK_User` untuk `App\Models\User`, jadi tidak pernah muncul sebagai class `User` kedua. Entri `classMixins` lain di `ide.json` tetap dipertahankan.
@@ -667,6 +693,46 @@ Kalau model terkait memakai builder-nya sendiri, seperti [`Model\Builder`](#buil
 Atur `KOMPACT_IDE_HELPER=true` di `.env` untuk menjalankannya otomatis setelah setiap `php artisan migrate` di environment `local`. Kemungkinan besar kamu ingin menambahkan `_ide_helper_kompact.php` ke `.gitignore`.
 
 ## Helper migration
+
+### Schema\Blueprint
+
+`EloquentKompactServiceProvider` secara otomatis melakukan binding `Illuminate\Database\Schema\Blueprint` milik Laravel ke `JundFauz\EloquentKompact\Schema\Blueprint`, sehingga `Schema::create('orders', function (Blueprint $table) { ... })` langsung menerima `JundFauz\EloquentKompact\Schema\Blueprint` tanpa perlu mengubah import `Blueprint`. (Kalau aplikasimu melakukan binding subclass `Blueprint` kustom sendiri, buat subclass itu meng-extend `JundFauz\EloquentKompact\Schema\Blueprint`.)
+
+| Method | Membuat |
+|---|---|
+| `stringCastsEnum($column, $defaultValue = null)` | `string("{$column}_enum")`, menerapkan `default()` saat `$defaultValue !== null` (membuka `BackedEnum`) |
+| `stringCastsArray($column)` | `string("{$column}_array")` |
+| `gram($column, $total = 12, $places = 7)` | `decimal("{$column}_gram", $total, $places)` |
+| `pcs($column, $big = false)` | `unsignedInteger("{$column}_pcs")`, atau `unsignedBigInteger()` saat `$big` bernilai `true` |
+| `quantity($config = null, $gramTotalDigit = 12, $bigPcs = false)` | `[gram('quantity', $gramTotalDigit), pcs('quantity', $bigPcs)]`, menerapkan `Config::apply()` saat `$config` diberikan |
+| `percentage($column, $canBeNegative = false, $total = 6, $places = 2)` | `decimal("{$column}_percentage", $total, $places)`, `unsigned()` kecuali `$canBeNegative` bernilai `true` |
+| `createForeignId($model, $customName = null, $config = null)` | `foreignId(...)` (memakai `$customName` dengan akhiran `_id` dipastikan satu kali, atau `{singular_table}_id`), menerapkan `Config::applies()` saat `$config` diberikan, lalu `constrained($tableName)` |
+| `completeTimestampColumns()` | `timestamps()` + `softDeletes()` |
+| `createTimestamp($columnName, $config = null)` | `timestamp("{$columnName}_at")`, menerapkan callable atau payload `Config::applies()` saat `$config` diberikan |
+| `booleanCol($columnName)` | `boolean("{$columnName}_is")` |
+| `viewedId($minus = null, $columnName = null, $enumColumn = null)` | Kolom generated `string` (`viewed_id` secara default) dari model tabel tersebut ([`ViewedId::getPrefixId()` dan `getSourceColumnNameForViewedId()`](#viewedid)): `virtualAs` saat sumbernya `'id'`, `storedAs` selain itu; prefix string menambahkan awalan `"{$prefix}-"`, prefix array membangun `CASE` pada `$enumColumn` (`type_enum` secara default), `$minus` mengurangi nilai kolom sumber |
+
+Setiap pemanggilan method jamak yang bentuk tunggalnya ada di `Blueprint` (atau sebagai macro) memanggil method tunggalnya untuk setiap item — meneruskan key string array sebagai argumen kedua — lalu menerapkan `$config` lewat `Config::apply()`, dan mengembalikan array berisi definisi yang dibuat (`booleans()` dipetakan ke `booleanCol()` → `*_is`, dan `times()` menambahkan akhiran `_time` → `*_time`):
+
+```php
+use Illuminate\Database\Schema\Blueprint;
+use Illuminate\Support\Facades\Schema;
+
+Schema::create('orders', function (Blueprint $table) {
+    $table->id();
+    $table->viewedId();
+    $table->createForeignIds(['from_stock' => Stock::class, Stock::class], ['from_stock_id' => 'nullable']);
+    $table->strings(['name', 'code'], ['code' => 'nullable']);
+    $table->stringCastsEnum('status', OrderStatus::Draft);
+    $table->grams(['initial', 'final']);
+    $table->quantity(['all' => ['default' => 0]]);
+    $table->booleans(['active']); // active_is
+    $table->times(['shift']);     // shift_time
+    $table->completeTimestampColumns();
+});
+```
+
+### Config::apply()
 
 `Config::apply()` menerapkan column modifier ke banyak kolom sekaligus. Key payload-nya, dengan urutan ini:
 
@@ -699,6 +765,8 @@ Schema::create('posts', function (Blueprint $table) {
 ```
 
 Konstanta `JundFauz\EloquentKompact\Column\ALL_NULLABLE` adalah `['all' => 'nullable']` yang siap pakai.
+
+### Convert
 
 `Convert` mengubah nama dan nilai dari satu bentuk ke bentuk lain:
 
@@ -1037,10 +1105,10 @@ Money::plus('1.555', '1');          // '2.55'
 Money::higherThan('0.005', '0');    // false
 ```
 
-`php artisan make:kompact-math` membuat class seperti itu beserta docblock `@method` untuk autocomplete:
+`php artisan make:math` membuat class seperti itu beserta docblock `@method` untuk autocomplete:
 
 ```bash
-php artisan make:kompact-math --class=Money --precision=2 --output=App\\Logic
+php artisan make:math --class=Money --precision=2 --output=App\\Logic
 ```
 
 | Opsi | Default |
@@ -1090,19 +1158,18 @@ use function JundFauz\EloquentKompact\String\concat;
 use const JundFauz\EloquentKompact\NEW_LINE;
 ```
 
-Upgrade dari `1.x`? Lihat [UPGRADE.id.md](UPGRADE.id.md) untuk nama lama setiap helper.
+Upgrade dari versi major sebelumnya? Lihat [UPGRADE.id.md](UPGRADE.id.md) untuk nama lama setiap helper.
 
 ### Pengecekan
 
 Di `JundFauz\EloquentKompact`.
 
-`is_not()`, `is_all()`, `is_any()`, `is_all_not()`, `is_any_not()`, `is_any_of()` dan `is_all_of()` menerima pengecekan lewat namanya. Pengecekannya adalah fungsi yang mengembalikan `bool`, dicari dengan urutan ini: namanya sendiri (`'defined'` → `defined()`), `is_` + namanya (`'null'` → `is_null()`), lalu `array_is_` + namanya (`'list'` → `array_is_list()`), lalu tiga hal yang sama di package ini (`'app_local_or_test'` → `is_app_local_or_test()`), lalu di helper [string](#string) dan [array](#array)-nya (`'count_one'` → `Array\is_count_one()`, `'in'` → `Array\in()`). Nama yang mengandung kata `not` (dalam snake case) adalah pengecekan tanpa kata itu, dinegasikan: `'not_null'` → `! is_null()`, `'not_in'` → `! Array\in()`, `'is_not_null'` → `! is_null()`, jadi `is_all('not_null', ...)` sama dengan `is_all_not('null', ...)`. Fungsi yang mengembalikan hal lain dilewati, jadi `'file'` adalah `is_file()`, bukan `file()`. Nama yang tidak punya fungsi seperti itu melempar `BadMethodCallException`.
+`is_not()`, `is_all()`, `is_any()`, `is_any_of()` dan `is_all_of()` menerima pengecekan lewat namanya. Pengecekannya adalah fungsi yang mengembalikan `bool`, dicari dengan urutan ini: namanya sendiri (`'defined'` → `defined()`), `is_` + namanya (`'null'` → `is_null()`), lalu `array_is_` + namanya (`'list'` → `array_is_list()`), lalu tiga hal yang sama di package ini (`'app_local_or_test'` → `is_app_local_or_test()`), lalu di helper [string](#string) dan [array](#array)-nya (`'count_one'` → `Array\is_count_one()`, `'in'` → `Array\in()`). Nama yang mengandung kata `not` (dalam snake case) adalah pengecekan tanpa kata itu, dinegasikan: `'not_null'` → `! is_null()`, `'not_in'` → `! Array\in()`, `'is_not_null'` → `! is_null()`, jadi `is_all('not_null', $a, $b)` mengecek `! is_null()` pada setiap nilai. Fungsi yang mengembalikan hal lain dilewati, jadi `'file'` adalah `is_file()`, bukan `file()`. Nama yang tidak punya fungsi seperti itu melempar `BadMethodCallException`.
 
 | Fungsi | Hasil |
 |---|---|
 | `is_not($check, ...$arguments)` | Pengecekannya `false` untuk nilai itu: `is_not('array', $value)` → `! is_array($value)`, `is_not('defined', 'FOO')` → `! defined('FOO')`. Setiap argumen diteruskan ke pengecekannya, jadi `is_not('in', $needle, $haystack)` → `! in($needle, $haystack)` |
 | `is_all($check, ...$values)` / `is_any($check, ...$values)` | Pengecekannya `true` untuk semua nilai / minimal satu nilai, termasuk array bersarang: `is_all('null', $a, $b)`, `is_any('numeric', 'abc', '2')` → `true`. Tanpa nilai `true` / `false` |
-| `is_all_not($check, ...$values)` / `is_any_not($check, ...$values)` | Pengecekannya `false` untuk semua nilai / minimal satu nilai, termasuk array bersarang: `is_all_not('null', $a, $b)`. Deprecated, dihapus di 3.0: pakai `is_all('not_null', $a, $b)` / `is_any('not_null', $a, $b)` |
 | `is_any_of($value, ...$checks)` | Minimal satu pengecekan bernilai `true` untuk nilai itu, berhenti di yang pertama: `is_any_of($value, 'int', 'string')`. Parameter tambahan lewat named argument, nilainya duluan: `is_any_of($value, 'int', in: 'min,max')` → `is_int($value) \|\| in($value, 'min,max')` |
 | `is_all_of($value, ...$checks)` | Semua pengecekan bernilai `true` untuk nilai itu, berhenti di `false` pertama; `true` tanpa pengecekan: `is_all_of($value, 'string', 'numeric')`. Named argument seperti `is_any_of()` |
 | `all(...$checks)` / `any(...$checks)` | Semua / minimal satu pengecekan bernilai `true`, masing-masing berupa named argument beserta argumennya, berhenti lebih awal; `true` / `false` tanpa pengecekan: `all(method_exists: [$class, $method], same_with: [$a, $b])` |
@@ -1111,9 +1178,7 @@ Di `JundFauz\EloquentKompact`.
 | `not($condition)` | `! $condition` |
 | `same_with($a, $b, $cast = null)` / `not_same_with($a, $b, $cast = null)` | `$a === $b` / `$a !== $b`. Dengan cast, kedua nilai di-cast dulu dengannya: `same_with('5', 5, 'integer')` → `true` |
 | `same_with_one_of($value, ...$others)` | Apakah `$value` `===` dengan salah satu nilai lain; `false` tanpa nilai lain |
-| `cast_as($value, $cast = null)` | Nilai yang di-cast dengan cast Laravel, seperti atribut model: `cast_as('10.5', 'decimal:2')` → `'10.50'`, `cast_as('paid', Status::class)` → `Status::Paid`. Cast tanggal menghasilkan object Carbon. Tanpa cast, nilainya dikembalikan apa adanya |
-| `not_in_array($needle, $haystack, $strict = false)` | `! in_array()`. Deprecated, dihapus di 3.0: pakai `is_not('in_array', ...)` |
-| `not_in($needle, $haystack, $strict = false)` | `not_in_array()` untuk array atau collection. Deprecated, dihapus di 3.0: pakai `is_not('in', ...)` |
+| `cast_as($value, $cast = null)` | Nilai yang di-cast dengan cast Laravel (baik dari nilai mentah database maupun array/object PHP), seperti atribut model: `cast_as('10.5', 'decimal:2')` → `'10.50'`, `cast_as('paid', Status::class)` → `Status::Paid`, `cast_as([1, 2], 'collection')` → `Collection`. Cast tanggal menghasilkan object Carbon (tanpa membutuhkan koneksi database). Tanpa cast, nilainya dikembalikan apa adanya |
 | `null_if($condition, $value)` / `nullIf($condition, $value)` | `null` kalau `$condition` bernilai truthy, atau `$value`: `null_if($order->isCancelled(), $order->total)`. `nullIf()` adalah alias |
 | `null_if_not($condition, $value)` | `null` kalau `$condition` bernilai falsy, atau `$value`: `null_if_not($order->isFinished(), $order->total)` |
 | `if_not_null($value, $then)` | `$then` kalau `$value` tidak `null`, atau `null`: `if_not_null($paidAt, 'Lunas')`. `$then` dievaluasi sebelum fungsi dipanggil, juga saat `$value` bernilai `null`. `@experimental` |
@@ -1125,8 +1190,9 @@ Di `JundFauz\EloquentKompact`.
 
 | Fungsi | Hasil |
 |---|---|
-| `concat_by($delimiter, ...$values)` | Digabung dengan delimiter-nya, misalnya salah satu konstanta `path`, `word`, `schema`, `relation` dan `snake`: `concat_by(relation, 'posts', 'user')` → `'posts.user'`, `concat_by('-', 'a', 'b')` → `'a-b'` |
+| `concat_by($delimiter, ...$values)` | Digabung dengan delimiter-nya, misalnya salah satu konstanta `path`, `word`, `schema`, `relation`, `snake` dan `strip`: `concat_by(relation, 'posts', 'user')` → `'posts.user'`, `concat_by('-', 'a', 'b')` → `'a-b'` |
 | `word_concat(...$values)` | Digabung dengan spasi |
+| `snake_concat(...$values)` / `strip_concat(...$values)` | Digabung dengan `_` / `-` |
 | `schema_concat(...$values)` | Digabung dengan `:` |
 | `path_concat(...$values)` | Digabung dengan `/` |
 | `relation_concat(...$values)` | Digabung dengan `.` |
@@ -1145,8 +1211,9 @@ Di `JundFauz\EloquentKompact`.
 | `build_class($name, $content = '{}', $parent = '', $docblock = '')` | `class Name extends Parent {}`, dengan docblock di atasnya; spasi di akhir setiap baris di-trim |
 | `build_class_docblock($methods, $returnType = 'mixed', $isStatic = false, $parameters = '', $prefix = '')` | Docblock class dengan baris `@method` untuk setiap method. `$methods` adalah list nama, atau `nama => return type` |
 | `collect(...$values)` | [`Builder\Collection`](#helper-lain) dari satu nilai, seperti `collect()` Laravel, atau dari beberapa nilai sebagai item-nya: `collect(1, 2)` → `[1, 2]`. Tanpa nilai hasilnya kosong. Import untuk memakainya sebagai pengganti milik Laravel |
+| `collects($array, ...$methods)` | `chain()` pada [`Builder\Collection`](#helper-lain) dari `$array`, mengembalikan `array` biasa kalau hasil terakhir berupa `Collection`, `string` biasa kalau berupa `Stringable`, atau hasil method terakhir apa adanya kalau bukan: `collects(['a', null, 'b'], 'filterFilled', values: '')` → `['a', 'b']` |
+| `chain($object, ...$methods)` | Memanggil method-method pada `$object` secara berurutan, masing-masing pada hasil method sebelumnya, lalu mengembalikan hasil terakhir. String posisional memanggil method tanpa argumen (`'snake'`; array yang dikirim tanpa `...` tidak diratakan). Named argument (atau array `[method => parameter]` yang di-unpack dengan `...`) meneruskan parameternya lewat `wrap()`: satu nilai non-array menjadi satu argumen (`startsWith: 'is'`), list meneruskan beberapa argumen posisional (`replace: ['-', '_']`), array asosiatif meneruskan named parameter ke method itu (`replace: ['search' => '-', 'replace' => '_']`), dan parameter yang nilainya sendiri berupa array dibungkus satu lapis lagi (`diff: [['not']]`, `swap: [['a' => 'b']]`). Nilai `blank()` (`''`, `' '`, `[]`, `null`) memanggil method tanpa argumen (`lower: ''`, `trim: []`), sehingga method tanpa parameter tetap bisa ditaruh setelah named argument (di mana PHP melarang argumen posisional), dan argumen tunggal yang blank seperti `' '` harus dibungkus menjadi `[' ']`. Nama method yang sama tidak bisa dipakai dua kali sebagai named argument dalam satu pemanggilan |
 | `object_compact($object, ...$properties)` | `[properti => nilai]` untuk properti yang diberikan dari object apa saja, misalnya kolom model setelah casting; properti yang tidak ada bernilai `null` dan relasi yang sudah dimuat menjadi array. Properti bisa diberikan dalam array, dan key string, di dalam array atau sebagai named argument, dipakai sebagai alias-nya: `object_compact($user, 'id', ['mail' => 'email'])` → `['id' => 1, 'mail' => '…']` |
-| `model_compact($model, ...$columns)` | `object_compact()` untuk model. Deprecated, dihapus di 3.0: pakai `object_compact()` |
 
 Fungsi-fungsi penggabung juga menerima array, yang akan diratakan: `word_concat('a', ['b', ['c']])` → `a b c`.
 
@@ -1168,6 +1235,7 @@ Di `JundFauz\EloquentKompact\Array`.
 | `map($callback, $array)` | `array_map()` yang juga memberikan key: `map(fn ($value, $key) => "$key=$value", $array)`. Hasilnya berupa list |
 | `flat(&$array)` | Meratakan array di tempat |
 | `wrap($value)` | `Arr::wrap()` Laravel: nilainya sebagai array, `[]` untuk `null` |
+| `simple_wrap($value)` | Nilainya sebagai array kalau bukan array, tetap `[null]` untuk `null` |
 | `cast($value, $delimiter = null)` | Item-item sebuah collection, string atau `Stringable` yang dipecah dengan `$delimiter` kalau diberikan (`cast('a,b', ',')` → `['a', 'b']`), atau `wrap()` dari nilai lain |
 | `filter($array, $callback = null)` | `array_filter()` yang juga memberikan key (`fn ($value, $key)`), key dipertahankan |
 | `filter_filled($array)` | Nilai yang `filled()` menurut Laravel, key dipertahankan: `null`, string kosong dan array atau collection kosong dihapus; `0`, `'0'` dan `false` dipertahankan |
@@ -1181,6 +1249,7 @@ Di `JundFauz\EloquentKompact\Array`.
 | `is_array_or_collection($value)` | Apakah nilainya array atau `Collection` Laravel |
 | `is_count_zero($value)` / `is_count_one($value)` / `is_count_many($value)` | Apakah array atau `Countable`-nya tidak punya item / punya satu item / lebih dari satu item |
 | `in($needle, $haystack, $strict = false, $delimiter = ',')` | `in_array()` untuk array, collection, atau string maupun `Stringable` yang dipecah dengan `$delimiter`: `in('max', 'min,max')` → `true` |
+| `arrs($array, ...$methods)` | Merangkai method static `Arr` dari Laravel pada `$array`, meneruskan array saat ini sebagai argumen pertama di tiap pemanggilan, dengan named argument dan nilai `blank()` ditangani seperti [`chain()`](#string-path-dan-file): `arrs(['a' => 1, 'b' => null], only: [['a', 'b']], whereNotNull: '')` → `['a' => 1]` |
 
 ### String
 
@@ -1189,19 +1258,27 @@ Di `JundFauz\EloquentKompact\String`.
 | Fungsi | Hasil |
 |---|---|
 | `concat(...$values)` | Digabung tanpa delimiter. Array dan collection diratakan: `concat('a', ['b', collect(['c'])])` → `abc` |
-| `before_last()`, `lower()`, `upper()` | `Str::beforeLast()`, `lower()`, `upper()` dari Laravel. Deprecated, dihapus di 3.0: pakai `str('before_last', …)`, `str('lower', …)`, `str('upper', …)` |
 | `empty_if_false($condition, $value)` | `$value`, atau `''` kalau `$condition` falsy, seperti [`Str::emptyIfFalse()`](#str) |
 | `constant($class, $constant)` | `Class::Constant`, misalnya untuk `defined()` atau `constant()` bawaan PHP |
 | `stringify($array)` | Setiap nilai di-cast ke `string`, termasuk array bersarang, key dipertahankan; `null` dan `false` menjadi `''` |
 | `rtrim_multiline($value, $characters = " \n\r\t\v\0")` | `rtrim()` pada setiap baris. `@experimental` |
 | `str($method, ...$parameters)` | Method static dari `Str` Laravel lewat namanya, dalam camel case atau snake case: `str('replace_first', 'a', 'b', 'aa')` → `Str::replaceFirst('a', 'b', 'aa')` → `'ba'`. Method yang tidak dimiliki `Str` Laravel dipanggil pada [`Str`](#str) package ini dari parameter pertama, lalu string-nya dikembalikan: `str('add_at_start', 'b', 'a')` → `'ab'`. Nama plural menjalankan method singular-nya pada setiap parameter: `str('camels', 'a_b', 'c_d')` → `['aB', 'cD']`. Method yang tidak ada melempar `BadMethodCallException` |
-| `strs($string, ...$methods)` | Method-method [`Str`](#str) package ini dirangkai pada string itu, named argument adalah method beserta parameternya, lalu string-nya dikembalikan (atau hasil method terakhir): `strs('  a ', 'trim', 'upper')` → `'A'`, `strs('isDirty', 'snake', startsWith: 'is')` → `true` |
+| `strs($string, ...$methods)` | [`chain()`](#string-path-dan-file) pada [`Str`](#str) package ini dari `$string`, mengembalikan `string` biasa kalau hasil terakhir berupa `Stringable`, atau hasil method terakhir apa adanya kalau bukan: `strs('  a ', 'trim', 'upper')` → `'A'`, `strs('isDirty', 'snake', startsWith: 'is')` → `true`, `strs($name, removeStart: 'has', lower: '', singular: '', sameWith: 'scrap')` → `bool`, `strs('foo', ...['swap' => [['foo' => 'bar']]])` → `'bar'`. Nama method dipanggil langsung pada `Str` (camelCase, berbeda dari `str()`) |
 
 ### Konstanta
 
 Di `JundFauz\EloquentKompact`: `NEW_LINE` (`"\n"`), `DISTANCE_LINE` (`"\n\n"`), `NAMESPACE_DELIMITER` (`\`), `PATH_DELIMITER` (`/`) dan `TAB` (4 spasi).
 
 ## Helper lain
+
+- `Helper\Concat` menggabungkan string dan array bersarang dengan delimiter yang dipetakan di `Concat::$tokens` (`path` `/`, `word` `' '`, `schema` `:`, `relation` `.`, `snake` `_`, `strip` `-`; entri kustom bisa ditambahkan ke `Concat::$tokens`), serta melempar `BadMethodCallException` untuk method yang tidak dikenal:
+
+  ```php
+  use JundFauz\EloquentKompact\Helper\Concat;
+
+  Concat::relation('posts', ['user', 'name']); // 'posts.user.name'
+  Concat::strip('order', 'item');              // 'order-item'
+  ```
 
 - `Relation\Arrange::relation($column, ...$models)` / `relations(...)` membangun path relasi dari class model (tunggal / jamak), dan mengembalikan `string`:
 

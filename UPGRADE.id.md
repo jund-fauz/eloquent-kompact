@@ -2,6 +2,70 @@
 
 [English](UPGRADE.md) | Bahasa Indonesia
 
+## Dari 2.x ke 3.0
+
+```bash
+composer require jund-fauz/eloquent-kompact:^3.0
+```
+
+### Command Artisan berganti nama ke `make:*`
+
+Command Artisan pembuat class sekarang memakai prefix `make:`:
+
+| 2.x | 3.0 |
+|---|---|
+| `php artisan kompact:column-builder` | `php artisan make:column-builder` |
+| `php artisan kompact:ide-helper` | `php artisan make:ide-helper` |
+| `php artisan make:kompact-math` | `php artisan make:math` |
+
+Class column builder yang dibuat di `2.x` tetap berjalan dan tetap diperbarui otomatis setelah migration.
+
+### Binding container `Schema\Blueprint`
+
+`EloquentKompactServiceProvider` sekarang melakukan binding `Illuminate\Database\Schema\Blueprint` ke [`JundFauz\EloquentKompact\Schema\Blueprint`](README.id.md#helper-migration). Migration yang sudah ada tetap berjalan tanpa perlu mengubah import `Blueprint`.
+
+Kalau aplikasimu sebelumnya melakukan binding subclass `Blueprint` kustom sendiri di `AppServiceProvider` (atau lewat `DB::connection()->setSchemaGrammar()` / `Schema::blueprintResolver()`), ubah subclass tersebut agar meng-extend `JundFauz\EloquentKompact\Schema\Blueprint` supaya helper schema dan pemanggilan jamak milik Kompact tetap tersedia.
+
+### Fungsi helper deprecated yang dihapus
+
+Semua fungsi helper yang ditandai deprecated selama `2.x` telah dihapus:
+
+| 2.x | 3.0 |
+|---|---|
+| `model_compact($model, ...$columns)` | `object_compact($model, ...$columns)` |
+| `String\before_last($subject, $search)` | `String\str('before_last', $subject, $search)` |
+| `String\lower($subject)` / `String\upper($subject)` | `String\str('lower', $subject)` / `String\str('upper', $subject)` |
+| `not_in($needle, $haystack, $strict = false)` | `is_not('in', $needle, $haystack, $strict)` |
+| `not_in_array($needle, $haystack, $strict = false)` | `is_not('in_array', $needle, $haystack, $strict)` |
+| `is_all_not($check, ...$values)` / `is_any_not($check, ...$values)` | `is_all("not_$check", ...$values)` / `is_any("not_$check", ...$values)` |
+
+### Method `AdditionalQueries` deprecated yang dihapus
+
+Semua method `AdditionalQueries` yang ditandai deprecated selama `2.x` telah dihapus:
+
+| 2.x | 3.0 |
+|---|---|
+| `$model->matchAndDirty($conditions)` | `$model->isAll('dirty', array_keys($conditions)) && $model->match($conditions)` |
+| `$model->sameWithAndDirty($col, $val, $cast = null)` | `$model->isAllOf($col, 'dirty', sameWith: [$val, $cast])` |
+| `$model->notSameWithAndDirty($col, $val, $cast = null)` | `$model->isAllOf($col, 'dirty', notSameWith: [$val, $cast])` |
+| `$model->sameWithOtherAndDirty($other, ...$cols)` | `$model->isAll('dirty', ...$cols) && $model->sameWithOther($other, ...$cols)` |
+| `$model->sameWithOtherOrAndDirty($other, ...$cols)` | `array_any($cols, fn ($col) => $model->isAllOf($col, 'dirty', sameWith: [$other->{$col}]))` |
+| `$model->notSameWithOtherAndDirty($other, ...$cols)` | `$model->isAll('dirty', ...$cols) && ! $model->sameWithOther($other, ...$cols, ...['or'])` |
+| `$model->notSameWithOtherOrAndDirty($other, ...$cols)` | `array_any($cols, fn ($col) => $model->isAllOf($col, 'dirty', notSameWith: [$other->{$col}]))` |
+| `$model->isMorphModelSameAndDirty($morphName, $modelClass)` | `$model->isAllOf(ColumnCreator::type($morphName), 'dirty', sameWith: [Relation::getMorphAlias($modelClass)])` |
+| `$model->isBlankAndDirty($col)` / `$model->isFilledAndDirty($col)` / `$model->isNullAndDirty($col)` / `$model->isNotNullAndDirty($col)` | `$model->isAllOf($col, 'dirty', 'blank')` / `'filled'` / `'null'` / `'not_null'` |
+| `$model->wereChanged(...$cols)` | `$cols ? $model->isAll('was_changed', ...$cols) : $model->wasChanged()` |
+| `$model->wereNotChanged(...$cols)` | `$cols ? $model->isAllNot('was_changed', ...$cols) : ! $model->wasChanged()` |
+| `$model->sameWithOtherOr($other, ...$cols)` | `$model->sameWithOther($other, ...$cols, ...['or'])` |
+| `$model->notSameWithOther($other, ...$cols)` | `! $model->sameWithOther($other, ...$cols, ...['or'])` (saat minimal satu kolom diberikan) |
+| `$model->notSameWithOtherOr($other, ...$cols)` | `! $model->sameWithOther($other, ...$cols)` (saat minimal satu kolom diberikan) |
+| `$model->notSameWith($col, $val, $cast = null)` | `$model->not('same_with', $col, $val, $cast)` atau `not_same_with: [$val, $cast]` di `isAllOf()` |
+| `$model->getManyVia($columnNames, ...$relationClasses)` | `$model->getVia($columnNames, ...$relationClasses)` |
+| `$model->assignIfBlank($cols, $val = null)` / `$model->assignIfNull($cols, $val = null)` | `$model->assign($cols, $val, 'blank')` (atau `$model->assign($cols, 'blank')` untuk array) / `'null'` |
+| `$model->assignIfBlankFrom($other, ...$cols)` / `$model->assignIfNullFrom($other, ...$cols)` | `$model->assignFromIf('blank', $other, ...$cols)` / `'null'` |
+
+Catatan: `getVia($columnNames, ...$relationClasses)` mempertahankan key dari `$columnNames` alih-alih mengatur ulang index-nya; bungkus hasilnya dengan `array_values()` kalau membutuhkan list. Ingat juga bahwa `sameWithOther()` mengembalikan `false` tanpa kolom, jadi menegasikannya dengan `!` sama dengan `notSameWithOther()` / `notSameWithOtherOr()` saat minimal satu kolom diberikan.
+
 ## Dari 1.x ke 2.0
 
 ```bash

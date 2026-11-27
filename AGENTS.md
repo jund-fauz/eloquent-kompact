@@ -6,7 +6,12 @@ Working guide for the `jund-fauz/eloquent-kompact` project (a Laravel/Eloquent p
 
 - Stable since `1.0.0`. Breaking change → major (`2.0.0`), new feature → minor (`1.x.0`), fix → patch (`1.x.y`).
 - Classes/methods marked `@internal` or `@experimental` may change in any release (not breaking).
+- Extending classes or overriding methods marked `@final` is not covered by the backward-compatibility promise (callers remain covered, overrides are not).
 - The version is NOT written in `composer.json` — Packagist reads it from the git tag. So never bump the version in composer.json.
+
+## Coding conventions
+
+- Every method in `src/` must have a PHPDoc docblock (`@param` and `@return`, except `__construct` which omits `@return`).
 
 ## CHANGELOG conventions
 
