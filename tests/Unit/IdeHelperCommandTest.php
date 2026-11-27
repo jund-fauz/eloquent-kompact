@@ -60,10 +60,12 @@ class IdeHelperCommandTest extends TestCase
     {
         $block = $this->invoke('renderMixin', 'App\Models\Article', [
             'labels' => ['type' => 'belongsToMany', 'class' => 'App\Models\Label'],
+            'customLabels' => ['type' => 'belongsToMany', 'class' => 'App\Models\Label', 'pivot' => 'App\Models\ArticleLabelConnector'],
         ]);
 
         $this->assertStringContainsString('@property-read \Illuminate\Database\Eloquent\Collection<int, \App\Models\Label> $labels', $block);
         $this->assertStringContainsString('@method \Illuminate\Database\Eloquent\Relations\BelongsToMany<\App\Models\Label, \App\Models\Article> labels()', $block);
+        $this->assertStringContainsString('@method \Illuminate\Database\Eloquent\Relations\BelongsToMany<\App\Models\Label, \App\Models\Article, \App\Models\ArticleLabelConnector> customLabels()', $block);
     }
 
     #[Test]

@@ -4,6 +4,7 @@ namespace JundFauz\EloquentKompact\Model\Traits;
 
 use BadMethodCallException;
 use Closure;
+use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\MorphTo;
 use Illuminate\Database\Eloquent\Relations\Relation;
 use Illuminate\Support\Facades\Schema;
@@ -11,6 +12,7 @@ use Illuminate\Support\Str;
 use JundFauz\EloquentKompact\Column\ColumnListing;
 use JundFauz\EloquentKompact\Column\ColumnCreator;
 use JundFauz\EloquentKompact\Model\KompactModel;
+use JundFauz\EloquentKompact\Model\KompactPivot;
 use ReflectionClass;
 use ReflectionException;
 use ReflectionMethod;
@@ -41,6 +43,43 @@ trait AutoRelation
     }
 
     /**
+     * Resolves a custom `KompactPivot` connecting `static::class` and `$relatedClass`.
+     *
+     * @param string $modelNamespace
+     * @param class-string<Model> $relatedClass
+     * @param string $foreignKey
+     * @param string $relatedKey
+     * @return array{0: class-string<KompactPivot>, 1: string}|null
+     * @throws ReflectionException
+     */
+    protected static function resolveCustomPivot(
+        string $modelNamespace,
+        string $relatedClass,
+        string $foreignKey,
+        string $relatedKey
+    ): ?array {
+        $fileName = (new ReflectionClass($relatedClass))->getFileName();
+        $fallbackDir = $fileName ? dirname($fileName) : null;
+
+        foreach (KompactPivot::pivots($modelNamespace, $fallbackDir) as $pivotClass) {
+            if (! $pivotClass::connects(static::class, $relatedClass)) {
+                continue;
+            }
+
+            $pivotTable = $pivotClass::tableName();
+            if (
+                Schema::hasTable($pivotTable)
+                && ColumnListing::has($pivotTable, $foreignKey)
+                && ColumnListing::has($pivotTable, $relatedKey)
+            ) {
+                return [$pivotClass, $pivotTable];
+            }
+        }
+
+        return null;
+    }
+
+    /**
      * @throws ReflectionException
      */
     protected static function resolveDynamicRelationConfig(string $relationName): array|false
@@ -53,27 +92,32 @@ trait AutoRelation
         $singularRelation = Str::singular($relationName);
         $parts = preg_split('/(?=[A-Z])/', $singularRelation, -1, PREG_SPLIT_NO_EMPTY);
         $originalParts = $parts;
+        $modelNamespace = config('eloquent-kompact.path.model');
 
         while (count($parts) > 0) {
             $attemptedClassName = implode('', array_map('ucfirst', $parts));
             /** @var class-string<KompactModel> $className */
-            $className = namespace_concat(config('eloquent-kompact.path.model'), $attemptedClassName);
+            $className = namespace_concat($modelNamespace, $attemptedClassName);
 
             if (class_exists($className)) {
                 $prefixParts = array_slice($originalParts, 0, count($originalParts) - count($parts));
                 $prefix = implode('_', array_map('strtolower', $prefixParts));
 
                 $table = $className::tableName();
+                $pivotClass = null;
                 if ($isPlural) {
                     if (ColumnListing::has($table, $foreignKey = static::foreign($prefix))) {
                         $type = 'hasMany';
                     } elseif ($morphName = static::resolveMorphName($className, $table)) {
                         $type = 'morphMany';
                         $foreignKey = $morphName;
+                    } elseif ($customPivot = static::resolveCustomPivot($modelNamespace, $className, $foreignKey, $relatedKey = $className::foreign())) {
+                        $type = 'belongsToMany';
+                        [$pivotClass, $pivotTable] = $customPivot;
                     } elseif (
                         Schema::hasTable($pivotTable = (new static)->joiningTable($className))
                         && ColumnListing::has($pivotTable, $foreignKey)
-                        && ColumnListing::has($pivotTable, $relatedKey = $className::foreign())
+                        && ColumnListing::has($pivotTable, $relatedKey)
                     ) {
                         $type = 'belongsToMany';
                     } else {
@@ -104,6 +148,7 @@ trait AutoRelation
                     'class' => $className,
                     'foreign_key' => $foreignKey,
                     ...($type === 'belongsToMany' ? ['table' => $pivotTable, 'related_key' => $relatedKey] : []),
+                    ...($pivotClass ? ['pivot' => $pivotClass] : []),
                 ];
             }
 
@@ -117,7 +162,7 @@ trait AutoRelation
     {
         return match ($config['type']) {
             'belongsTo' => $this->belongsTo($config['class'], $config['foreign_key']),
-            'belongsToMany' => $this->belongsToMany($config['class'], $config['table'], $config['foreign_key'], $config['related_key']),
+            'belongsToMany' => $this->belongsToMany($config['class'], $config['pivot'] ?? $config['table'], $config['foreign_key'], $config['related_key']),
             'hasMany' => $this->hasMany($config['class'], $config['foreign_key'] ?? null),
             'hasOne' => $this->hasOne($config['class'], $config['foreign_key'] ?? null),
             'morphMany' => $this->morphMany($config['class'], $config['foreign_key'])

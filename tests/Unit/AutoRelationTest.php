@@ -14,6 +14,7 @@ use Illuminate\Support\Facades\Schema;
 use JundFauz\EloquentKompact\Column\ColumnListing;
 use JundFauz\EloquentKompact\Model\KompactModel;
 use JundFauz\EloquentKompact\Tests\Fixtures\AutoRelation\Article;
+use JundFauz\EloquentKompact\Tests\Fixtures\AutoRelation\ArticleLabelConnector;
 use JundFauz\EloquentKompact\Tests\Fixtures\AutoRelation\Label;
 use JundFauz\EloquentKompact\Tests\Fixtures\AutoRelation\Note;
 use JundFauz\EloquentKompact\Tests\Fixtures\AutoRelation\Writer;
@@ -222,6 +223,42 @@ class AutoRelationTest extends TestCase
         $this->assertSame('article_id', $article->labels()->getForeignPivotKeyName());
         $this->assertSame('label_id', $article->labels()->getRelatedPivotKeyName());
         $this->assertSame(['News', 'Tech'], $article->labels->pluck('name')->all());
+        $this->assertSame(['First'], Label::find(1)->articles->pluck('title')->all());
+
+        $featured = Article::find(2);
+        $this->assertSame('featured_article_id', $featured->featuredLabels()->getForeignPivotKeyName());
+        $this->assertSame(['Tech'], $featured->featuredLabels->pluck('name')->all());
+
+        $loaded = Article::with('labels')->find(1);
+        $this->assertTrue($loaded->relationLoaded('labels'));
+        $this->assertCount(2, $loaded->labels);
+    }
+
+    #[Test]
+    public function it_resolves_a_belongs_to_many_relation_via_a_custom_kompact_pivot(): void
+    {
+        Schema::create('ar_article_label_connector', function (Blueprint $table) {
+            $table->foreignId('article_id')->nullable();
+            $table->foreignId('featured_article_id')->nullable();
+            $table->foreignId('label_id');
+        });
+        ColumnListing::flush();
+
+        DB::table('ar_labels')->insert([['name' => 'News'], ['name' => 'Tech']]);
+        DB::table('ar_article_label_connector')->insert([
+            ['article_id' => 1, 'featured_article_id' => null, 'label_id' => 1],
+            ['article_id' => 1, 'featured_article_id' => 2, 'label_id' => 2],
+        ]);
+
+        $article = Article::find(1);
+
+        $this->assertInstanceOf(BelongsToMany::class, $article->labels());
+        $this->assertSame('ar_article_label_connector', $article->labels()->getTable());
+        $this->assertSame(ArticleLabelConnector::class, $article->labels()->getPivotClass());
+        $this->assertSame('article_id', $article->labels()->getForeignPivotKeyName());
+        $this->assertSame('label_id', $article->labels()->getRelatedPivotKeyName());
+        $this->assertSame(['News', 'Tech'], $article->labels->pluck('name')->all());
+        $this->assertInstanceOf(ArticleLabelConnector::class, $article->labels->first()->pivot);
         $this->assertSame(['First'], Label::find(1)->articles->pluck('title')->all());
 
         $featured = Article::find(2);

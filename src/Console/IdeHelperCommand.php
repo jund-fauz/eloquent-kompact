@@ -19,6 +19,7 @@ use JsonException;
 use JundFauz\EloquentKompact\Builder\Str;
 use JundFauz\EloquentKompact\Column\ColumnListing;
 use JundFauz\EloquentKompact\Column\ColumnCreator;
+use JundFauz\EloquentKompact\Model\KompactPivot;
 use JundFauz\EloquentKompact\Model\Traits\AutoRelation;
 use ReflectionClass;
 use ReflectionException;
@@ -168,6 +169,10 @@ final class IdeHelperCommand extends Command
         $parentName = Str::of($parent)->classBasename()->snake();
         $morphMap = Relation::morphMap();
         $tables = Schema::getTableListing(schemaQualified: false);
+        $customPivots = array_values(array_filter(
+            $models,
+            static fn (string $class): bool => is_subclass_of($class, KompactPivot::class) && count($class::pivotBetween()) >= 2
+        ));
 
         foreach ($models as $model) {
             $table = (new $model)->getTable();
@@ -187,9 +192,19 @@ final class IdeHelperCommand extends Command
                 }
             }
 
-            // belongsToMany: article_id & label_id in the article_label pivot table → Article::labels, Label::articles
-            $pivotTable = $parentInstance->joiningTable($model);
-            if (in_array($pivotTable, $tables, true)) {
+            // belongsToMany: standard joiningTable or custom KompactPivot::$pivotBetween
+            $pivotTables = [$parentInstance->joiningTable($model)];
+            foreach ($customPivots as $pivotClass) {
+                if ($pivotClass::connects($parent, $model)) {
+                    $pivotTables[] = $pivotClass::tableName();
+                }
+            }
+
+            foreach (array_unique($pivotTables) as $pivotTable) {
+                if (! in_array($pivotTable, $tables, true)) {
+                    continue;
+                }
+
                 foreach ($relationColumns($pivotTable) as $column) {
                     $plain = ColumnCreator::getPlainColumnName($column);
 
@@ -252,7 +267,7 @@ final class IdeHelperCommand extends Command
         $lines = [];
 
         foreach ($relations as $name => $relation) {
-            [$type, $class, $builder] = pull_list($relation, 'type', 'class', 'builder');
+            [$type, $class, $builder, $pivot] = pull_list($relation, 'type', 'class', 'builder', 'pivot');
 
             $lines[] = concat(self::Indentation,
                 ' * @property-read \\',
@@ -261,7 +276,8 @@ final class IdeHelperCommand extends Command
                     : concat(namespace_concat('Illuminate', 'Database', 'Eloquent', 'Collection'), "<int, \\$class>"),
                 " \$$name"
             );
-            $lines[] = word_concat(self::Indentation,  concat('* @method \\', self::RelationClasses[$type], "<\\$class, \\$parent>", empty_if_false($builder, "|\\$builder")), "$name()");
+            $generics = $pivot ? "<\\$class, \\$parent, \\$pivot>" : "<\\$class, \\$parent>";
+            $lines[] = word_concat(self::Indentation,  concat('* @method \\', self::RelationClasses[$type], $generics, empty_if_false($builder, "|\\$builder")), "$name()");
         }
 
         return write_line(

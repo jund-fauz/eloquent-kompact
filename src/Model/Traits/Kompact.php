@@ -3,6 +3,7 @@
 namespace JundFauz\EloquentKompact\Model\Traits;
 
 use Illuminate\Database\Eloquent\SoftDeletes;
+use JundFauz\EloquentKompact\Model\KompactPivot;
 
 trait Kompact
 {
@@ -34,5 +35,6 @@ trait Kompact
         self::$autoCastCache = [];
         self::$AFCache = null;
         self::$dynamicRelationCache = [];
+        KompactPivot::flushKompactCache();
     }
 }

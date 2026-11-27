@@ -10,6 +10,7 @@ use JundFauz\EloquentKompact\Console\IdeHelperCommand;
 use JundFauz\EloquentKompact\Model\Builder;
 use JundFauz\EloquentKompact\Model\KompactModel;
 use JundFauz\EloquentKompact\Tests\Fixtures\AutoRelation\Article;
+use JundFauz\EloquentKompact\Tests\Fixtures\AutoRelation\ArticleLabelConnector;
 use JundFauz\EloquentKompact\Tests\Fixtures\AutoRelation\Label;
 use JundFauz\EloquentKompact\Tests\Fixtures\AutoRelation\Note;
 use JundFauz\EloquentKompact\Tests\Fixtures\AutoRelation\Writer;
@@ -250,5 +251,40 @@ class IdeHelperCommandRunTest extends TestCase
         $this->assertStringContainsString("@method \\Illuminate\\Database\\Eloquent\\Relations\\BelongsToMany<$label, $article>|$builder featuredLabels()", $file);
         $this->assertStringContainsString("@property-read \\Illuminate\\Database\\Eloquent\\Collection<int, $article> \$articles", $file);
         $this->assertStringContainsString("@method \\Illuminate\\Database\\Eloquent\\Relations\\BelongsToMany<$article, $label>|$builder articles()", $file);
+    }
+
+    #[Test]
+    public function it_writes_belongs_to_many_relations_from_a_custom_kompact_pivot(): void
+    {
+        File::put($this->appPath.'/JundFauz/EloquentKompact/Tests/Fixtures/AutoRelation/ArticleLabelConnector.php', '<?php');
+
+        Schema::create('ar_article_label_connector', function (Blueprint $table) {
+            $table->foreignId('article_id');
+            $table->foreignId('featured_article_id');
+            $table->foreignId('label_id');
+        });
+        ColumnListing::flush();
+        KompactModel::flushKompactCache();
+
+        \Illuminate\Database\Eloquent\Relations\Relation::morphMap(['article' => Article::class]);
+
+        try {
+            $this->artisan('kompact:ide-helper')->assertSuccessful();
+        } finally {
+            \Illuminate\Database\Eloquent\Relations\Relation::morphMap([], false);
+        }
+
+        $file = $this->helperFile();
+        $article = '\\'.Article::class;
+        $label = '\\'.Label::class;
+        $pivot = '\\'.ArticleLabelConnector::class;
+        $builder = '\\'.Builder::class;
+
+        $this->assertStringContainsString("@property-read \\Illuminate\\Database\\Eloquent\\Collection<int, $label> \$labels", $file);
+        $this->assertStringContainsString("@method \\Illuminate\\Database\\Eloquent\\Relations\\BelongsToMany<$label, $article, $pivot>|$builder labels()", $file);
+        $this->assertStringContainsString("@property-read \\Illuminate\\Database\\Eloquent\\Collection<int, $label> \$featuredLabels", $file);
+        $this->assertStringContainsString("@method \\Illuminate\\Database\\Eloquent\\Relations\\BelongsToMany<$label, $article, $pivot>|$builder featuredLabels()", $file);
+        $this->assertStringContainsString("@property-read \\Illuminate\\Database\\Eloquent\\Collection<int, $article> \$articles", $file);
+        $this->assertStringContainsString("@method \\Illuminate\\Database\\Eloquent\\Relations\\BelongsToMany<$article, $label, $pivot>|$builder articles()", $file);
     }
 }
