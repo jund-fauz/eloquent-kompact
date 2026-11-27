@@ -7,6 +7,21 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [3.1.0] - 2026-11-27
+
+### Added
+
+- `make:ide-helper` generates IDE autocomplete for the public helper methods on `Schema\Blueprint` and their supported plural calls, and registers the mixin for Laravel's schema `Blueprint`.
+- `concat_between($delimiter, ...$values)` joins values with the delimiter and surrounds the joined result with it.
+
+### Documentation
+
+- Documented generated `Schema\Blueprint` autocomplete and `concat_between()` in both READMEs.
+
+### Tests
+
+- Added coverage for generated blueprint method and plural-call autocomplete, mixin registration, and `concat_between()`.
+
 ## [3.0.0] - 2026-11-27
 
 A major release: all helpers and `AdditionalQueries` methods deprecated in `2.x` are removed, the generating Artisan commands move to `make:*`, and `EloquentKompactServiceProvider` binds `Schema\Blueprint` for migration helpers and plural column calls. See [UPGRADE.md](UPGRADE.md) for every removed helper/method and its replacement.
@@ -2825,7 +2840,8 @@ The first stable release: from now on, breaking changes only come in a major rel
 - `RawQuery` static helpers for raw SQL expressions.
 - Translations for `en` and `id`.
 
-[Unreleased]: https://github.com/jund-fauz/eloquent-kompact/compare/v3.0.0...HEAD
+[Unreleased]: https://github.com/jund-fauz/eloquent-kompact/compare/v3.1.0...HEAD
+[3.1.0]: https://github.com/jund-fauz/eloquent-kompact/compare/v3.0.0...v3.1.0
 [3.0.0]: https://github.com/jund-fauz/eloquent-kompact/compare/v2.17.1...v3.0.0
 [2.17.1]: https://github.com/jund-fauz/eloquent-kompact/compare/v2.17.0...v2.17.1
 [2.17.0]: https://github.com/jund-fauz/eloquent-kompact/compare/v2.16.0...v2.17.0
