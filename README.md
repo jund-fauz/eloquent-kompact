@@ -422,6 +422,7 @@ Relations are resolved from the relation name and the columns, without declaring
 | `$user->authorPosts` | `hasMany(Post::class, 'author_user_id')` | `posts.author_user_id` |
 | `$post->comments` | `morphMany(Comment::class, 'commentable')` | no `comments.post_id`, `Comment` has a single public method returning `MorphTo` and a `commentable_type` column |
 | `$post->tags` | `belongsToMany(Tag::class, 'post_tag', 'post_id', 'tag_id')` | no `tags.post_id` or morph on `Tag`, and the pivot table `post_tag` exists with `post_id` and `tag_id` |
+| `$post->tags` | `belongsToMany(Tag::class, PostTagConnector::class, 'post_id', 'tag_id')` | a `KompactPivot` subclass in `path.model` with `protected static array $pivotBetween = [Post::class, Tag::class];` whose table has `post_id` and `tag_id` |
 
 A singular or plural name without a matching column or morph throws a `BadMethodCallException`. Relations declared as methods always win. Dynamic relations respect `Model::preventLazyLoading()` and can be eager loaded (`Post::with('authorUser')`).
 

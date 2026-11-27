@@ -422,6 +422,7 @@ Relasi diselesaikan dari nama relasi dan kolom-kolomnya, tanpa mendeklarasikan m
 | `$user->authorPosts` | `hasMany(Post::class, 'author_user_id')` | `posts.author_user_id` |
 | `$post->comments` | `morphMany(Comment::class, 'commentable')` | tidak ada `comments.post_id`, `Comment` punya satu public method yang mengembalikan `MorphTo` dan kolom `commentable_type` |
 | `$post->tags` | `belongsToMany(Tag::class, 'post_tag', 'post_id', 'tag_id')` | tidak ada `tags.post_id` atau morph di `Tag`, dan tabel pivot `post_tag` ada dengan kolom `post_id` dan `tag_id` |
+| `$post->tags` | `belongsToMany(Tag::class, PostTagConnector::class, 'post_id', 'tag_id')` | ada subclass `KompactPivot` di `path.model` dengan `protected static array $pivotBetween = [Post::class, Tag::class];` yang tabelnya punya kolom `post_id` dan `tag_id` |
 
 Nama tunggal atau jamak tanpa kolom atau morph yang cocok akan melempar `BadMethodCallException`. Relasi yang dideklarasikan sebagai method selalu menang. Relasi dinamis menghormati `Model::preventLazyLoading()` dan bisa di-eager load (`Post::with('authorUser')`).
 
