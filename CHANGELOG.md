@@ -7,6 +7,57 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [3.0.0] - 2026-11-27
+
+A major release: all helpers and `AdditionalQueries` methods deprecated in `2.x` are removed, the generating Artisan commands move to `make:*`, and `EloquentKompactServiceProvider` binds `Schema\Blueprint` for migration helpers and plural column calls. See [UPGRADE.md](UPGRADE.md) for every removed helper/method and its replacement.
+
+### Added
+
+- `Schema\Blueprint`: extends Laravel's `Blueprint` (automatically bound to `Illuminate\Database\Schema\Blueprint` in `EloquentKompactServiceProvider`) with direct column helpers (`stringCastsEnum()`, `stringCastsArray()`, `gram()`, `pcs()`, `quantity()`, `percentage()`, `createForeignId()`, `completeTimestampColumns()`, `createTimestamp()`, `booleanCol()`, `viewedId()`) and dynamic plural calls (`strings()`, `grams()`, `quantities()`, `createForeignIds()`, `booleans()`, `times()`, …) backed by `Config::apply()`.
+- `Model\Traits\ViewedId` (included in `Kompact` / `KompactModel` / `KompactUser`): `getPrefixId()` (`null` by default) and `getSourceColumnNameForViewedId()` (`'id'` by default), read by `Schema\Blueprint::viewedId()`.
+- `customCompact()`, `assignSelfToReal()` and `assignSelfToRealIf()` on `AdditionalQueries` for `real_*` columns.
+- Custom foreign keys and endpoint aliases in `KompactPivot::$pivotBetween` (`[foreignKeyOrStem => Model::class]`, `[foreignKeyOrStem => [Model::class, 'alias']]` and `['alias' => [Model::class, foreignKeyOrStem]]`, exposed via `KompactPivot::pivotEndpoints()`), resolving `belongsTo` on the pivot, `hasMany` / `hasOne` from parent models to the pivot, `belongsToMany` across custom foreign keys and aliases, and `make:ide-helper` mixins.
+- Built-in `'categorical'` (`categorical()` → `'categorical_id'`) and `'viewed'` (`viewed()` → `'viewed_id'`) entries in `Column\Builder\Concerns\RelationBuilder`'s own `private static` default list, preserved when subclasses define `protected static array $relation = [...]`.
+- `protected static bool $includeSoftDeletedData = false` (and `includesSoftDeletedData()`) on `AutoRelation`: when `true` on a soft-deletable model, dynamic relations pointing to that model (`belongsTo`, `hasOne`, `hasMany`, `morphMany` and `belongsToMany`) apply `withTrashed()`.
+- `Model\ModelCache::flush()`: clears the centralized in-memory caches for `AutoFillable`, `AutoCast`, `AutoRelation` and `KompactPivot`, and runs automatically on `MigrationsEnded`. `flushKompactCache()` delegates to it.
+- `if($condition, $column)` on `AdditionalQueries`: runs a single check by name on one column, e.g. `$order->if('blank', 'note')`.
+- `collects($array, ...$methods)`: chains methods on a `Builder\Collection` of `$array` via `chain()`, returning a plain `array` for a `Collection`, a plain `string` for a `Stringable`, or the last result as is.
+- `Array\arrs($array, ...$methods)`: chains static methods of Laravel's `Arr` on `$array`, passing the current array as the first argument of each call.
+- `Array\simple_wrap($data)`: wraps a non-array value in `[...]`, keeping `[null]` for `null` instead of `[]`.
+- `snake_concat(...$values)`, `strip_concat(...$values)` and the `strip` (`'-'`) delimiter constant: join strings and nested arrays with `'_'` and `'-'`.
+- `Helper\Concat`: static delimiter-based string joiner (`path()`, `word()`, `schema()`, `relation()`, `snake()`, `strip()`) backed by `Concat::$tokens`.
+
+### Changed
+
+- **Breaking:** renamed the generating Artisan commands to `make:*`: `kompact:column-builder` → `make:column-builder`, `kompact:ide-helper` → `make:ide-helper` and `make:kompact-math` → `make:math`.
+- **Breaking:** `EloquentKompactServiceProvider` binds `Illuminate\Database\Schema\Blueprint` to `JundFauz\EloquentKompact\Schema\Blueprint` (custom application `Blueprint` subclasses should extend `JundFauz\EloquentKompact\Schema\Blueprint`).
+- `sameWith()` on `AdditionalQueries` accepts an array of allowed values, matching when the attribute equals one of its items (with `$cast` applied to each), unless the attribute itself is an array.
+- `chain()` (and `String\strs()`, `collects()`, `Array\arrs()`) calls a named method without extra arguments when its value is `blank()` (`''`, `' '`, `[]`, `null`), so parameterless methods can follow named arguments.
+- `object_compact()` builds the result array directly in a loop instead of instantiating a `Collection`, while still converting `Arrayable` values to arrays.
+- Named checks in `all()`, `any()`, `is_any_of()` and `is_all_of()` unwrap parameters with `Array\simple_wrap()` so a `null` argument is preserved as `[null]`, and `execute_what_function()` caches negation parsing per check name alongside function resolution.
+
+### Removed
+
+- **Breaking:** deprecated helper functions `model_compact()`, `String\before_last()`, `String\lower()`, `String\upper()`, `not_in()`, `not_in_array()`, `is_all_not()` and `is_any_not()`.
+- **Breaking:** deprecated `AdditionalQueries` methods `matchAndDirty()`, `sameWithAndDirty()`, `notSameWithAndDirty()`, `sameWithOtherAndDirty()`, `sameWithOtherOrAndDirty()`, `notSameWithOtherAndDirty()`, `notSameWithOtherOrAndDirty()`, `isMorphModelSameAndDirty()`, `isBlankAndDirty()`, `isFilledAndDirty()`, `isNullAndDirty()`, `isNotNullAndDirty()`, `wereChanged()`, `wereNotChanged()`, `sameWithOtherOr()`, `notSameWithOther()`, `notSameWithOtherOr()`, `notSameWith()`, `getManyVia()`, `assignIfBlank()`, `assignIfNull()`, `assignIfBlankFrom()` and `assignIfNullFrom()`.
+
+### Fixed
+
+- Centralized the in-memory caches of `AutoFillable`, `AutoCast`, `AutoRelation` and `KompactPivot` into `ModelCache`, so models using `Kompact` or individual traits on custom parent classes are also flushed after migrations.
+- `cast_as()` handles PHP arrays, objects (`Carbon`, `Collection`, `UuidInterface`, `Stringable`, `BackedEnum`), inbound casts (`CastsInboundAttributes`, `'hashed'`), and date casts without requiring an active database connection.
+
+### Documentation
+
+- Added the `From 2.x to 3.0` migration guide in `UPGRADE.md` and `UPGRADE.id.md`, and removed all deprecated `2.x` helpers and methods from `README.md` and `README.id.md`.
+- Documented `Schema\Blueprint` (direct helpers and plural calls), `ViewedId`, `RealColumns`, custom foreign keys and aliases in `KompactPivot::$pivotBetween` (`pivotEndpoints()`), built-in `categorical()` / `viewed()` on `RelationBuilder`, and the `make:*` Artisan commands in both READMEs.
+- Added complete PHPDoc docblocks across all methods in `src/`, and marked non-extension utility classes and methods as `@final`.
+- Documented `@final` in the versioning policy, `ModelCache::flush()` in the column cache section, `$includeSoftDeletedData` on `AutoRelation`, `if()`, array values in `sameWith()`, `collects()`, `Array\arrs()`, `Array\simple_wrap()`, `snake_concat()`, `strip_concat()`, `strip`, `Helper\Concat`, and `blank()` arguments in `chain()` / `String\strs()` in both READMEs.
+
+### Tests
+
+- Added tests for `Schema\Blueprint` (direct helpers, `viewedId()`, plural calls and container binding), `ViewedId`, `RealColumns`, mapped `KompactPivot::$pivotBetween` (`pivotEndpoints()`, `AutoRelation` and `make:ide-helper`), built-in `categorical()` and `viewed()` on `RelationBuilder`, and removed the tests of the removed `2.x` helpers and methods.
+- Added tests for `$includeSoftDeletedData` across dynamic relations in `AutoRelation`, `ModelCache::flush()` on standalone traits and custom `Kompact` models after migrations, `if()`, array values in `sameWith()`, `collects()`, `Array\arrs()`, `Array\simple_wrap()`, `snake_concat()`, `strip_concat()`, `Helper\Concat`, and `blank()` named arguments in `chain()`.
+
 ## [2.17.1] - 2026-11-27
 
 ### Changed
@@ -2774,7 +2825,8 @@ The first stable release: from now on, breaking changes only come in a major rel
 - `RawQuery` static helpers for raw SQL expressions.
 - Translations for `en` and `id`.
 
-[Unreleased]: https://github.com/jund-fauz/eloquent-kompact/compare/v2.17.1...HEAD
+[Unreleased]: https://github.com/jund-fauz/eloquent-kompact/compare/v3.0.0...HEAD
+[3.0.0]: https://github.com/jund-fauz/eloquent-kompact/compare/v2.17.1...v3.0.0
 [2.17.1]: https://github.com/jund-fauz/eloquent-kompact/compare/v2.17.0...v2.17.1
 [2.17.0]: https://github.com/jund-fauz/eloquent-kompact/compare/v2.16.0...v2.17.0
 [2.16.0]: https://github.com/jund-fauz/eloquent-kompact/compare/v2.15.0...v2.16.0
