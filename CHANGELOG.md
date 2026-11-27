@@ -7,6 +7,20 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [2.16.0] - 2026-11-27
+
+### Added
+
+- `$pivotBetween` on `KompactPivot` (with `pivotBetween()`, `connects()` and cached `pivots()`): declares the connected models so `AutoRelation` resolves `belongsToMany` via the custom pivot model (`using($pivotClass)`, including prefixed foreign keys and self-pivots) and `kompact:ide-helper` (`IdeHelperCommand`) generates `BelongsToMany<TRelated, TParent, TPivot>` mixins.
+
+### Documentation
+
+- Documented custom `KompactPivot::$pivotBetween` resolution in `AutoRelation` in both READMEs.
+
+### Tests
+
+- Added tests for custom `KompactPivot::$pivotBetween` resolution in `AutoRelation` and `BelongsToMany` 3-generic mixin generation in `kompact:ide-helper`.
+
 ## [2.15.0] - 2026-11-26
 
 ### Added
@@ -2721,7 +2735,8 @@ The first stable release: from now on, breaking changes only come in a major rel
 - `RawQuery` static helpers for raw SQL expressions.
 - Translations for `en` and `id`.
 
-[Unreleased]: https://github.com/jund-fauz/eloquent-kompact/compare/v2.15.0...HEAD
+[Unreleased]: https://github.com/jund-fauz/eloquent-kompact/compare/v2.16.0...HEAD
+[2.16.0]: https://github.com/jund-fauz/eloquent-kompact/compare/v2.15.0...v2.16.0
 [2.15.0]: https://github.com/jund-fauz/eloquent-kompact/compare/v2.14.0...v2.15.0
 [2.14.0]: https://github.com/jund-fauz/eloquent-kompact/compare/v2.13.0...v2.14.0
 [2.13.0]: https://github.com/jund-fauz/eloquent-kompact/compare/v2.12.0...v2.13.0
