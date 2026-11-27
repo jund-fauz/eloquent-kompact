@@ -7,6 +7,21 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [2.17.1] - 2026-11-27
+
+### Changed
+
+- `Array\filter()` passes both value and key (`ARRAY_FILTER_USE_BOTH`, `fn ($value, $key)`) to the callback, consistent with `Array\map()`.
+- `assign()` and `assignFromIf()` on `AdditionalQueries` ignore positional `null` items in `$condition` (e.g. `[null_if($skip, 'dirty')]`) while keeping keyed checks with `null` values (e.g. `['same_with' => null]`), and `assignFromIf()` accepts a nullable `$condition`.
+
+### Documentation
+
+- Updated `Array\filter()` callback signature in both READMEs.
+
+### Tests
+
+- Added tests for `$key` in `Array\filter()` and positional `null` items in the conditions of `assign()` and `assignFromIf()`.
+
 ## [2.17.0] - 2026-11-27
 
 ### Added
@@ -2759,7 +2774,8 @@ The first stable release: from now on, breaking changes only come in a major rel
 - `RawQuery` static helpers for raw SQL expressions.
 - Translations for `en` and `id`.
 
-[Unreleased]: https://github.com/jund-fauz/eloquent-kompact/compare/v2.17.0...HEAD
+[Unreleased]: https://github.com/jund-fauz/eloquent-kompact/compare/v2.17.1...HEAD
+[2.17.1]: https://github.com/jund-fauz/eloquent-kompact/compare/v2.17.0...v2.17.1
 [2.17.0]: https://github.com/jund-fauz/eloquent-kompact/compare/v2.16.0...v2.17.0
 [2.16.0]: https://github.com/jund-fauz/eloquent-kompact/compare/v2.15.0...v2.16.0
 [2.15.0]: https://github.com/jund-fauz/eloquent-kompact/compare/v2.14.0...v2.15.0
