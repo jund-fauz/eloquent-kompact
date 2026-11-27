@@ -3,6 +3,7 @@
 namespace JundFauz\EloquentKompact;
 
 use function JundFauz\EloquentKompact\Array\flat;
+use function JundFauz\EloquentKompact\String\concat;
 
 const path = '/';
 const word = ' ';
@@ -24,6 +25,19 @@ function concat_by(string $by, string|array ...$values): string
 {
     flat($values);
     return join($by, $values);
+}
+
+/**
+ * Joins values with a delimiter and surrounds the result with that delimiter.
+ *
+ * @param string $between
+ * @param string|array ...$values
+ * @return string
+ */
+function concat_between(string $between, string|array ...$values): string
+{
+    flat($values);
+    return concat($between, concat_by($between, ...$values), $between);
 }
 
 /**

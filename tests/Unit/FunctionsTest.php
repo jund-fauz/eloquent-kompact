@@ -59,6 +59,7 @@ use function JundFauz\EloquentKompact\same_with;
 use function JundFauz\EloquentKompact\same_with_one_of;
 use function JundFauz\EloquentKompact\execute_what_function;
 use function JundFauz\EloquentKompact\concat_by;
+use function JundFauz\EloquentKompact\concat_between;
 use function JundFauz\EloquentKompact\schema_concat;
 use function JundFauz\EloquentKompact\syntax;
 use function JundFauz\EloquentKompact\word_concat;
@@ -139,6 +140,8 @@ class FunctionsTest extends TestCase
         $this->assertSame('a_b_c', concat_by(\JundFauz\EloquentKompact\snake, 'a', ['b', ['c']]));
         $this->assertSame('a-b', concat_by('-', 'a', 'b'));
         $this->assertSame('', concat_by('-'));
+        $this->assertSame('-a-b-', concat_between('-', 'a', ['b']));
+        $this->assertSame('--', concat_between('-'));
         $this->assertSame('a:b:c', schema_concat('a', ['b', 'c']));
         $this->assertSame("a\nb\nc", write_line('a', ['b', 'c']));
         $this->assertSame('a/b/c', path_concat('a', ['b', 'c']));
