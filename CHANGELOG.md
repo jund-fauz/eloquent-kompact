@@ -7,6 +7,30 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [2.17.0] - 2026-11-27
+
+### Added
+
+- `assignFromIf($condition, $other, ...$columns)` on `AdditionalQueries`: copies each column from `$other` that satisfies `isAllOf($column, ...$condition)`, without saving.
+- `Array\filter($array, $callable = null)`: shorthand for `array_filter()`, keeping the keys.
+
+### Changed
+
+- `assign()` on `AdditionalQueries` accepts a condition (as the third argument for a single column, or as the second argument / `condition:` for an array of `[column => value]`), assigning only columns that satisfy `isAllOf($column, ...$condition)`.
+- `getMany()` on `AdditionalQueries` falls back to the default set by `withDefault()` instead of `null`.
+
+### Deprecated
+
+- `assignIfBlank()`, `assignIfBlankFrom()`, `assignIfNull()` and `assignIfNullFrom()` on `AdditionalQueries`, to be removed in 3.0. Use `assign()` with `'blank'` or `'null'` as the condition (e.g. `$order->assign('note', '-', 'blank')` or `$order->assign(['note' => '-'], 'blank')`) and `assignFromIf()` (e.g. `$order->assignFromIf('blank', $other, 'tenant_id', 'branch_id')`).
+
+### Documentation
+
+- Documented conditional `assign()`, `assignFromIf()`, `withDefault()` on `getMany()` and `Array\filter()`, and marked `assignIfBlank()`, `assignIfBlankFrom()`, `assignIfNull()` and `assignIfNullFrom()` as deprecated in both READMEs.
+
+### Tests
+
+- Added tests for conditional `assign()` (including keyed checks with `null` values and named `condition:`), `assignFromIf()`, equivalence with the deprecated `assignIf*` methods, `withDefault()` on `getMany()` and `Array\filter()`.
+
 ## [2.16.0] - 2026-11-27
 
 ### Added
@@ -2735,7 +2759,8 @@ The first stable release: from now on, breaking changes only come in a major rel
 - `RawQuery` static helpers for raw SQL expressions.
 - Translations for `en` and `id`.
 
-[Unreleased]: https://github.com/jund-fauz/eloquent-kompact/compare/v2.16.0...HEAD
+[Unreleased]: https://github.com/jund-fauz/eloquent-kompact/compare/v2.17.0...HEAD
+[2.17.0]: https://github.com/jund-fauz/eloquent-kompact/compare/v2.16.0...v2.17.0
 [2.16.0]: https://github.com/jund-fauz/eloquent-kompact/compare/v2.15.0...v2.16.0
 [2.15.0]: https://github.com/jund-fauz/eloquent-kompact/compare/v2.14.0...v2.15.0
 [2.14.0]: https://github.com/jund-fauz/eloquent-kompact/compare/v2.13.0...v2.14.0
