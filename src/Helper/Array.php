@@ -37,6 +37,18 @@ function map(?callable $callable, array $array): array
 }
 
 /**
+ * Shorthand for array_filter(), keeping the keys
+ *
+ * @param array $array
+ * @param callable|null $callable
+ * @return array
+ */
+function filter(array $array, ?callable $callable = null): array
+{
+    return array_filter($array, $callable);
+}
+
+/**
  * Removes the keys from the array and returns their values: the value for one key, key => value pairs for several.
  * A missing key gives null; dot notation is supported
  *

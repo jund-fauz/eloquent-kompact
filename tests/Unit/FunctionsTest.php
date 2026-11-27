@@ -257,6 +257,14 @@ class FunctionsTest extends TestCase
     }
 
     #[Test]
+    public function it_filters_an_array_keeping_its_keys(): void
+    {
+        $this->assertSame(['a' => 1, 'c' => 0], Arr\filter(['a' => 1, 'b' => null, 'c' => 0], is_not_null(...)));
+        $this->assertSame([0 => 'a', 'k' => 'v'], Arr\filter([0 => 'a', 1 => '', 2 => 0, 3 => null, 'k' => 'v']));
+        $this->assertSame([], Arr\filter([], is_not_null(...)));
+    }
+
+    #[Test]
     public function it_pulls_one_key(): void
     {
         $array = ['name' => 'Ana', 'email' => 'ana@example.com'];
