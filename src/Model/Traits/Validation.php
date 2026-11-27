@@ -12,14 +12,26 @@ use ReflectionMethod;
 
 trait Validation
 {
+    use AutoFillable;
+
     /** @var array<class-string, list<class-string>> */
     protected static array $ruleLayerCache = [];
 
+    /**
+     * Upper bound applied to `gram` columns in `defaultRules()`.
+     *
+     * @return float
+     */
     protected static function gramMaxRule(): float
     {
         return 99_999.9999999;
     }
 
+    /**
+     * Upper bound applied to `pcs` columns in `defaultRules()`.
+     *
+     * @return int
+     */
     protected static function pcsMaxRule(): int
     {
         return 4_294_967_295;
@@ -34,8 +46,10 @@ trait Validation
      * applied to the columns of the model, while the ones declared by the model itself are
      * always applied.
      *
+     * @param Model|null $record
      * @return array<string, array<int, mixed>>
      * @throws ReflectionException
+     * @final
      */
     public static function rules(?Model $record = null): array
     {
@@ -74,6 +88,9 @@ trait Validation
     }
 
     /**
+     * Custom validation rules per column for this model class.
+     *
+     * @param Model|null $record
      * @return array<string, string|array|ValidationB>
      */
     protected function defineRules(?Model $record = null): array
@@ -82,6 +99,8 @@ trait Validation
     }
 
     /**
+     * Default validation rules inferred from the column token of `$column`.
+     *
      * @param string $column
      * @param Model|null $record
      * @return array<int, mixed>|ValidationB
@@ -99,6 +118,13 @@ trait Validation
         };
     }
 
+    /**
+     * Unique validation rule on this model's table for `$column`, ignoring `$record` when provided.
+     *
+     * @param string $column
+     * @param Model|null $record
+     * @return Unique
+     */
     protected static function uniqueRule(string $column, ?Model $record = null): Unique
     {
         return Rule::unique((new static)->getTable(), $column)->ignore($record);
@@ -127,8 +153,10 @@ trait Validation
     }
 
     /**
+     * Normalizes a rule definition (builder, pipe-delimited string, array, or single rule) into a list.
+     *
      * @param mixed $rules
-     * @return array<int, string>
+     * @return array<int, mixed>
      */
     private static function normalizeRules(mixed $rules): array
     {
@@ -140,6 +168,13 @@ trait Validation
         };
     }
 
+    /**
+     * Appends rules to `$fieldRules` when no rule with the same prefix is already present.
+     *
+     * @param array<int, mixed> $fieldRules
+     * @param mixed ...$rulesToInject
+     * @return void
+     */
     private static function injectRules(array &$fieldRules, mixed ...$rulesToInject): void
     {
         foreach ($rulesToInject as $rule) {
@@ -149,6 +184,13 @@ trait Validation
         }
     }
 
+    /**
+     * Whether `$fieldRules` already contains a string rule sharing the rule name prefix of `$rule`.
+     *
+     * @param string $rule
+     * @param array<int, mixed> $fieldRules
+     * @return bool
+     */
     private static function isInRules(string $rule, array $fieldRules): bool
     {
         $prefix = str_contains($rule, ':') ? explode(':', $rule)[0] : $rule;

@@ -14,6 +14,14 @@ use JundFauz\EloquentKompact\Column\Convert;
  */
 final class Arrange
 {
+    /**
+     * Dynamically assemble dot-notated singular (`relation`) or plural (`relations`) paths with an optional leaf column.
+     *
+     * @param string $name
+     * @param array<int, mixed> $arguments
+     * @return string
+     * @throws BadMethodCallException
+     */
     public static function __callStatic(string $name, array $arguments)
     {
         if (in_array($name, ['relation', 'relations'], true)) {
@@ -33,6 +41,9 @@ final class Arrange
 
     /**
      * Flattens the lists only, so a [prefix => model class] keeps its prefix
+     *
+     * @param array<int, mixed> $relationClasses
+     * @return array<int, string|array<string, string>>
      */
     private static function flatten(array $relationClasses): array
     {

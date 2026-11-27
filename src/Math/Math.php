@@ -50,6 +50,7 @@ class Math
      * @throws InvalidArgumentException When the argument count is invalid, a number is not numeric or the precision is negative
      * @throws DivisionByZeroError When divide() or quotient() divides by zero
      * @throws BadMethodCallException When the method does not exist
+     * @final
      */
     public static function __callStatic(string $name, array $arguments): string|bool
     {
@@ -91,6 +92,8 @@ class Math
     }
 
     /**
+     * Execute a variadic batch arithmetic operation (`sum`, `diff`, `product`, or `quotient`) using bcmath.
+     *
      * @param string $name
      * @param array $numbers
      * @return string
@@ -130,7 +133,9 @@ class Math
 }
 
 /**
- * @param array $payload
+ * Resolve the corresponding `bc*` function name for a math method index.
+ *
+ * @param array<int, string> $payload
  * @param string $name
  * @return string
  * @internal
@@ -146,6 +151,8 @@ function bc(array $payload, string $name): string
 }
 
 /**
+ * Count the number of decimal digits after the decimal point in a numeric string.
+ *
  * @param string $number
  * @return int
  * @internal
@@ -156,7 +163,9 @@ function decimal_scale(string $number): int
 }
 
 /**
- * @param array $numbers
+ * Multiply a list of normalized numeric strings without intermediate rounding loss.
+ *
+ * @param array<int, string> $numbers
  * @return string
  * @internal
  */
@@ -175,9 +184,11 @@ function exact_product(array $numbers): string
 }
 
 /**
- * @param $firstNumber
- * @param $secondNumber
- * @param $precision
+ * Determine whether either operand or the precision is invalid for bcmath comparison/arithmetic.
+ *
+ * @param mixed $firstNumber
+ * @param mixed $secondNumber
+ * @param mixed $precision
  * @return bool
  * @internal
  */
@@ -207,6 +218,8 @@ function normalize_numbers(?int &$precision = null, &...$numbers): void
 }
 
 /**
+ * Expand scientific notation in a numeric string into plain decimal form.
+ *
  * @param string $number
  * @return string
  * @internal
@@ -241,6 +254,8 @@ function expand_exponent(string $number): string
 }
 
 /**
+ * Populate `$precision` from the package configuration (falling back to `3`) when `null`.
+ *
  * @param int|null $precision
  * @return void
  * @internal
