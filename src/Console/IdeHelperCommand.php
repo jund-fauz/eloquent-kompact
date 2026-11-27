@@ -14,6 +14,9 @@ use Illuminate\Database\Eloquent\Relations\HasMany;
 use Illuminate\Database\Eloquent\Relations\HasOne;
 use Illuminate\Database\Eloquent\Relations\MorphMany;
 use Illuminate\Database\Eloquent\Relations\Relation;
+use Illuminate\Database\Schema\Blueprint as BaseBlueprint;
+use Illuminate\Database\Schema\ColumnDefinition;
+use Illuminate\Database\Schema\ForeignKeyDefinition;
 use Illuminate\Support\Facades\Schema;
 use Illuminate\Support\Str as SupportStr;
 use JsonException;
@@ -23,8 +26,14 @@ use JundFauz\EloquentKompact\Column\ColumnCreator;
 use JundFauz\EloquentKompact\Column\Convert;
 use JundFauz\EloquentKompact\Model\KompactPivot;
 use JundFauz\EloquentKompact\Model\Traits\AutoRelation;
+use JundFauz\EloquentKompact\Schema\Blueprint as KompactBlueprint;
 use ReflectionClass;
 use ReflectionException;
+use ReflectionMethod;
+use ReflectionNamedType;
+use ReflectionParameter;
+use ReflectionUnionType;
+use ReflectionType;
 use function JundFauz\EloquentKompact\Array\merge_as_array;
 use function JundFauz\EloquentKompact\Array\pull_list;
 use function JundFauz\EloquentKompact\comment;
@@ -49,6 +58,7 @@ final class IdeHelperCommand extends Command
     public const string Filename = '_ide_helper_kompact.php';
     protected const string MixinNamespace = 'EloquentKompact\IdeHelper';
     protected const string MixinPrefix = '_EK_';
+    protected const string BlueprintMixin = 'EloquentKompact\IdeHelper\_EK_Blueprint';
     protected const array RelationClasses = [
         'belongsTo' => BelongsTo::class,
         'belongsToMany' => BelongsToMany::class,
@@ -69,7 +79,7 @@ final class IdeHelperCommand extends Command
     public function handle(): int
     {
         $models = $this->models();
-        $blocks = [];
+        $blocks = [$this->renderBlueprintMixin()];
         $mixins = [];
 
         foreach ($models as $parent) {
@@ -87,7 +97,13 @@ final class IdeHelperCommand extends Command
         }
 
         file_put_contents(base_path(self::Filename), $this->renderFile($blocks));
-        $this->writeIdeJson($mixins);
+        $this->writeIdeJson([
+            [
+                'classFqn' => concat(NAMESPACE_DELIMITER, BaseBlueprint::class),
+                'mixinFqn' => concat(NAMESPACE_DELIMITER, self::BlueprintMixin)
+            ],
+            ...$mixins
+        ]);
 
         $this->info(word_concat(count($mixins), 'model(s) written to', self::Filename, 'and ide.json.'));
 
@@ -462,6 +478,139 @@ final class IdeHelperCommand extends Command
             concat(self::Indentation, word_concat('class', class_basename($mixin), '{}')),
             '}'
         );
+    }
+
+    /**
+     * Renders autocomplete methods for the Kompact blueprint and its dynamic plural calls.
+     *
+     * @return string
+     */
+    protected function renderBlueprintMixin(): string
+    {
+        $lines = [];
+        $methods = (new ReflectionClass(KompactBlueprint::class))->getMethods(ReflectionMethod::IS_PUBLIC);
+
+        foreach ($methods as $method) {
+            if ($method->getDeclaringClass()->getName() !== KompactBlueprint::class
+                || $method->isConstructor()
+                || $method->isDestructor()
+                || str_starts_with($method->getName(), '__')
+            ) {
+                continue;
+            }
+
+            $lines[] = $this->renderMethodAnnotation($method);
+
+            if ($plural = $this->pluralMethod($method)) {
+                $lines[] = $plural;
+            }
+        }
+
+        return write_line(
+            word_concat('namespace', str('before_last', self::BlueprintMixin, '\\'), '{'),
+            concat(self::Indentation, '/**'),
+            $lines,
+            concat(self::Indentation, ' */'),
+            concat(self::Indentation, 'class _EK_Blueprint {}'),
+            '}'
+        );
+    }
+
+    /**
+     * Renders a reflected method as a PHPDoc @method annotation.
+     *
+     * @param ReflectionMethod $method
+     * @return string
+     */
+    protected function renderMethodAnnotation(ReflectionMethod $method): string
+    {
+        $parameters = array_map(fn (ReflectionParameter $parameter): string => $this->renderParameter($parameter), $method->getParameters());
+        $returnType = $method->hasReturnType() ? $this->renderType($method->getReturnType(), $method) : 'mixed';
+
+        return concat(self::Indentation, ' * @method ', $returnType, ' ', $method->getName(), '(', join(', ', $parameters), ')');
+    }
+
+    /**
+     * Renders the generated plural alias for methods that create a single named column.
+     *
+     * @param ReflectionMethod $method
+     * @return string|null
+     */
+    protected function pluralMethod(ReflectionMethod $method): ?string
+    {
+        $parameters = $method->getParameters();
+        $first = $parameters[0] ?? null;
+
+        if ($first === null
+            || ! $first->hasType()
+            || ! $first->getType() instanceof ReflectionNamedType
+            || $first->getType()->getName() !== 'string'
+            || ! $method->hasReturnType()
+            || ! $method->getReturnType() instanceof ReflectionNamedType
+            || ! in_array($method->getReturnType()->getName(), [ColumnDefinition::class, ForeignKeyDefinition::class], true)
+        ) {
+            return null;
+        }
+
+        $plural = SupportStr::pluralStudly($method->getName());
+
+        if ($plural === $method->getName()) {
+            return null;
+        }
+
+        return concat(
+            self::Indentation,
+            ' * @method array<int, \\', ColumnDefinition::class, '> ',
+            $plural,
+            '(array<int|string, mixed> $columns, ?array<string, mixed> $config = null)'
+        );
+    }
+
+    /**
+     * Renders a reflected parameter including its type and default value.
+     *
+     * @param ReflectionParameter $parameter
+     * @return string
+     */
+    protected function renderParameter(ReflectionParameter $parameter): string
+    {
+        $type = $parameter->hasType() ? $this->renderType($parameter->getType(), $parameter) : 'mixed';
+        $name = concat('$', $parameter->isVariadic() ? '...' : '', $parameter->getName());
+        $default = $parameter->isDefaultValueAvailable() && ! $parameter->isVariadic()
+            ? concat(' = ', var_export($parameter->getDefaultValue(), true))
+            : '';
+
+        return concat($type, ' ', $name, $default);
+    }
+
+    /**
+     * Renders a reflection type with fully qualified class names for PHPDoc.
+     *
+     * @param ReflectionType $type
+     * @param ReflectionMethod|ReflectionParameter $reflection
+     * @return string
+     */
+    protected function renderType(ReflectionType $type, ReflectionMethod|ReflectionParameter $reflection): string
+    {
+        if ($type instanceof ReflectionUnionType) {
+            return join('|', array_map(fn (ReflectionType $part): string => $this->renderType($part, $reflection), $type->getTypes()));
+        }
+
+        if ($type instanceof ReflectionNamedType) {
+            $name = $type->getName();
+
+            if (! $type->isBuiltin()) {
+                $name = concat('\\', ltrim($name, '\\'));
+            }
+
+            if ($type->allowsNull() && ! in_array($name, ['mixed', 'null'], true)) {
+                return concat($name, '|null');
+            }
+
+            return $name;
+        }
+
+        return (string) $type;
     }
 
     /**

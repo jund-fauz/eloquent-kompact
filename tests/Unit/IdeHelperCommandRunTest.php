@@ -104,6 +104,10 @@ class IdeHelperCommandRunTest extends TestCase
         $this->assertFileExists(base_path(IdeHelperCommand::Filename));
         $this->assertFileExists(base_path('ide.json'));
         $this->assertStringStartsWith('<?php', $this->helperFile());
+        $this->assertStringContainsString('class _EK_Blueprint {}', $this->helperFile());
+        $this->assertStringContainsString('@method \\Illuminate\\Database\\Schema\\ColumnDefinition gram(string $column, int $total = 12, int $places = 7)', $this->helperFile());
+        $this->assertStringContainsString('@method array<int, \\Illuminate\\Database\\Schema\\ColumnDefinition> grams(array<int|string, mixed> $columns, ?array<string, mixed> $config = null)', $this->helperFile());
+        $this->assertStringContainsString('@method array<int, \\Illuminate\\Database\\Schema\\ColumnDefinition> createForeignIds(array<int|string, mixed> $columns, ?array<string, mixed> $config = null)', $this->helperFile());
     }
 
     #[Test]
@@ -193,7 +197,11 @@ class IdeHelperCommandRunTest extends TestCase
             ['classFqn' => '\\'.Writer::class, 'mixinFqn' => '\\'.self::MixinNamespace.'\\_EK_Writer'],
             $json['helperCode']['classMixins'],
         );
-        $this->assertCount(4, $json['helperCode']['classMixins']);
+        $this->assertContains(
+            ['classFqn' => '\\Illuminate\\Database\\Schema\\Blueprint', 'mixinFqn' => '\\EloquentKompact\\IdeHelper\\_EK_Blueprint'],
+            $json['helperCode']['classMixins'],
+        );
+        $this->assertCount(5, $json['helperCode']['classMixins']);
     }
 
     #[Test]
@@ -217,7 +225,7 @@ class IdeHelperCommandRunTest extends TestCase
         $this->assertTrue($json['other']);
         $this->assertSame($other, $mixins[0]);
         $this->assertNotContains($old, $mixins);
-        $this->assertCount(5, $mixins);
+        $this->assertCount(6, $mixins);
     }
 
     #[Test]
@@ -229,8 +237,11 @@ class IdeHelperCommandRunTest extends TestCase
             ->expectsOutput('0 model(s) written to _ide_helper_kompact.php and ide.json.')
             ->assertSuccessful();
 
-        $this->assertStringNotContainsString('namespace', $this->helperFile());
-        $this->assertSame([], $this->ideJson()['helperCode']['classMixins']);
+        $this->assertStringContainsString('class _EK_Blueprint {}', $this->helperFile());
+        $this->assertStringNotContainsString('class _EK_Writer {}', $this->helperFile());
+        $this->assertSame([
+            ['classFqn' => '\\Illuminate\\Database\\Schema\\Blueprint', 'mixinFqn' => '\\EloquentKompact\\IdeHelper\\_EK_Blueprint'],
+        ], $this->ideJson()['helperCode']['classMixins']);
     }
 
     #[Test]

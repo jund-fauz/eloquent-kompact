@@ -18,6 +18,8 @@ use LogicException;
 /**
  * Extended Laravel Schema `Blueprint` providing Kompact token-suffixed column helpers and dynamic plural calls.
  *
+ * @mixin \EloquentKompact\IdeHelper\_EK_Blueprint
+ *
  * @method array<int, ColumnDefinition> strings(array<int|string, mixed> $columns, ?array<string, mixed> $config = null)
  * @method array<int, ColumnDefinition> grams(array<int|string, mixed> $columns, ?array<string, mixed> $config = null)
  * @method array<int, ColumnDefinition> quantities(array<int|string, mixed> $columns, ?array<string, mixed> $config = null)
