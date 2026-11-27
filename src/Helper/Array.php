@@ -37,7 +37,7 @@ function map(?callable $callable, array $array): array
 }
 
 /**
- * Shorthand for array_filter(), keeping the keys
+ * array_filter() that also passes the key to the callback, as fn ($value, $key), keeping the keys
  *
  * @param array $array
  * @param callable|null $callable
@@ -45,7 +45,7 @@ function map(?callable $callable, array $array): array
  */
 function filter(array $array, ?callable $callable = null): array
 {
-    return array_filter($array, $callable);
+    return array_filter($array, $callable, ARRAY_FILTER_USE_BOTH);
 }
 
 /**

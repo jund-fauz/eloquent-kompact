@@ -260,6 +260,10 @@ class FunctionsTest extends TestCase
     public function it_filters_an_array_keeping_its_keys(): void
     {
         $this->assertSame(['a' => 1, 'c' => 0], Arr\filter(['a' => 1, 'b' => null, 'c' => 0], is_not_null(...)));
+        $this->assertSame(
+            [0 => 'x', 'keep' => null],
+            Arr\filter([0 => 'x', 1 => null, 'keep' => null], fn ($value, $key) => is_string($key) || is_not_null($value)),
+        );
         $this->assertSame([0 => 'a', 'k' => 'v'], Arr\filter([0 => 'a', 1 => '', 2 => 0, 3 => null, 'k' => 'v']));
         $this->assertSame([], Arr\filter([], is_not_null(...)));
     }
