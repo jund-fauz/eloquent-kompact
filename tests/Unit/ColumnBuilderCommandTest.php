@@ -67,7 +67,7 @@ class ColumnBuilderCommandTest extends TestCase
     #[Test]
     public function it_generates_a_class_for_every_token_but_the_relation(): void
     {
-        $this->artisan('kompact:column-builder', ['-o' => 'App\Constant\Column'])->assertSuccessful();
+        $this->artisan('make:column-builder', ['-o' => 'App\Constant\Column'])->assertSuccessful();
 
         $files = collect(File::files($this->tempPath . '/Constant/Column'))->map->getFilename()->sort()->values()->all();
 
@@ -80,7 +80,7 @@ class ColumnBuilderCommandTest extends TestCase
     #[Test]
     public function it_lists_the_columns_of_the_database_as_methods(): void
     {
-        $this->artisan('kompact:column-builder', ['--output' => 'App\Constant\Column'])->assertSuccessful();
+        $this->artisan('make:column-builder', ['--output' => 'App\Constant\Column'])->assertSuccessful();
 
         $this->assertSame(<<<'PHP'
             <?php
@@ -107,7 +107,7 @@ class ColumnBuilderCommandTest extends TestCase
     #[Test]
     public function it_generates_the_morph_class_with_its_morph_names(): void
     {
-        $this->artisan('kompact:column-builder', ['-o' => 'App\Constant\Column'])->assertSuccessful();
+        $this->artisan('make:column-builder', ['-o' => 'App\Constant\Column'])->assertSuccessful();
 
         $this->assertSame(<<<'PHP'
             <?php
@@ -132,7 +132,7 @@ class ColumnBuilderCommandTest extends TestCase
     #[Test]
     public function the_generated_classes_build_the_column_names(): void
     {
-        $this->artisan('kompact:column-builder', ['-o' => 'App\Generated\Columns'])->assertSuccessful();
+        $this->artisan('make:column-builder', ['-o' => 'App\Generated\Columns'])->assertSuccessful();
 
         foreach (['ArrayC', 'Gram', 'PerUnit', 'Morph'] as $class) {
             require_once $this->tempPath . "/Generated/Columns/$class.php";
@@ -150,7 +150,7 @@ class ColumnBuilderCommandTest extends TestCase
     #[Test]
     public function it_asks_the_output_when_it_is_not_given(): void
     {
-        $this->artisan('kompact:column-builder')
+        $this->artisan('make:column-builder')
             ->expectsQuestion('Namespace of the column builder classes, inside app/', 'App\Asked')
             ->assertSuccessful();
 
@@ -160,7 +160,7 @@ class ColumnBuilderCommandTest extends TestCase
     #[Test]
     public function it_updates_its_classes_to_the_latest_database_when_run_again(): void
     {
-        $this->artisan('kompact:column-builder', ['-o' => 'App\Constant\Column'])->assertSuccessful();
+        $this->artisan('make:column-builder', ['-o' => 'App\Constant\Column'])->assertSuccessful();
 
         // A renamed constant of Morph is kept
         File::put(
@@ -173,7 +173,7 @@ class ColumnBuilderCommandTest extends TestCase
             $table->nullableMorphs('parentable');
         });
 
-        $this->artisan('kompact:column-builder', ['-o' => 'App\Constant\Column'])
+        $this->artisan('make:column-builder', ['-o' => 'App\Constant\Column'])
             ->expectsOutputToContain('Updated App\Constant\Column\Gram')
             ->assertSuccessful();
 
@@ -188,12 +188,12 @@ class ColumnBuilderCommandTest extends TestCase
     #[Test]
     public function it_drops_the_columns_that_are_gone(): void
     {
-        $this->artisan('kompact:column-builder', ['-o' => 'App\Constant\Column'])->assertSuccessful();
+        $this->artisan('make:column-builder', ['-o' => 'App\Constant\Column'])->assertSuccessful();
 
         Schema::drop('cb_items');
         Schema::table('cb_orders', fn (Blueprint $table) => $table->dropMorphs('sourceable'));
 
-        $this->artisan('kompact:column-builder', ['-o' => 'App\Constant\Column'])->assertSuccessful();
+        $this->artisan('make:column-builder', ['-o' => 'App\Constant\Column'])->assertSuccessful();
 
         $this->assertStringNotContainsString('start()', $this->file('Time'));
         $this->assertStringNotContainsString('sourceable', $this->file('Morph'));
@@ -206,12 +206,12 @@ class ColumnBuilderCommandTest extends TestCase
         File::ensureDirectoryExists($this->tempPath . '/Constant/Column');
         File::put($this->tempPath . '/Constant/Column/Gram.php', 'mine');
 
-        $this->artisan('kompact:column-builder', ['-o' => 'App\Constant\Column'])
+        $this->artisan('make:column-builder', ['-o' => 'App\Constant\Column'])
             ->expectsOutputToContain('Skipped App\Constant\Column\Gram')
             ->assertSuccessful();
         $this->assertSame('mine', $this->file('Gram'));
 
-        $this->artisan('kompact:column-builder', ['-o' => 'App\Constant\Column', '--force' => true])->assertSuccessful();
+        $this->artisan('make:column-builder', ['-o' => 'App\Constant\Column', '--force' => true])->assertSuccessful();
         $this->assertStringContainsString('class Gram extends ColumnBuilder', $this->file('Gram'));
     }
 
@@ -220,8 +220,8 @@ class ColumnBuilderCommandTest extends TestCase
     {
         $this->assertSame([], ColumnBuilderCommand::generatedNamespaces());
 
-        $this->artisan('kompact:column-builder', ['-o' => 'App\Constant\Column'])->assertSuccessful();
-        $this->artisan('kompact:column-builder', ['-o' => 'App\Generated\Columns'])->assertSuccessful();
+        $this->artisan('make:column-builder', ['-o' => 'App\Constant\Column'])->assertSuccessful();
+        $this->artisan('make:column-builder', ['-o' => 'App\Generated\Columns'])->assertSuccessful();
         File::put($this->tempPath . '/Mine.php', "<?php
 
 namespace App;
@@ -235,7 +235,7 @@ class Mine {}
     #[Test]
     public function it_regenerates_its_classes_after_migrating_locally(): void
     {
-        $this->artisan('kompact:column-builder', ['-o' => 'App\Constant\Column'])->assertSuccessful();
+        $this->artisan('make:column-builder', ['-o' => 'App\Constant\Column'])->assertSuccessful();
 
         Schema::table('cb_items', fn (Blueprint $table) => $table->decimal('gross_weight_gram')->nullable());
         $this->app['env'] = 'local';
@@ -247,7 +247,7 @@ class Mine {}
     #[Test]
     public function it_does_not_regenerate_its_classes_after_migrating_outside_local(): void
     {
-        $this->artisan('kompact:column-builder', ['-o' => 'App\Constant\Column'])->assertSuccessful();
+        $this->artisan('make:column-builder', ['-o' => 'App\Constant\Column'])->assertSuccessful();
 
         Schema::table('cb_items', fn (Blueprint $table) => $table->decimal('gross_weight_gram')->nullable());
         event(new MigrationsEnded('up'));

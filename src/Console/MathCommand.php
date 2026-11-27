@@ -20,16 +20,22 @@ use function JundFauz\EloquentKompact\write_line;
 use const JundFauz\EloquentKompact\CLASS_CLOSER;
 use const JundFauz\EloquentKompact\CLASS_OPENER;
 
+/** @final */
 class MathCommand extends Command
 {
     /** New Signature Style */
-    protected $signature = 'make:kompact-math
+    protected $signature = 'make:math
         {--c|class= : Name of the class (asked when not given)}
         {--p|precision= : Decimal precision that will be applied to created class} 
         {--o|output= : Namespace of the classes inside app/, e.g. App\Logic}';
 
     protected $description = 'Generate a child class based on Math class with user-defined precision for precision math operation';
 
+    /**
+     * Generates a `Math` subclass configured with the requested decimal precision.
+     *
+     * @return void
+     */
     public function handle(): void
     {
         $className = $this->option('class') ?: $this->ask('Name of the class');

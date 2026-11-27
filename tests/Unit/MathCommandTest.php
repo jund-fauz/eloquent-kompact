@@ -36,7 +36,7 @@ class MathCommandTest extends TestCase
     #[Test]
     public function it_generates_a_child_class_of_math_with_the_precision(): void
     {
-        $this->artisan('make:kompact-math', ['--class' => 'Money', '--precision' => '2', '--output' => 'App\Logic'])->assertSuccessful();
+        $this->artisan('make:math', ['--class' => 'Money', '--precision' => '2', '--output' => 'App\Logic'])->assertSuccessful();
 
         $content = $this->file('Logic/Money.php');
 
@@ -54,7 +54,7 @@ class MathCommandTest extends TestCase
     #[Test]
     public function the_generated_class_calculates_with_its_precision(): void
     {
-        $this->artisan('make:kompact-math', ['--class' => 'MathCommandTestMoney', '--precision' => '2', '--output' => 'App\Logic'])->assertSuccessful();
+        $this->artisan('make:math', ['--class' => 'MathCommandTestMoney', '--precision' => '2', '--output' => 'App\Logic'])->assertSuccessful();
 
         require $this->tempPath . '/Logic/MathCommandTestMoney.php';
 
@@ -67,7 +67,7 @@ class MathCommandTest extends TestCase
     {
         config(['eloquent-kompact.decimal.default-precision' => 4]);
 
-        $this->artisan('make:kompact-math', ['--class' => 'Money', '--output' => 'App\Logic'])
+        $this->artisan('make:math', ['--class' => 'Money', '--output' => 'App\Logic'])
             ->expectsQuestion('Decimal precision that will be applied to created class', null)
             ->assertSuccessful();
 
@@ -77,7 +77,7 @@ class MathCommandTest extends TestCase
     #[Test]
     public function it_imports_math_with_an_alias_when_the_class_is_named_math(): void
     {
-        $this->artisan('make:kompact-math', ['--class' => 'Math', '--precision' => '2', '--output' => 'App\Logic'])->assertSuccessful();
+        $this->artisan('make:math', ['--class' => 'Math', '--precision' => '2', '--output' => 'App\Logic'])->assertSuccessful();
 
         $content = $this->file('Logic/Math.php');
 
@@ -91,7 +91,7 @@ class MathCommandTest extends TestCase
         File::ensureDirectoryExists($this->tempPath . '/Logic');
         File::put($this->tempPath . '/Logic/Money.php', 'existing');
 
-        $this->artisan('make:kompact-math', ['--class' => 'Money', '--precision' => '2', '--output' => 'App\Logic'])
+        $this->artisan('make:math', ['--class' => 'Money', '--precision' => '2', '--output' => 'App\Logic'])
             ->expectsOutputToContain('Command aborted.')
             ->assertSuccessful();
 
