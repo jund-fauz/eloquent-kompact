@@ -16,6 +16,7 @@ use Illuminate\Database\Eloquent\Relations\MorphMany;
 use Illuminate\Database\Eloquent\Relations\Relation;
 use Illuminate\Database\Schema\Blueprint as BaseBlueprint;
 use Illuminate\Database\Schema\ColumnDefinition;
+use Illuminate\Database\Schema\ForeignIdColumnDefinition;
 use Illuminate\Database\Schema\ForeignKeyDefinition;
 use Illuminate\Support\Facades\Schema;
 use Illuminate\Support\Str as SupportStr;
@@ -66,6 +67,7 @@ final class IdeHelperCommand extends Command
         'hasMany' => HasMany::class,
         'morphMany' => MorphMany::class
     ];
+    protected const array BasePluralMethods = ['string', 'morphs'];
     protected const array SingularTypes = ['belongsTo', 'hasOne'];
     protected const string Indentation = '    ';
 
@@ -509,6 +511,10 @@ final class IdeHelperCommand extends Command
             }
         }
 
+        foreach (self::BasePluralMethods as $name) {
+            $lines[] = $this->pluralAnnotation($name);
+        }
+
         return write_line(
             word_concat('namespace', str('before_last', self::BlueprintMixin, '\\'), '{'),
             concat(self::Indentation, '/**'),
@@ -566,16 +572,46 @@ final class IdeHelperCommand extends Command
             || ! $first->getType() instanceof ReflectionNamedType
             || $first->getType()->getName() !== 'string'
             || ! $method->hasReturnType()
-            || ! $method->getReturnType() instanceof ReflectionNamedType
-            || ! in_array($method->getReturnType()->getName(), [ColumnDefinition::class, ForeignKeyDefinition::class], true)
+            || ! $this->returnsColumnDefinition($method->getReturnType())
         ) {
             return null;
         }
 
-        $plural = SupportStr::pluralStudly($method->getName());
+        return $this->pluralAnnotation($method->getName());
+    }
 
-        if ($plural === $method->getName()) {
-            return null;
+    /**
+     * Whether every member of the return type is a column definition class, so unions such as `ForeignIdColumnDefinition|ColumnDefinition` qualify.
+     *
+     * @param ReflectionType $type
+     * @return bool
+     */
+    protected function returnsColumnDefinition(ReflectionType $type): bool
+    {
+        $allowed = [ColumnDefinition::class, ForeignKeyDefinition::class, ForeignIdColumnDefinition::class];
+        $parts = $type instanceof ReflectionUnionType ? $type->getTypes() : [$type];
+
+        foreach ($parts as $part) {
+            if (! $part instanceof ReflectionNamedType || ! in_array($part->getName(), $allowed, true)) {
+                return false;
+            }
+        }
+
+        return true;
+    }
+
+    /**
+     * Renders the plural alias annotation for a singular blueprint method; names already plural (`pcs`, `morphs`) get an extra `s`, as the runtime resolves them.
+     *
+     * @param string $singular
+     * @return string
+     */
+    protected function pluralAnnotation(string $singular): string
+    {
+        $plural = SupportStr::pluralStudly($singular);
+
+        if ($plural === $singular) {
+            $plural = concat($singular, 's');
         }
 
         return concat(

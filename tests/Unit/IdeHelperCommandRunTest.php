@@ -108,6 +108,9 @@ class IdeHelperCommandRunTest extends TestCase
         $this->assertStringContainsString('@method \\Illuminate\\Database\\Schema\\ColumnDefinition gram(string $column, int $total = 12, int $places = 7)', $this->helperFile());
         $this->assertStringContainsString('@method array<int, \\Illuminate\\Database\\Schema\\ColumnDefinition> grams(array<int|string, mixed> $columns, ?array<string, mixed> $config = null)', $this->helperFile());
         $this->assertStringContainsString('@method array<int, \\Illuminate\\Database\\Schema\\ColumnDefinition> createForeignIds(array<int|string, mixed> $columns, ?array<string, mixed> $config = null)', $this->helperFile());
+        foreach (['strings', 'pcss', 'morphss'] as $plural) {
+            $this->assertStringContainsString("@method array<int, \\Illuminate\\Database\\Schema\\ColumnDefinition> $plural(array<int|string, mixed> \$columns, ?array<string, mixed> \$config = null)", $this->helperFile());
+        }
         $this->assertStringContainsString('namespace Illuminate\\Database\\Schema {', $this->helperFile());
         $this->assertStringContainsString('@mixin \\EloquentKompact\\IdeHelper\\_EK_Blueprint', $this->helperFile());
     }
