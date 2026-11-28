@@ -79,7 +79,10 @@ final class IdeHelperCommand extends Command
     public function handle(): int
     {
         $models = $this->models();
-        $blocks = [$this->renderBlueprintMixin()];
+        $blocks = [
+            $this->renderBlueprintMixin(),
+            $this->renderBlueprintPhpStormStub()
+        ];
         $mixins = [];
 
         foreach ($models as $parent) {
@@ -512,6 +515,23 @@ final class IdeHelperCommand extends Command
             $lines,
             concat(self::Indentation, ' */'),
             concat(self::Indentation, 'class _EK_Blueprint {}'),
+            '}'
+        );
+    }
+
+    /**
+     * Renders a PhpStorm stub that exposes generated blueprint methods on Laravel's callback type.
+     *
+     * @return string
+     */
+    protected function renderBlueprintPhpStormStub(): string
+    {
+        return write_line(
+            'namespace Illuminate\\Database\\Schema {',
+            concat(self::Indentation, '/**'),
+            concat(self::Indentation, ' * @mixin \\', self::BlueprintMixin),
+            concat(self::Indentation, ' */'),
+            concat(self::Indentation, 'class Blueprint {}'),
             '}'
         );
     }
