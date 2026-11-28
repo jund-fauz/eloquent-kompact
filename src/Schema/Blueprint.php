@@ -5,6 +5,7 @@ namespace JundFauz\EloquentKompact\Schema;
 use BackedEnum;
 use Illuminate\Database\Schema\Blueprint as BaseBlueprint;
 use Illuminate\Database\Schema\ColumnDefinition;
+use Illuminate\Database\Schema\ForeignIdColumnDefinition;
 use Illuminate\Database\Schema\ForeignKeyDefinition;
 use Illuminate\Support\Str as SupportStr;
 use JundFauz\EloquentKompact\Builder\Str;
@@ -199,9 +200,9 @@ class Blueprint extends BaseBlueprint
      * @param class-string $model
      * @param string|null $customName
      * @param array<int|string, mixed>|string|null $config
-     * @return ForeignKeyDefinition
+     * @return ForeignIdColumnDefinition|ColumnDefinition
      */
-    public function createForeignId(string $model, ?string $customName = null, array|string|null $config = null): ForeignKeyDefinition
+    public function createForeignId(string $model, ?string $customName = null, array|string|null $config = null): ForeignIdColumnDefinition|ColumnDefinition
     {
         if ($customName !== null && ! ColumnCheck::isRelation($customName)) {
             $customName = ColumnCreator::relation($customName);
@@ -212,8 +213,9 @@ class Blueprint extends BaseBlueprint
         if ($config) {
             Config::applies($column, $config);
         }
+        $column->constrained($tableName);
 
-        return $column->constrained($tableName);
+        return $column;
     }
 
     /**

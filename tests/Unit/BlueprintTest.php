@@ -5,7 +5,7 @@ namespace JundFauz\EloquentKompact\Tests\Unit;
 use BadMethodCallException;
 use Illuminate\Database\Schema\Blueprint as BaseBlueprint;
 use Illuminate\Database\Schema\ColumnDefinition;
-use Illuminate\Database\Schema\ForeignKeyDefinition;
+use Illuminate\Database\Schema\ForeignIdColumnDefinition;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Schema;
 use JundFauz\EloquentKompact\Schema\Blueprint;
@@ -242,7 +242,7 @@ class BlueprintTest extends TestCase
 
         Schema::create('transfers', function (Blueprint $table) use (&$capturedFk, &$capturedPluralCols) {
             $table->id();
-            $capturedFk = $table->createForeignId(PlainRecord::class, config: 'nullable')->nullOnDelete();
+            $capturedFk = $table->createForeignId(PlainRecord::class, config: 'nullable');
             $capturedPluralCols = $table->createForeignIds([
                 Stock::class,
                 'from_stock' => Stock::class,
@@ -250,7 +250,7 @@ class BlueprintTest extends TestCase
             ], ALL_NULLABLE);
         });
 
-        $this->assertInstanceOf(ForeignKeyDefinition::class, $capturedFk);
+        $this->assertInstanceOf(ForeignIdColumnDefinition::class, $capturedFk);
         $this->assertCount(3, $capturedPluralCols);
         $this->assertSame(
             ['id', 'plain_record_id', 'stock_id', 'from_stock_id', 'to_stock_id'],
@@ -270,7 +270,6 @@ class BlueprintTest extends TestCase
         }
 
         $this->assertSame('plain_records', $byColumn['plain_record_id']['foreign_table']);
-        $this->assertSame('set null', strtolower((string) $byColumn['plain_record_id']['on_delete']));
         $this->assertSame('stocks', $byColumn['stock_id']['foreign_table']);
         $this->assertSame('stocks', $byColumn['from_stock_id']['foreign_table']);
         $this->assertSame('stocks', $byColumn['to_stock_id']['foreign_table']);
