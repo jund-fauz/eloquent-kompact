@@ -698,7 +698,7 @@ Atur `KOMPACT_IDE_HELPER=true` di `.env` untuk menjalankannya otomatis setelah s
 
 `EloquentKompactServiceProvider` secara otomatis melakukan binding `Illuminate\Database\Schema\Blueprint` milik Laravel ke `JundFauz\EloquentKompact\Schema\Blueprint`, sehingga `Schema::create('orders', function (Blueprint $table) { ... })` langsung menerima `JundFauz\EloquentKompact\Schema\Blueprint` tanpa perlu mengubah import `Blueprint`. (Kalau aplikasimu melakukan binding subclass `Blueprint` kustom sendiri, buat subclass itu meng-extend `JundFauz\EloquentKompact\Schema\Blueprint`.)
 
-Jalankan `php artisan make:ide-helper` untuk membuat autocomplete IDE bagi helper blueprint dan pemanggilan plural yang didukung di callback schema.
+Jalankan `php artisan make:ide-helper` untuk membuat autocomplete PhpStorm dan Laravel Idea bagi helper blueprint dan pemanggilan plural yang didukung di callback schema.
 
 | Method | Membuat |
 |---|---|
