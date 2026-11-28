@@ -7,6 +7,20 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [3.1.1] - 2026-11-28
+
+### Fixed
+
+- `make:ide-helper` now emits a PhpStorm-visible `Blueprint` stub so `Ctrl+Space` suggests helper methods and plural calls inside schema callbacks.
+
+### Documentation
+
+- Clarified that generated autocomplete supports PhpStorm and Laravel Idea.
+
+### Tests
+
+- Added coverage for the PhpStorm `Blueprint` stub in generated helper output.
+
 ## [3.1.0] - 2026-11-27
 
 ### Added
@@ -2840,7 +2854,8 @@ The first stable release: from now on, breaking changes only come in a major rel
 - `RawQuery` static helpers for raw SQL expressions.
 - Translations for `en` and `id`.
 
-[Unreleased]: https://github.com/jund-fauz/eloquent-kompact/compare/v3.1.0...HEAD
+[Unreleased]: https://github.com/jund-fauz/eloquent-kompact/compare/v3.1.1...HEAD
+[3.1.1]: https://github.com/jund-fauz/eloquent-kompact/compare/v3.1.0...v3.1.1
 [3.1.0]: https://github.com/jund-fauz/eloquent-kompact/compare/v3.0.0...v3.1.0
 [3.0.0]: https://github.com/jund-fauz/eloquent-kompact/compare/v2.17.1...v3.0.0
 [2.17.1]: https://github.com/jund-fauz/eloquent-kompact/compare/v2.17.0...v2.17.1
